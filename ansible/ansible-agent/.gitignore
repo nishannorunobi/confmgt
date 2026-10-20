@@ -1,0 +1,14 @@
+# agent.conf holds NO secret (the SSH key is in kms) — it is tracked in git
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Logs & runtime
+*.log
+memory/*.log
+
+# kms login files — written by connect_external/kms/signup_with_kms.sh
+connect_external/kms/credentials/
