@@ -1,0 +1,5 @@
+# test-vm — the test VM (myworkspace/test_server). Its SSH port 22 is forwarded to the PC's 127.0.0.1:2222
+# (test_server/test_vm.conf SSH_PORT). From the container the PC is host.docker.internal.
+ansible_host: host.docker.internal
+ansible_port: 2222
+ansible_user: nishan

@@ -1,0 +1,8 @@
+# ping.yml — can Ansible reach every machine of the inventory (SSH login + Python)? Changes nothing.
+# Run: bash check_playbook.sh (or apply_playbook.sh) → ping → test
+- name: Reach every machine
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: SSH login + Python answer
+      ansible.builtin.ping:
