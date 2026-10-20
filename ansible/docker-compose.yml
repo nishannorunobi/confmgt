@@ -50,7 +50,7 @@ services:
       - "host.docker.internal:host-gateway"              # the PC itself (e.g. the test VM's forwarded SSH port)
     networks:
       my_docker_network:
-        ipv4_address: 172.28.0.70      # static IP within my_docker_network's subnet
+        ipv4_address: 172.28.0.100     # static IP within my_docker_network's subnet
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8897/health || exit 1"]
       interval: 15s
