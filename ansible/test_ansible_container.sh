@@ -10,9 +10,9 @@
 #
 # How         bash test_ansible_container.sh        (≈2 min; the first run builds the SSH test machine's image once)
 #
-# Checks      C0  sign-up: own login + files (600), may read confmgt/ansible-agent + confmgt/ansible only
-#             C1  kms mode, no login + key missing → the agent signs itself up, registers the key (random), fetches it,
-#                 makes the SSH key in RAM · healthy · /health ssh_key true
+# Checks      C0  sign-up: own login + files (600), may read confmgt/ansible-agent + confmgt/ansible only · creates a missing key
+#             C1  kms mode, no login + key missing → the agent signs itself up (its sign-up creates the key), fetches it,
+#                 makes the SSH key in RAM · healthy · /health ssh_key true · C1b signed up + key gone → the agent registers it
 #             C2  public key = ssh-ed25519 … confmgt-ansible · private key 600 in RAM only · same secret → same key
 #             C3  /playbooks finds the playbooks + inventories by itself
 #             C4  check ping → ok on the SSH machine · apply a test playbook → the file is there · check again → no change
@@ -25,6 +25,8 @@
 #             C10 the API never sees the secret (its environment) · the Ansible project passes --syntax-check
 #             C11 every script explains itself (--help) · .env + agent.conf secret-free · credentials ignored
 #             C12 no test value in logs or git
+#             C13 the register script by hand on the PC: the PC's kms + the usual master_password, nothing asked
+#             C14 wait_until_answering.sh: OK when it answers · the agent's own reason when it cannot · C15 status.sh: no traceback
 # ─────────────────────────────────────────────────────────────────────────────
 case "${1:-}" in -h|--help) awk 'NR==1{next} /^# ─/{n++; if(n==2) exit; next} n==1{ sub(/^# ?/,""); if(!t){printf "\033[1m%s\033[0m\n",$0; t=1; next} l=substr($0,1,12); if(l ~ /^[A-Z][A-Za-z ]+$/){c=(l ~ /^Errors/)?"\033[33m":"\033[36m"; printf "%s%s\033[0m%s\n",c,l,substr($0,13)} else print }' "$0"; exit 0 ;; esac
 
@@ -89,6 +91,7 @@ printf '%s\n%s\n%s\n%s\n' "$S1" "$S2" "$PW" "$PW" | bash "$KMSP/bootstrap.sh" >/
 owner_token() { printf '%s' "$PW" | python3 -c 'import sys,json; print(json.dumps({"password":sys.stdin.read()}))' \
     | curl -s -X POST --data @- "$KMS_URL/v1/auth/userpass/login/nishan" | j 'd["auth"]["client_token"]'; }
 kget() { local t; t="$(owner_token)"; curl -s -H @<(printf 'X-Vault-Token: %s\n' "$t") "$KMS_URL/v1/kv/data/$1" | j "d['data']['data'].get('$2','')"; }
+kdel() { local t; t="$(owner_token)"; curl -s -o /dev/null -X DELETE -H @<(printf 'X-Vault-Token: %s\n' "$t") "$KMS_URL/v1/kv/metadata/$1"; }
 KADDR="http://$T:8200/v1/kv/data"
 
 # ── C0: sign-up with temp credentials ────────────────────────────────────────
@@ -97,10 +100,14 @@ printf 'KMS_URL=http://%s:8200\nSECRET_MGT=kms\n# kms: ${KMS_URL}/v1/kv/data/con
 reg="$(printf '%s\n' "$PW" | bash "$AGENT/connect_external/kms/signup_with_kms.sh" 2>&1)"; rc=$?
 reg2="$(printf '%s\n' "$PW" | bash "$AGENT/connect_external/kms/signup_with_kms.sh" 2>&1)"
 rm -f "$REG_AGENT_CONF"; unset REG_AGENT_CONF
+K0="$(kget confmgt/ansible ANSIBLE_SSH_KEY_SECRET)"
 [ $rc = 0 ] && grep -q 'confmgt-ansible-agent — may read: confmgt/ansible-agent confmgt/ansible' <<< "$reg" && grep -q 'login kept' <<< "$reg2" \
   && [ "$(stat -c %a "$KMS_APPROLE_DIR/confmgt-ansible-agent/secret_id")" = 600 ] \
-  && ok "C0 sign-up: own login + files (600), may read confmgt/ansible-agent + confmgt/ansible only, re-run keeps it" \
-  || bad "C0 sign-up: $(grep -E 'ERROR|may read' <<< "$reg$reg2" | head -2)"
+  && grep -q 'ANSIBLE_SSH_KEY_SECRET → kv/confmgt/ansible: initial RANDOM value' <<< "$reg" && [[ "$K0" =~ ^[A-Za-z0-9]{32}$ ]] \
+  && grep -q 'ANSIBLE_SSH_KEY_SECRET already in kms' <<< "$reg2" && ! grep -qF -- "$K0" <<< "$reg$reg2" \
+  && ok "C0 sign-up: own login (600), reads its 2 paths only · the missing key created right away with the same login · re-run keeps both" \
+  || bad "C0 sign-up: $(grep -E 'ERROR|may read|RANDOM' <<< "$reg$reg2" | head -3)"
+kdel confmgt/ansible                                                     # C1 starts again from a kms without the key
 
 # ── helper: the agent exactly as compose runs it (supervisor.py), with a COPY of ansible-agent/ ──
 AD="$WORK/x/ansible-agent"; PD="$WORK/x/ansible_project"; LG="$WORK/x/logs"; MPF="$WORK/x/master_password"
@@ -137,13 +144,27 @@ ANSIBLE_SSH_KEY_SECRET=\${KMS_URL}/v1/kv/data/confmgt/ansible"
 # ── C1: no login + key missing → signs up, registers, fetches, key in RAM ────
 run_agent "$CONF_KMS"
 if up; then lg="$(docker logs "$A" 2>&1)"; h="$(curl -s "$API/health")"; S="$(kget confmgt/ansible ANSIBLE_SSH_KEY_SECRET)"
-    grep -q 'signed up with kms' <<< "$lg" && grep -q 'ANSIBLE_SSH_KEY_SECRET: not in kms — registering' <<< "$lg" \
+    grep -q 'signed up with kms' <<< "$lg" && grep -q 'ANSIBLE_SSH_KEY_SECRET → kv/confmgt/ansible: initial RANDOM value' <<< "$lg" \
       && grep -q 'ANSIBLE_SSH_KEY_SECRET ← kms (confmgt/ansible)' <<< "$lg" && [[ "$S" =~ ^[A-Za-z0-9]{32}$ ]] \
       && [ "$(echo "$h" | j 'd["ssh_key"]')" = True ] && grep -q 'core 2.21' <<< "$(echo "$h" | j 'd["ansible"]')" \
-      && ok "C1 no login + key missing → signed up, key registered (random), fetched, SSH key in RAM, /health ok" \
+      && ok "C1 no login + key missing → the agent signs up (its sign-up creates the key), fetches it, SSH key in RAM, /health ok" \
       || bad "C1: $(grep -E 'ERROR|WARN' <<< "$lg" | head -3) health=$h"
 else bad "C1 the agent did not come up: $(docker logs "$A" 2>&1 | tail -3)"; fi
 cp -r "$AD/connect_external/kms/credentials/confmgt-ansible-agent" "$WORK/login" 2>/dev/null || docker cp "$A:/ansible-agent/connect_external/kms/credentials/confmgt-ansible-agent" "$WORK/login"
+
+# ── C1b: signed up, but the key is gone from kms → the agent registers it itself (master_password) ──
+kdel confmgt/ansible; run_agent "$CONF_KMS" with-login
+if up; then lg="$(docker logs "$A" 2>&1)"
+    grep -q 'ANSIBLE_SSH_KEY_SECRET: not in kms — registering' <<< "$lg" && grep -q 'kms owner login: handed over' <<< "$lg" \
+      && grep -q 'ANSIBLE_SSH_KEY_SECRET ← kms (confmgt/ansible)' <<< "$lg" && ! grep -q 'signed up with kms' <<< "$lg" \
+      && ok "C1b signed up + key missing → the agent registers it itself (owner login from master_password), fetches it" \
+      || bad "C1b: $(grep -E 'ERROR|registering' <<< "$lg" | head -2)"
+else bad "C1b the agent did not come up: $(docker logs "$A" 2>&1 | tail -2)"; fi
+S="$(kget confmgt/ansible ANSIBLE_SSH_KEY_SECRET)"
+
+# ── C14a: wait_until_answering.sh — a healthy agent → OK at once ─────────────
+o14="$(CONFMGT_CONTAINER="$A" ANSIBLE_AGENT_URL="$API" WAIT_SECONDS=20 bash "$AGENT/wait_until_answering.sh" 2>&1)"; r14=$?
+[ $r14 = 0 ] && grep -q 'ansible-agent answers on .* (SSH key ready)' <<< "$o14" && ok "C14a wait_until_answering.sh: the agent answers → OK, SSH key ready" || bad "C14a rc=$r14 $o14"
 
 # ── C2: public key, private key in RAM only, same secret → same key ─────────
 PUB="$(curl -s "$API/public-key")"
@@ -214,6 +235,13 @@ SECRET_MGT=kms
 ANSIBLE_SSH_KEY_SECRET=$LSEC" with-login; stopped; l3="$(docker logs "$A" 2>&1)"
 run_agent "SECRET_MGT=local
 ANSIBLE_SSH_KEY_SECRET="; stopped; l4="$(docker logs "$A" 2>&1)"
+# ── C14b + C15: the agent is down — wait says why at once · status.sh one plain line, no traceback ──
+o14b="$(CONFMGT_CONTAINER="$A" ANSIBLE_AGENT_URL="$API" WAIT_SECONDS=20 bash "$AGENT/wait_until_answering.sh" 2>&1)"; r14b=$?
+o15="$(cd "$HERE" && CONFMGT_CONTAINER="$A" ANSIBLE_AGENT_URL="$API" bash status.sh 2>&1)"
+[ $r14b = 1 ] && grep -q 'does not answer — why: ANSIBLE_SSH_KEY_SECRET is empty' <<< "$o14b" \
+  && grep -q "agent: not answering on $API — last error: ANSIBLE_SSH_KEY_SECRET is empty" <<< "$o15" && ! grep -q Traceback <<< "$o15" \
+  && ok "C14b + C15 agent down → wait_until_answering.sh names the agent's reason, exit 1 · status.sh one plain line with it, no traceback" \
+  || bad "C14b/C15 rc=$r14b [$(tail -2 <<< "$o14b" | tr '\n' '¦')] [$(tail -2 <<< "$o15" | tr '\n' '¦')]"
 grep -q 'secrets: local' <<< "$l1" && ! grep -q '← kms' <<< "${l1:-x}" && [[ "$LPUB" =~ ^ssh-ed25519\  ]] && [ "$LPUB" != "$PUB" ] \
   && grep -q 'but ANSIBLE_SSH_KEY_SECRET is a kms address' <<< "$l2" && grep -q 'SECRET_MGT=kms but ANSIBLE_SSH_KEY_SECRET is not a kms address' <<< "$l3" \
   && grep -q 'ANSIBLE_SSH_KEY_SECRET is empty' <<< "$l4" \
@@ -228,6 +256,19 @@ syn="$(docker exec "$A" sh -c 'cd /ansible_project && for p in playbooks/*.yml; 
 [ -n "$apienv" ] && ! grep -q 'ANSIBLE_SSH_KEY_SECRET' <<< "$apienv" && ! grep -qF -- "$S" <<< "$apienv" && [ $src = 0 ] \
   && ok "C10 the API's environment has no secret · every playbook passes --syntax-check" || bad "C10 env-has-secret=$(grep -c SECRET <<< "$apienv") syntax=$src ${syn: -200}"
 docker rm -f "$A" >/dev/null
+
+# ── C13: the register script by hand ON THE PC: agent.conf names kms as containers see it (unknown here) → the
+#         PC's kms (KMS_HOST_URL) · the password from the usual master_password file (a temp workspace) · no terminal ──
+kdel confmgt/ansible
+PC="$WORK/pc"; PK="$PC/projectspace/confmgt/ansible/ansible-agent/connect_external/kms"; mkdir -p "$PK" "$PC/mountspace/usb/myworkspace/projectspace/kms/master_password"
+cp "$AGENT/connect_external/kms/register_kms_ansible_keys_with_random_initial.sh" "$AGENT/connect_external/kms/kms_conf.sh" "$PK/"
+printf '%s\n' "$PW" > "$PC/mountspace/usb/myworkspace/projectspace/kms/master_password/master_password"
+printf 'KMS_URL=http://kms-not-from-the-pc.invalid:8200\nSECRET_MGT=kms\n# kms: ${KMS_URL}/v1/kv/data/confmgt/ansible\nANSIBLE_SSH_KEY_SECRET=${KMS_URL}/v1/kv/data/confmgt/ansible\n' > "$PC/projectspace/confmgt/ansible/ansible-agent/agent.conf"
+o13="$(env -u KMS_URL -u KMS_TOKEN -u KMS_MASTER_PASSWORD_FILE KMS_HOST_URL="$KMS_URL" bash "$PK/register_kms_ansible_keys_with_random_initial.sh" </dev/null 2>&1)"; r13=$?
+[ $r13 = 0 ] && grep -q "using this PC's kms at $KMS_URL" <<< "$o13" && grep -q "kms owner login: from kms's master_password" <<< "$o13" \
+  && grep -q 'initial RANDOM value' <<< "$o13" && [[ "$(kget confmgt/ansible ANSIBLE_SSH_KEY_SECRET)" =~ ^[A-Za-z0-9]{32}$ ]] && ! grep -q 'password for' <<< "$o13" \
+  && ok "C13 register script by hand on the PC: kms's container name unknown → the PC's kms · password from the usual master_password file, nothing asked" \
+  || bad "C13 rc=$r13 [$(grep -E 'ERROR|INFO' <<< "$o13" | head -3 | tr '\n' '¦')]"
 
 # ── C11: static ──────────────────────────────────────────────────────────────
 b11=""
@@ -244,13 +285,13 @@ git -C "$HERE" check-ignore -q "ansible-agent/agent.conf" && b11+=" agent.conf:i
 
 # ── C12: no test value in logs or git; the real kms state untouched ──────────
 leak=0
-for v in "$PW" "$S" "$LSEC"; do [ -n "$v" ] || continue
+for v in "$PW" "$S" "$LSEC" "${K0:-}"; do [ -n "$v" ] || continue
     grep -rqF -- "$v" "$LG" "$_WS_ROOT/mountspace/logs/myworkspace/projectspace/under_develop/confmgt" "$_WS_ROOT/mountspace/logs/myworkspace/projectspace/confmgt" 2>/dev/null && leak=1
     git -C "$HERE" grep -qF -- "$v" 2>/dev/null && leak=1
 done
 NOW_STATE="$(stat -c '%n %s %Y' "$AGENT/connect_external/kms/credentials"/*/* "$_WS_ROOT/mountspace/usb/myworkspace/projectspace/kms"/* "$_WS_ROOT/mountspace/usb/myworkspace/projectspace/kms"/*/* 2>/dev/null | sort)"
 [ $leak = 0 ] && [ "$NOW_STATE" = "$REAL_STATE" ] && ok "C12 no test value in logs or git · the real kms state + logins untouched" || bad "C12 leak=$leak real-state-changed=$([ "$NOW_STATE" = "$REAL_STATE" ] && echo no || echo YES)"
 
-unset S1 S2 PW S LSEC
+unset S1 S2 PW S LSEC K0
 [ "$FAIL" = 0 ] && ok "confmgt Ansible tests passed (throwaway containers removed)" && exit 0
 exit 1

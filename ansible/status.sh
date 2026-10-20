@@ -11,6 +11,7 @@
 # Output      NAME              STATUS                 PORTS
 #             confmgt-ansible   Up 2 hours (healthy)   127.0.0.1:8897->8897/tcp
 #             agent: ok · ansible [core 2.21.5] · SSH key ready · no run going on
+#             (agent down: "agent: not answering on … — last error: <the agent's own reason>")
 #
 # Next        For scripts: bash state.sh (one word)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -29,12 +30,19 @@ cd "$SCRIPT_DIR"
 
 BOLD="\033[1m"; RESET="\033[0m"
 PORT="$(grep -E '^AGENT_PORT=' .env | cut -d= -f2)"; PORT="${PORT:-8897}"
+URL="${ANSIBLE_AGENT_URL:-http://127.0.0.1:$PORT}"; C="${CONFMGT_CONTAINER:-confmgt-ansible}"   # overrides: tests
 
 echo -e "${BOLD}==> Ansible (confmgt) container status${RESET}"
 docker compose ps
-curl -fsS --max-time 5 "http://127.0.0.1:$PORT/health" 2>/dev/null | python3 -c '
+H="$(curl -fsS --max-time 5 "$URL/health" 2>/dev/null)"      # read first: no answer → one plain line, never a traceback
+if [ -n "$H" ]; then
+    printf '%s' "$H" | python3 -c '
 import json, sys
 h = json.load(sys.stdin)
 key = "ready" if h["ssh_key"] else "MISSING"
 run = "a run is going on" if h["running"] else "no run going on"
-print("agent: %s · %s · SSH key %s · %s" % (h["status"], h["ansible"], key, run))' || echo "agent: not answering on :$PORT"
+print("agent: %s · %s · SSH key %s · %s" % (h["status"], h["ansible"], key, run))'
+else
+    why="$(docker logs --tail 200 "$C" 2>&1 | grep '\[agent\] ERROR' | tail -1 | sed 's/^\[agent\] ERROR: //')"
+    echo "agent: not answering on $URL${why:+ — last error: $why}"
+fi

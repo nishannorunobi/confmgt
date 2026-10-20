@@ -14,8 +14,10 @@
 #                kms's master_password, .env KMS_MASTER_PASSWORD_DIR) — file empty → asks here, by hand only
 #             2. docker compose up -d — builds the image once (internet once), then:
 #                inside: ansible-agent/supervisor.py → kms → the SSH key in RAM → the agent API
+#             3. waits until the agent answers (ansible-agent/wait_until_answering.sh) — else its reason, exit 1
 #
-# Output      ==> Ansible (confmgt) is up
+# Output      [  OK  ] ansible-agent answers on http://127.0.0.1:8897 (SSH key ready)
+#             ==> Ansible (confmgt) is up
 #                 Agent     : http://127.0.0.1:8897
 #
 # Errors      kms is SEALED          → unseal kms — the container retries by itself
@@ -61,11 +63,14 @@ fi
 
 echo -e "${BOLD}==> Starting Ansible ${ANSIBLE_CORE_VERSION} (confmgt)...${RESET}"
 docker compose up -d
+# "started" is not "ready": the agent first needs kms — wait for its answer, else say why (CONFMGT-13)
+bash ansible-agent/wait_until_answering.sh || exit 1
 
 echo ""
 echo -e "${GREEN}${BOLD}==> Ansible (confmgt) is up${RESET}"
 KMS_ENTRY="$(grep -E '^ANSIBLE_SSH_KEY_SECRET=' ansible-agent/agent.conf | grep -oE '/v1/kv/data/[^ ]+' | head -1)"   # where (no value)
-echo -e "    SSH key   : ${BOLD}made in RAM${RESET} from kms (${KMS_ENTRY:+${KMS_ENTRY#/v1/}}${KMS_ENTRY:-agent.conf — SECRET_MGT=local}) — never on disk"
+if [ -n "$KMS_ENTRY" ]; then SRC="kms (kv/${KMS_ENTRY#/v1/kv/data/})"; else SRC="agent.conf (SECRET_MGT=local)"; fi
+echo -e "    SSH key   : ${BOLD}made in RAM${RESET} from $SRC — never on disk"
 echo -e "    Agent     : ${BOLD}http://${AGENT_HOST}:${AGENT_PORT}${RESET} (Ansible's assistant — always on)"
 echo ""
 echo -e "    ${BOLD}./show_public_key.sh${RESET} — the key to put on each machine"

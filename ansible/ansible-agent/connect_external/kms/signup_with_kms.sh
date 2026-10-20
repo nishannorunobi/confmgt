@@ -12,7 +12,8 @@
 #             2. policy + AppRole confmgt-ansible-agent → may READ:
 #                kv/confmgt/ansible-agent · kv/confmgt/ansible
 #             3. login files → credentials/confmgt-ansible-agent/ (git-ignored, 600)
-#             4. first time: copy ANTHROPIC_API_KEY from agent.conf into kms
+#             4. a key kms does not have yet (ANSIBLE_SSH_KEY_SECRET) → created right away with the same login
+#                (register_kms_ansible_keys_with_random_initial.sh: initial random value, never overwrites)
 #
 # Output      [  OK  ] ansible-agent registered with kms
 #
@@ -104,6 +105,7 @@ for part in "${!READS[@]}"; do
 done
 
 # ── 3: first time, copy secrets that are still in local files into kms ─────────
+MISSING=()
 for m in "${MOVES[@]}"; do
     read -r kpath key file <<< "$m"
     cur="$(call GET "kv/data/$kpath" | python3 -c 'import sys,json; d=json.load(sys.stdin); print(json.dumps((d.get("data") or {}).get("data") or {}))' 2>/dev/null)"
@@ -124,11 +126,17 @@ for line in open(path):
         break
 PY
 )"
-    if [ -z "$val" ]; then echo -e "\033[36m[ INFO ]\033[0m $key not in kms yet — the ansible-agent creates it at its first fetch (initial random value; register_kms_ansible_keys_with_random_initial.sh)"; continue; fi
+    if [ -z "$val" ]; then MISSING+=("$key"); continue; fi          # created below, with this same login
     printf '%s\n%s' "$cur" "$val" | python3 -c 'import sys,json
 cur=json.loads(sys.stdin.readline()); cur[sys.argv[1]]=sys.stdin.read(); print(json.dumps({"data": cur}))' "$key" \
         | code POST "kv/data/$kpath" | grep -q '^20' && ok "kv/$kpath $key copied into kms from $(basename "$file")" \
         || { unset val; bad "could not store $key"; exit 1; }
     unset val
 done
+# ── 4: a key kms does not have yet → created NOW with this login (initial random value), so the agent never needs
+#       kms's master_password just for that (CONFMGT-13) — never overwrites a key that exists
+if [ ${#MISSING[@]} -gt 0 ]; then
+    KMS_TOKEN="$TOKEN" KMS_URL="$URL" REG_AGENT_CONF="$ENV_FILE" bash "$HERE/register_kms_ansible_keys_with_random_initial.sh" "${MISSING[@]}" \
+        || { bad "creating ${MISSING[*]} in kms failed — the lines above say why"; exit 1; }
+fi
 ok "ansible-agent registered with kms — start it: bash ansible-agent/host_start.sh"

@@ -55,11 +55,5 @@ if ! docker inspect "$CONTAINER" --format '{{.State.Running}}' 2>/dev/null | gre
     bash "$SCRIPT_DIR/../start.sh" || exit 1
 fi
 
-# The supervisor inside starts the API and restarts it if it dies — only wait for it.
-for _ in $(seq 1 30); do
-    curl -fsS --max-time 2 -o /dev/null "http://localhost:8897/health" 2>/dev/null && { echo "[OK] Ansible agent running on :8897"; exit 0; }
-    sleep 1
-done
-echo "[ERROR] the ansible-agent does not answer on :8897 — why: docker logs --tail 20 $CONTAINER" >&2
-docker logs --tail 5 "$CONTAINER" 2>&1 | grep '\[agent\]' >&2 || true
-exit 1
+# The supervisor inside starts the API and restarts it if it dies — only wait for it (and say why if it cannot).
+exec bash "$SCRIPT_DIR/wait_until_answering.sh"
