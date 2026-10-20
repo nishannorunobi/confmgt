@@ -35,5 +35,6 @@ docker compose ps
 curl -fsS --max-time 5 "http://127.0.0.1:$PORT/health" 2>/dev/null | python3 -c '
 import json, sys
 h = json.load(sys.stdin)
-print(f"agent: {h[\"status\"]} · {h[\"ansible\"]} · SSH key {\"ready\" if h[\"ssh_key\"] else \"MISSING\"} · "
-      f"{\"a run is going on\" if h[\"running\"] else \"no run going on\"}")' || echo "agent: not answering on :$PORT"
+key = "ready" if h["ssh_key"] else "MISSING"
+run = "a run is going on" if h["running"] else "no run going on"
+print("agent: %s · %s · SSH key %s · %s" % (h["status"], h["ansible"], key, run))' || echo "agent: not answering on :$PORT"
