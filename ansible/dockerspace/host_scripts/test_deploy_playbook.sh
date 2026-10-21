@@ -162,7 +162,7 @@ pol_t="$(bash -c 'source "$1"; printf "%s\n" "${SVC_VIA_DEPLOY[@]:-}" | sort | x
 
 # ── P8: restart handlers that must never START a stopped project ────────────
 h8=""
-for spec in "myodoo:projectspace/myodoo:--19"; do
+for spec in "myodoo:projectspace/myodoo:--19" "mylog_analytics:projectspace/mylog_analytics:"; do
     IFS=: read -r role dir arg <<< "$spec"
     docker exec -u ansible "$M" sh -c "mkdir -p /home/ansible/ws/$dir && cd /home/ansible/ws/$dir && rm -f calls
         printf '#!/bin/sh\ncat state\n' > status.sh; printf '#!/bin/sh\necho \"stop \$*\" >> calls\n' > stop.sh; printf '#!/bin/sh\necho \"start \$*\" >> calls\n' > start.sh"
@@ -181,7 +181,7 @@ for spec in "myodoo:projectspace/myodoo:--19"; do
     done
 done
 rm -f "$WORK/a/project/playbooks/h8.yml"
-[ -z "$h8" ] && ok "P8 restart handlers of config-only projects (myodoo): stopped → nothing started, a message · running → own stop + start" \
+[ -z "$h8" ] && ok "P8 restart handlers of config-only projects (myodoo · mylog_analytics): stopped → nothing started, a message · running → own stop + start" \
   || bad "P8:$h8"
 
 [ $FAIL = 0 ] && ok "deploy playbook tests passed (throwaway machine + stand-in agent removed)" || { echo -e "\033[31m[FAILED]\033[0m deploy playbook tests"; exit 1; }

@@ -3,6 +3,10 @@
 - name: restart mylog_analytics
   ansible.builtin.shell: |
     set -e
+    # only when it runs: the log stack is "no" in the start plan — a changed config must never START it (CONFMGT [6.6])
+    if [ "$(bash status.sh --state 2>/dev/null | tail -1 | awk '{print $NF}')" = stopped ]; then
+        echo "mylog_analytics is stopped — not started; the new config is used at its next start"; exit 0
+    fi
     bash stop.sh
     SVC_RUN=1 bash start.sh
   args:
