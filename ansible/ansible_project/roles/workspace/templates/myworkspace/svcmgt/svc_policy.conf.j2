@@ -1,0 +1,182 @@
+{# rendered by Ansible (confmgt) from inventories/<env>/myworkspace/ (the mirror) + shared/ — the comments are the project's own #}
+# svc_policy.conf — THE service policy. The ONLY thing the workspace knows about each
+# target is here: its folder and the names of its own scripts. Every target (project,
+# agent, or the workspace's own platform) owns all its logic and is independently
+# manageable — this file just lists, orders and selects them.
+#
+# Where a target's original script is not idempotent, the policy names a NEW wrapper
+# next to it (ensure_running.sh / ensure_stopped.sh / state.sh) that checks first and
+# then calls the original — the originals stay exactly as they were (owner, 2026-09-29).
+#
+# Contract with every target's scripts:
+#   start / stop   idempotent (already running/stopped → says so, exit 0); exit 1 = failed
+#   state          prints one word as its LAST word: running / partial / stopped
+# Paths are relative to the workspace root; arguments may follow the script name.
+
+# Start order (stop_all walks it in reverse): the platform, then the database everything
+# data-bearing needs, then the host agents, then Plane's cache and broker, then Plane,
+# then the optional stacks. An agent that lives in a container follows its container.
+SVC_TARGETS=(
+    docker kms kms-keys portainer
+    mypostgresql_db db-agent
+    agent-orchestrator docker-manager-agent workspace-agent
+    mycache cache-agent mychannels channel-agent
+    mydocs mydocs-other
+    mylog_analytics log-agent myodoo17 odoo-agent myodoo19
+    confmgt-ansible ansible-agent
+    updown
+)
+
+declare -A SVC_DIR=(
+    [docker]=dockerspace                       [portainer]=dockerspace
+    [kms]=projectspace/kms                     [kms-keys]=svcmgt
+    [mypostgresql_db]=projectspace/mypostgresql_db   [db-agent]=projectspace/mypostgresql_db/db-agent
+    [agent-orchestrator]=agents/agent-orchestrator   [docker-manager-agent]=agents/docker-manager-agent
+    [workspace-agent]=agents/workspace-agent
+    [mycache]=projectspace/mycache             [cache-agent]=projectspace/mycache/cache-agent
+    [mychannels]=projectspace/mychannels       [channel-agent]=projectspace/mychannels/channel-agent
+    [mydocs]=projectspace/mydocs             [mydocs-other]=projectspace/mydocs
+    [mylog_analytics]=projectspace/mylog_analytics   [log-agent]=projectspace/mylog_analytics/log-agent
+    [myodoo17]=projectspace/myodoo             [odoo-agent]=projectspace/myodoo/odoo-agent
+    [myodoo19]=projectspace/myodoo
+    [confmgt-ansible]=projectspace/confmgt/ansible   [ansible-agent]=projectspace/confmgt/ansible/ansible-agent
+    [updown]=projectspace/updown
+)
+declare -A SVC_START=(
+    [docker]=02_docker_up.sh                      [portainer]=04_start_docker_ui.sh
+    [kms]=start.sh                             [kms-keys]=register_all_kms_keys.sh
+    [mypostgresql_db]=start.sh                 [db-agent]=host_start.sh
+    [agent-orchestrator]=start_background.sh       [docker-manager-agent]=start_background.sh
+    [workspace-agent]=ensure_running.sh
+    [mycache]="ensure_running.sh --no-ui"               [cache-agent]=host_start.sh
+    [mychannels]=ensure_running.sh             [channel-agent]=host_start.sh
+    [mydocs]=ensure_running.sh               [mydocs-other]=start_other_plane.sh
+    [mylog_analytics]=start.sh                 [log-agent]=host_start.sh
+    [myodoo17]="start.sh --17"                 [odoo-agent]=host_start.sh
+    [myodoo19]="start.sh --19"
+    [confmgt-ansible]=start.sh                 [ansible-agent]=host_start.sh
+    [updown]=start.sh
+)
+declare -A SVC_STOP=(
+    [docker]=ensure_docker_stopped.sh             [portainer]=stop_docker_ui.sh
+    [kms]=stop.sh
+    [mypostgresql_db]=stop.sh                  [db-agent]=host_stop.sh
+    [agent-orchestrator]=ensure_stopped.sh     [docker-manager-agent]=ensure_stopped.sh
+    [workspace-agent]=ensure_stopped.sh
+    [mycache]=ensure_stopped.sh                [cache-agent]=host_stop.sh
+    [mychannels]=ensure_stopped.sh             [channel-agent]=host_stop.sh
+    [mydocs]=ensure_stopped.sh               [mydocs-other]=stop_other_plane.sh
+    [mylog_analytics]=stop.sh                  [log-agent]=host_stop.sh
+    [myodoo17]="stop.sh --17"                  [odoo-agent]=host_stop.sh
+    [myodoo19]="stop.sh --19"
+    [confmgt-ansible]=stop.sh                  [ansible-agent]=host_stop.sh
+    [updown]=stop.sh
+)
+declare -A SVC_STATE=(
+    [docker]="03_status_docker.sh --state"        [portainer]="status_docker_ui.sh --state"
+    [kms]="status.sh --state"                  [kms-keys]="register_all_kms_keys.sh --state"
+    [mypostgresql_db]="status.sh --state"      [db-agent]="host_status.sh --state"
+    [agent-orchestrator]="status.sh --state"   [docker-manager-agent]="status.sh --state"
+    [workspace-agent]="status.sh --state"
+    [mycache]=state.sh              [cache-agent]="host_status.sh --state"
+    [mychannels]=state.sh           [channel-agent]="host_status.sh --state"
+    [mydocs]=state.sh                        [mydocs-other]=state_other_plane.sh
+    [mylog_analytics]="status.sh --state"      [log-agent]="host_status.sh --state"
+    [myodoo17]="status.sh --state --17"        [odoo-agent]="host_status.sh --state"
+    [myodoo19]="status.sh --state --19"
+    [confmgt-ansible]="status.sh --state"      [ansible-agent]="host_status.sh --state"
+    [updown]="status.sh --state"
+)
+
+# ── Where to open each target (status_all.sh → startup / restart summaries) ───
+# EVERY target in SVC_TARGETS has an entry here: a URL, or "-" when it has no page.
+# A target without an entry is flagged "⚠ no SVC_URL entry" by status_all.sh — so a
+# new component cannot be forgotten in the summary (owner, 2026-10-02).
+declare -A SVC_URL=(
+    [docker]=-                                 [portainer]=http://localhost:9001
+    [kms]=http://127.0.0.1:8110/ui             [kms-keys]=-
+    [mypostgresql_db]=-                        [db-agent]=http://localhost:8890
+    [agent-orchestrator]=http://localhost:8888 [docker-manager-agent]=http://localhost:8889/docs
+    [workspace-agent]=http://localhost:8895
+    [mycache]=-                                [cache-agent]=http://localhost:8892
+    [mychannels]=http://localhost:15672        [channel-agent]=http://localhost:8894
+    [mydocs]=http://localhost:8080             [mydocs-other]=-
+    [mylog_analytics]=http://localhost:3000    [log-agent]=http://localhost:8893
+    [myodoo17]=http://localhost:8069           [odoo-agent]=http://localhost:8896
+    [myodoo19]=http://localhost:8089
+    [confmgt-ansible]=-                        [ansible-agent]=http://localhost:8897/docs
+    [updown]=-
+)
+
+# ── What start_all.sh starts (its plan defaults; startup.sh runs it) ──────────
+# The in-container helper agents default to NO (owner, 2026-09-29) — they stay in the plan
+# and can be switched on there. cache-agent (KMS-86), channel-agent (KMS-96) and db-agent
+# (KMS-29) are their containers' ENTRY POINTS (2026-10-03/04): they start and stop WITH
+# mycache / mychannels / mypostgresql_db; their targets only check / report.
+# kms + kms-keys are NOT in this list: SECRET_MGT below decides them (TESTSERVER-83). kms's own start asks for the
+# shares / offers its one-time setup; kms-keys (TESTSERVER-46) right after it creates every component's missing kms
+# keys in one go (svcmgt/register_all_kms_keys.sh).
+SVC_START_TARGETS=(docker portainer mypostgresql_db db-agent agent-orchestrator
+                   mycache mychannels mydocs)
+# ── Who depends on whom (restart.sh warns before restarting these) ─────────────
+# Plain text, shown to a human; restart.sh only reads it to print the warning.
+declare -A SVC_USED_BY=(
+    [kms]="mycache, mychannels, mypostgresql_db (their agents fetch the secrets at start), mydocs + the host agents (their start scripts fetch), mylog_analytics + myodoo19 (their containers fetch at start), confmgt-ansible (its agent fetches the SSH key's secret at start) · comes back SEALED"
+    [mypostgresql_db]="Plane (mydocs), ums, odoo, grafana · db-agent runs inside it"
+    [mycache]="Plane (mydocs) · cache-agent runs inside it"
+    [mychannels]="Plane (mydocs) · channel-agent runs inside it"
+)
+# Targets that fetch their secrets from kms when they start: restart.sh refuses to
+# restart them while kms is sealed (they could not come back) — unless their component's own SECRET_MGT is not kms.
+SVC_NEEDS_KMS=(kms-keys mypostgresql_db db-agent mycache cache-agent mychannels channel-agent mydocs mydocs-other agent-orchestrator docker-manager-agent workspace-agent mylog_analytics log-agent myodoo19 odoo-agent confmgt-ansible ansible-agent)   # container agents = entry points; mydocs + host agents = fetch at start
+
+# mydocs = minimal Plane (start_minimal_plane.sh, default yes); mydocs-other = admin / beat / minio (start_other_plane.sh) — NOT in
+# SVC_START_TARGETS, so the start plan shows it as "no" unless you switch it (owner, 2026-10-02).
+# A failure here stops start_all — nothing after them can work without them. kms counts as started only when READY
+# (status.sh --state = running: unsealed + foundation set up) — else nothing that needs kms is tried (startup kms-first).
+# A secret manager's target (kms) is critical only when it is needed (SECRET_MGT below).
+SVC_CRITICAL=(docker kms mypostgresql_db)
+
+# ── The secret manager (TESTSERVER-83) ─────────────────────────────────────────
+# SECRET_MGT — which secret manager the workspace runs: local | kms | <a future provider>. The VALUE names the
+#   provider, never the key. Missing / empty → local · unknown → WARN + local.
+#   A provider's targets (SECRET_MGT_PROVIDER) default to yes — and are critical — only when it is needed:
+#   this value names it, OR a component's own config says it (a component's own SECRET_MGT always wins).
+#   A mismatch (kms here but no component on kms · local here but a component on kms) → a WARN with the fix.
+#   svcmgt/config_all_secret_mgt_local.sh / config_all_secret_mgt_kms.sh set it (local / kms) — no need to edit it by hand.
+#   kms today: every component uses kms.
+SECRET_MGT={{ mirror.SECRET_MGT }}
+# which start targets belong to which secret manager — a new provider = its targets here + its value above
+declare -A SECRET_MGT_PROVIDER=([kms]=kms [kms-keys]=kms)
+# every component that manages its secrets — ONE list, read by kms-keys (register_all_kms_keys.sh), the transfer
+# scripts and the checks above: "<name shown>|<the folder its connect_external/ lives in>|<short name>"; the short
+# name names its scripts in <folder>/connect_external/<provider>/: register_kms_<short>_keys_with_random_initial.sh ·
+# <short>_transfer_kms2tempfile.sh · _local2tempfile_random_value.sh · _tempfile2local.sh · _local2kms.sh ·
+# _comment2local_kmsurl.sh (values) · <short>_config_secret_mgt_local.sh · _kms.sh (SECRET_MGT only).
+# A new component = one more line (kms-keys WARNs about
+# a register script found in no line).
+SECRET_MGT_COMPONENTS=(
+    "mypostgresql_db (db-agent)|projectspace/mypostgresql_db/db-agent|db"
+    "mycache (cache-agent)|projectspace/mycache/cache-agent|cache"
+    "mychannels (channel-agent)|projectspace/mychannels/channel-agent|channels"
+    "mylog_analytics (log-agent)|projectspace/mylog_analytics/log-agent|log"
+    "myodoo (odoo-agent)|projectspace/myodoo/odoo-agent|odoo"
+    "mydocs (Plane)|projectspace/mydocs|docs"
+    "agents (host)|agents|agents"
+    "agents/workspace-agent (.mcp.json)|agents/workspace-agent|workspace"
+    "confmgt (ansible-agent)|projectspace/confmgt/ansible/ansible-agent|ansible"
+)
+
+# ── What stop_all.sh stops (its plan defaults; shutdown.sh runs it) ───────────
+# docker is not listed: shutdown.sh stops the daemon itself, last (with power off).
+# db-agent, cache-agent, channel-agent are NOT listed: each is its container's entry point and stops
+# with mypostgresql_db / mycache / mychannels (listing them made the report say "stop said OK but it is
+# running" one step before their container went down — CLAUDEWORK-152).
+SVC_STOP_TARGETS=(kms portainer mypostgresql_db agent-orchestrator
+                  docker-manager-agent workspace-agent mycache mychannels
+                  mydocs mydocs-other mylog_analytics log-agent myodoo17 odoo-agent myodoo19
+                  confmgt-ansible updown)
+
+# Folders with nothing to run (status_all.sh lists them as "no services").
+SVC_NO_SERVICES=(projectspace/myportfolio projectspace/nishannorunobi.github.io
+                 projectspace/potomacuniv projectspace/pc-maker)

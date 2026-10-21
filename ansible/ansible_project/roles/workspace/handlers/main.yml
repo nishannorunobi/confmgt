@@ -1,0 +1,4 @@
+# workspace: nothing to restart — only a message when a file changed
+- name: restart workspace
+  ansible.builtin.debug:
+    msg: "workspace config changed. nothing to restart: svc_policy.conf is read at every start / stop / status"
