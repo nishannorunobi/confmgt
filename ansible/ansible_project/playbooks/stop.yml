@@ -1,0 +1,29 @@
+# stop.yml — the projects of deploy_projects DOWN on the deploy_targets machines, in REVERSE start order (CONFMGT [6.14]).
+#   apply_playbook.sh → stop → dev     shutdown.sh runs it first (stop-plan target deploy-dev: stop_on_this_pc.sh)
+# Each project's targets go down with the workspace's svcmgt/stop_targets.sh (each target's OWN stop script from
+# svc_policy.conf; already stopped → left alone). A project that fails does not keep the others up (they are all tried);
+# whatever is still running after it, stop_all stops itself with the target's own script.
+- name: Stop the workspace's projects
+  hosts: deploy_targets
+  gather_facts: false
+  tasks:
+    - name: "down: {{ project.name }}"
+      ansible.builtin.command: bash svcmgt/stop_targets.sh {{ project.targets | reverse | join(' ') }}
+      args:
+        chdir: "{{ ws_dir }}"
+      environment:
+        SVC_RUN: "1"
+      register: down
+      changed_when: "' DOWN' in down.stdout"
+      ignore_errors: true
+      loop: "{{ deploy_projects | default([]) | reverse | list }}"
+      loop_control:
+        loop_var: project
+        label: "{{ project.name }}"
+      when: project.targets | default([]) | length > 0
+
+    - name: every project down
+      ansible.builtin.assert:
+        that: down.results | default([]) | selectattr('failed', 'defined') | selectattr('failed') | list | length == 0
+        fail_msg: "not every project stopped — see the FAILED lines above (stop_all stops what is left with its own scripts)"
+        quiet: true

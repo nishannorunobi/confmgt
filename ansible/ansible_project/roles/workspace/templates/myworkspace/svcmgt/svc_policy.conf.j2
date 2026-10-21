@@ -73,6 +73,7 @@ declare -A SVC_STOP=(
     [myodoo17]="stop.sh --17"                  [odoo-agent]=host_stop.sh
     [myodoo19]="stop.sh --19"
     [confmgt-ansible]=stop.sh                  [ansible-agent]=host_stop.sh
+    [deploy-dev]=stop_on_this_pc.sh
     [updown]=stop.sh
 )
 declare -A SVC_STATE=(
@@ -123,7 +124,8 @@ declare -A SVC_URL=(
 # keys in one go (svcmgt/register_all_kms_keys.sh).
 # confmgt-ansible + ansible-agent + deploy-dev default to YES (CONFMGT [6.2], 2026-10-21): the LAST step, deploy-dev, is
 # Ansible deploying this PC (confmgt's deploy_on_this_pc.sh: playbook deploy, inventory dev) — the projects move into
-# it one per story ([6.3]…) and leave this list then. No stop script: a deploy is a one-shot (like kms-keys).
+# it one per story ([6.3]…) and leave this list then. Its STOP (CONFMGT [6.14]) is confmgt's stop_on_this_pc.sh: as the
+# LAST target it is stopped FIRST — the projects go down through Ansible; stop_all stops what still runs itself.
 SVC_START_TARGETS=(docker portainer confmgt-ansible ansible-agent deploy-dev)
 # Targets ANSIBLE starts (CONFMGT [6]): deploy-dev's playbook deploy brings each up with svcmgt/start_targets.sh — they
 # leave SVC_START_TARGETS and the start plan shows them as "via deploy-dev". confmgt's inventories/dev
@@ -183,7 +185,7 @@ SECRET_MGT_COMPONENTS=(
 # db-agent, cache-agent, channel-agent are NOT listed: each is its container's entry point and stops
 # with mypostgresql_db / mycache / mychannels (listing them made the report say "stop said OK but it is
 # running" one step before their container went down — CLAUDEWORK-152).
-SVC_STOP_TARGETS=(kms portainer mypostgresql_db agent-orchestrator
+SVC_STOP_TARGETS=(deploy-dev kms portainer mypostgresql_db agent-orchestrator
                   docker-manager-agent workspace-agent mycache mychannels
                   mydocs mydocs-other mylog_analytics log-agent myodoo17 odoo-agent myodoo19
                   confmgt-ansible updown)

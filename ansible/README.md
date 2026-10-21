@@ -14,6 +14,7 @@ confmgt/ansible/
   check_playbook.sh                         dry run: what WOULD change — asks playbook · inventory · machines
   apply_playbook.sh                         the real run
   deploy_on_this_pc.sh                      Ansible deploys the workspace on THIS PC (deploy · dev) — startup.sh's last step (deploy-dev)
+  stop_on_this_pc.sh                        Ansible takes the projects DOWN on THIS PC (stop · dev) — shutdown's first step (deploy-dev)
   dockerspace/
     docker-compose.yml · Dockerfile · .env  the container (built once, then offline)
     host_scripts/      ON YOUR PC:  start.sh · stop.sh (Docker only) · logs.sh · clean.sh (⚠ forgets known_hosts)

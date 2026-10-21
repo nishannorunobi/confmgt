@@ -23,6 +23,10 @@
 #             P7 the real lists agree: inventories/dev deploy_projects targets == ~/myworkspace svc_policy.conf SVC_VIA_DEPLOY
 #             P8 a config-only project's REAL restart handler (default "no" in the start plan) on stub scripts: stopped →
 #                nothing started, a message · running → its own stop + start
+#             P9 playbooks/stop.yml on the SSH machine (a fake svcmgt/stop_targets.sh): projects in REVERSE order, each one's
+#                targets reversed · one failing → the others are STILL stopped, the play ends FAILED · all down → ok
+#             P10 stop_on_this_pc.sh: the agent answers → apply stop dev → deploy_on_this_pc.sh --state stopped · the agent
+#                is down → nothing started, exit 1, --state partial
 # ─────────────────────────────────────────────────────────────────────────────
 case "${1:-}" in -h|--help) awk 'NR==1{next} /^# ─/{n++; if(n==2) exit; next} n==1{ sub(/^# ?/,""); if(!t){printf "\033[1m%s\033[0m\n",$0; t=1; next} l=substr($0,1,12); if(l ~ /^[A-Z][A-Za-z ]+$/){c=(l ~ /^Errors/)?"\033[33m":"\033[36m"; printf "%s%s\033[0m%s\n",c,l,substr($0,13)} else print }' "$0"; exit 0 ;; esac
 set -uo pipefail
@@ -183,5 +187,35 @@ done
 rm -f "$WORK/a/project/playbooks/h8.yml"
 [ -z "$h8" ] && ok "P8 restart handlers of config-only projects (myodoo · mylog_analytics): stopped → nothing started, a message · running → own stop + start" \
   || bad "P8:$h8"
+
+# ── P9: stop.yml ─────────────────────────────────────────────────────────────
+docker exec -u ansible "$M" sh -c 'rm -f /home/ansible/ws/events; cat > /home/ansible/ws/svcmgt/stop_targets.sh <<"X"
+cd "$(dirname "$0")/.."; rc=0; for t in "$@"; do
+  if [ "$t" = bad ]; then echo "$t FAILED"; rc=1; else echo "stop $t" >> events; echo "$t DOWN"; fi
+done; exit $rc
+X'
+pb() { docker run --rm --network "$NET" -v "$WORK/a:/a" -w /a/project -e HOME=/tmp -e ANSIBLE_CONFIG=/a/project/ansible.cfg \
+        -e ANSIBLE_PRIVATE_KEY_FILE=/a/key -e ANSIBLE_NOCOLOR=1 -e ANSIBLE_LOCAL_TEMP=/tmp/al \
+        -e "ANSIBLE_SSH_ARGS=-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/a/known_hosts" \
+        "$IMG" ansible-playbook -i inventories/p9 playbooks/stop.yml 2>&1; }
+mkinv p9 "ws_dir: /home/ansible/ws\ndeploy_projects:\n  - {name: one, targets: [a1, a2]}\n  - {name: cfg, targets: []}\n  - {name: two, targets: [b1]}\n"
+o9="$(pb)"; e9="$(ev)"; docker exec "$M" sh -c 'rm -f /home/ansible/ws/events'
+mkinv p9 "ws_dir: /home/ansible/ws\ndeploy_projects:\n  - {name: one, targets: [a1, a2]}\n  - {name: broken, targets: [bad]}\n  - {name: two, targets: [b1]}\n"
+o9b="$(pb)"; e9b="$(ev)"
+[ "$e9" = "stop b1,stop a2,stop a1," ] && grep -qE 'm1 +: .*failed=0' <<< "$o9" \
+  && [ "$e9b" = "stop b1,stop a2,stop a1," ] && grep -qE 'm1 +: .*failed=1' <<< "$o9b" && grep -q 'not every project stopped' <<< "$o9b" \
+  && ok "P9 stop.yml: reverse order (two, then one's a2 → a1), config-only skipped · one failing → the others still stopped, the play FAILED" \
+  || bad "P9 e9=[$e9] e9b=[$e9b] $(grep -E 'm1 +:' <<< "$o9$o9b" | tr '\n' '¦')"
+
+# ── P10: stop_on_this_pc.sh ──────────────────────────────────────────────────
+echo ok > "$WORK/mode"; rm -f "$SF"
+run10() { ANSIBLE_AGENT_URL="$1" DEPLOY_STATE_FILE="$SF" bash "$HERE/stop_on_this_pc.sh" </dev/null 2>&1; }
+o10="$(run10 "http://127.0.0.1:$PORT")"; r10=$?; s10="$(DEPLOY_STATE_FILE="$SF" bash "$HERE/deploy_on_this_pc.sh" --state)"
+asked="$(cat "$WORK/asked")"
+o10b="$(run10 "http://127.0.0.1:1")"; r10b=$?; s10b="$(DEPLOY_STATE_FILE="$SF" bash "$HERE/deploy_on_this_pc.sh" --state)"
+[ $r10 = 0 ] && grep -q '"playbook": "stop", "inventory": "dev"' <<< "$asked" && [ "$s10" = stopped ] \
+  && [ $r10b = 1 ] && grep -q 'nothing stopped by Ansible' <<< "$o10b" && [ "$s10b" = partial ] \
+  && ok "P10 stop_on_this_pc.sh: apply stop dev → --state stopped · agent down → nothing started, exit 1, --state partial" \
+  || bad "P10 r10=$r10 s10=$s10 r10b=$r10b s10b=$s10b asked=$asked"
 
 [ $FAIL = 0 ] && ok "deploy playbook tests passed (throwaway machine + stand-in agent removed)" || { echo -e "\033[31m[FAILED]\033[0m deploy playbook tests"; exit 1; }
