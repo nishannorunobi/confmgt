@@ -26,7 +26,7 @@ Each environment has its own mirror with the same paths and its own values.
 
 | Project | Mirrored files | Playbook | Story |
 |---|---|---|---|
-| mycache | `.env` · `cache-agent/agent.conf` | `mycache.yml` (check only) | 3.1 |
+| mycache | `.env` · `cache-agent/agent.conf` | `mycache.yml` (check · apply + restart via its own scripts) | 3.1 · 3.2 |
 
 A project joins (one story each): its files in the mirror + their templates + a role listing them + a playbook — no core change.
 

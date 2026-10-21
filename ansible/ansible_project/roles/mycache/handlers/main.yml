@@ -1,0 +1,10 @@
+# restart mycache with its OWN scripts (three-layer rule: Ansible never runs docker for a project) — the same steps
+# the workspace uses: stop.sh, then ensure_running.sh --no-ui (SVC_RUN=1: no questions, the project's startup mode)
+- name: restart mycache
+  ansible.builtin.shell: |
+    set -e
+    bash stop.sh
+    SVC_RUN=1 bash ensure_running.sh --no-ui
+  args:
+    chdir: "{{ workspace_root }}/projectspace/mycache"
+    executable: /bin/bash

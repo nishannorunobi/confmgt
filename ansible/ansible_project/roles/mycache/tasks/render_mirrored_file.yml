@@ -7,3 +7,4 @@
   ansible.builtin.template:
     src: "myworkspace/{{ item }}.j2"
     dest: "{{ workspace_root }}/{{ item }}"
+  notify: restart mycache                     # only when this file really changed (never in a dry run)
