@@ -1,0 +1,4 @@
+# roles/myodoo — its config files, each rendered from its mirror + shared/ (the single source of truth)
+- name: "myodoo {{ item }}"
+  ansible.builtin.include_tasks: render_mirrored_file.yml
+  loop: "{{ myodoo_files }}"

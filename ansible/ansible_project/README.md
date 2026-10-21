@@ -39,6 +39,7 @@ Each environment has its own mirror with the same paths and its own values.
 | mypostgresql_db | `db-agent/agent.conf` (databases, users, password addresses → NEW shared/postgres.yml, owned by mypostgresql_db) | `mypostgresql_db.yml` (check · apply + restart via its stop.sh + start.sh) | 3.5 |
 | mydocs (Plane) | `.env` (Postgres · Redis · RabbitMQ → shared/, NEW shared/redis.yml owned by mycache) | `mydocs.yml` (check · apply + restart via ensure_stopped/ensure_running) | 3.6 |
 | mylog_analytics | `log-agent/agent.conf` (all three values → shared/) | `mylog_analytics.yml` (check · apply + restart via stop/start) | 3.7 |
+| myodoo | `odoo-agent/agent.conf` · `odoo-19/odoo.conf` (INI; database → shared/postgres.yml) | `myodoo.yml` (check · apply + restart Odoo 19 via stop/start --19) | 3.8 |
 
 A project joins (one story each): its files in the mirror + their templates + a role listing them + a playbook — no core change.
 

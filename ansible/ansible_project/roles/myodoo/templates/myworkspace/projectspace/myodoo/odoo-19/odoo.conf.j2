@@ -1,0 +1,31 @@
+{# rendered by Ansible (confmgt) from inventories/<env>/myworkspace/ (the mirror) + shared/ — the comments are the project's own #}
+[options]
+; odoo.conf — Odoo 19's settings. Tracked in git: it holds NO secret. A secret's value is its kms ADDRESS;
+; at start the container renders this file into RAM with the real values (odoo-agent/connect_external/kms/
+; env_from_kms.sh → kms.py render) and points ODOO_RC at the copy. The address is kms as seen from the CONTAINER.
+; KMS_URL = kms's base, named once in odoo-agent/agent.conf (TESTSERVER-46)
+;   key = ${KMS_URL}/v1/kv/data/<entry>            key inside the entry = key
+;   key = ${KMS_URL}/v1/kv/data/<entry>#OTHER_KEY  the entry names it differently
+; every password keeps its kms address in the "; kms:" comment right above it — the rotation (connect_external/kms/):
+; transfer (values): odoo_transfer_kms2tempfile.sh / _local2tempfile_random_value.sh / _tempfile2local.sh /
+;   _local2kms.sh / _comment2local_kmsurl.sh · config (SECRET_MGT only): odoo_config_secret_mgt_local.sh / _kms.sh
+; A new secret: bash odoo-agent/connect_external/kms/add_new_secret_to_kms.sh   (asks name + value, writes the line)
+
+; Odoo's master password — Odoo's own, in kv/myodoo/odoo (rotate: refresh_random_secrets_to_kms.sh)
+; kms: ${KMS_URL}/v1/kv/data/myodoo/odoo
+admin_passwd = {{ mirror.admin_passwd }}
+
+; PostgreSQL — reuses the already-running mypostgresql_db-container over my_docker_network
+; (shared with the Odoo 17 stack; this stack uses its own database, see dbfilter).
+; The password is mypostgresql_db's, named ODOO_PASSWORD there.
+db_host = {{ mirror.db_host }}
+db_port = {{ mirror.db_port }}
+db_user = {{ mirror.db_user }}
+; kms: ${KMS_URL}/v1/kv/data/mypostgresql_db/myodoo#ODOO_PASSWORD
+db_password = {{ mirror.db_password }}
+dbfilter = {{ mirror.dbfilter }}
+
+; Core addons (in-source) + your custom modules.
+addons_path = {{ mirror.addons_path }}
+data_dir = {{ mirror.data_dir }}
+logfile = {{ mirror.logfile }}
