@@ -16,7 +16,7 @@
 #             C2  public key = ssh-ed25519 … confmgt-ansible · private key 600 in RAM only · same secret → same key
 #             C3  /playbooks finds the playbooks + inventories by itself
 #             C4  check ping → ok on the SSH machine · apply a test playbook → the file is there · check again → no change
-#             C5  unknown playbook / inventory, bad limit → 400 · nothing run
+#             C5  unknown playbook / inventory, bad limit, bad extra_vars → 400 · nothing run
 #             C6  one run at a time → 409 while busy
 #             C7  every run in its own log file + /runs/last
 #             C8  SECRET_MGT=local: the value as written, no kms · local + a kms address → refused · kms + a plain
@@ -220,7 +220,10 @@ c1="$(code "$(post check '{"playbook":"nope","inventory":"t"}')")"
 c2="$(code "$(post check '{"playbook":"ping","inventory":"prod"}')")"
 c3="$(code "$(post apply '{"playbook":"../playbooks/ping","inventory":"t"}')")"
 c4="$(code "$(post check '{"playbook":"ping","inventory":"t","limit":"m1; rm -rf /"}')")"
-[ "$c1$c2$c3$c4" = 400400400400 ] && ok "C5 unknown playbook / inventory, a path, a bad limit → 400, nothing run" || bad "C5 codes $c1 $c2 $c3 $c4"
+c5="$(code "$(post check '{"playbook":"ping","inventory":"t","extra_vars":{"ws_branch":"x; rm -rf /"}}')")"
+c6="$(code "$(post check '{"playbook":"ping","inventory":"t","extra_vars":{"Bad-Name":"main"}}')")"
+c7="$(code "$(post check '{"playbook":"ping","inventory":"t","extra_vars":{"ws_branch":"story/CONFMGT-1-x"}}')")"
+[ "$c1$c2$c3$c4$c5$c6$c7" = 400400400400400400200 ] && ok "C5 unknown playbook / inventory, a path, a bad limit, a bad extra_vars value / name → 400, nothing run · a plain branch → 200" || bad "C5 codes $c1 $c2 $c3 $c4 $c5 $c6 $c7"
 
 # ── C6: one run at a time ────────────────────────────────────────────────────
 post apply '{"playbook":"zz_sleep","inventory":"t"}' > "$WORK/busy" & bp=$!

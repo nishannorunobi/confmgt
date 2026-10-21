@@ -2,7 +2,8 @@
 #   check_playbook.sh → deploy → test    dry run: what would be installed / pulled — changes nothing
 #   apply_playbook.sh → deploy → test    git (only when missing) → workspace clone, or pull → Docker by the workspace's
 #                                         OWN script. Run again → nothing changes (changed=0).
-# What is deployed: inventories/test/group_vars/deploy_targets/. Each project joins in its own story ([6.2]…).
+# What is deployed: inventories/test/group_vars/deploy_targets/ (ws_branch: a run may send its own — the story branch
+# under test). Each project joins in its own story ([6.2]…).
 - name: Deploy the workspace
   hosts: deploy_targets
   gather_facts: false

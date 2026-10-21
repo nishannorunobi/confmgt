@@ -12,9 +12,11 @@ Endpoints
   GET  /playbooks     what can run: playbooks/*.yml and inventories/<env>/ — found at run time (a new file = a new choice)
   POST /check         {"playbook": "ping", "inventory": "test", "limit": "test-vm"}  → dry run (--check --diff)
   POST /apply         the same body → the real run
+                      optional "extra_vars": {"ws_branch": "story/X"} → -e (overrides the inventory's value for this run)
   GET  /runs/last     the last run: what, when, exit code, output
 
-Rules     names only from the lists above (anything else → 400) · one run at a time (busy → 409) ·
+Rules     names only from the lists above (anything else → 400) · extra_vars: lower-case names, plain values
+          (letters digits . _ / - only) · one run at a time (busy → 409) ·
           a run longer than RUN_TIMEOUT seconds (agent.conf, default 1800) is stopped · every run's output is kept
           in its own log file (the newest 50 kept)
 """
@@ -40,6 +42,8 @@ RUN_LOGS = Path(LOG_ROOT) / "ansible-agent" / "runs" if LOG_ROOT else DATA / "ru
 KEEP_RUNS = 50
 NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")              # a playbook / inventory name
 LIMIT = re.compile(r"^[A-Za-z0-9_.,:*!&\[\]-]+$")              # Ansible's --limit pattern, plain characters only
+VAR_NAME = re.compile(r"^[a-z][a-z0-9_]{0,63}$")                # an extra_vars name
+VAR_VALUE = re.compile(r"^[A-Za-z0-9._/-]{1,200}$")             # an extra_vars value: a branch, a tag, a name
 
 
 def _timeout() -> int:
@@ -88,6 +92,7 @@ class Run(BaseModel):
     playbook: str
     inventory: str = "test"
     limit: str | None = None
+    extra_vars: dict[str, str] | None = None
 
 
 def _prune():
@@ -103,6 +108,9 @@ def _run(req: Run, check: bool) -> dict:
         raise HTTPException(400, f"no inventory '{req.inventory}' — known: {', '.join(inventories()) or 'none'}")
     if req.limit is not None and not LIMIT.match(req.limit):
         raise HTTPException(400, "limit: host / group names and , : * ! & only")
+    for k, v in (req.extra_vars or {}).items():
+        if not VAR_NAME.match(k) or not isinstance(v, str) or not VAR_VALUE.match(v):
+            raise HTTPException(400, "extra_vars: lower-case names, values of letters digits . _ / - only")
     book = _playbook_file(req.playbook)
     key = KEY_DIR / "id_ed25519"
     if not key.is_file():
@@ -116,6 +124,8 @@ def _run(req: Run, check: bool) -> dict:
             cmd += ["--check", "--diff"]
         if req.limit:
             cmd += ["--limit", req.limit]
+        if req.extra_vars:
+            cmd += ["-e", json.dumps(req.extra_vars)]
         env = dict(os.environ)
         env.update({
             "ANSIBLE_CONFIG": str(PROJECT / "ansible.cfg"),
