@@ -1,0 +1,4 @@
+# defaults for roles/mylog_analytics — the values live in the mirror (inventories/<env>/myworkspace/<path>.yml) + shared/
+# its config files, as paths below ~/myworkspace — a new file = one line here + its mirrored values + its template
+mylog_analytics_files:
+  - projectspace/mylog_analytics/log-agent/agent.conf

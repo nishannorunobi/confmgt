@@ -1,0 +1,20 @@
+{# rendered by Ansible (confmgt) from inventories/<env>/myworkspace/ (the mirror) + shared/ — the comments are the project's own #}
+# agent.conf — the log-agent's settings. Tracked in git: it holds NO secret. A secret's value is its
+# kms ADDRESS; connect_external/kms/env_from_kms.sh (sourced by the container's command) fetches the
+# values with the agent's own login and exports them. The address is kms as seen from the CONTAINER.
+#   KEY=${KMS_URL}/v1/kv/data/<entry>            key inside the entry = KEY
+#   KEY=${KMS_URL}/v1/kv/data/<entry>#OTHER_KEY  the entry names it differently
+# A new secret: bash log-agent/connect_external/kms/add_new_secret_to_kms.sh   (asks name + value, writes the line)
+
+# ── AI chat — the one shared Claude key (kv/shared/anthropic) ─────────────────
+# kms's base is named ONCE (TESTSERVER-46): kms elsewhere → KMS_URL=https://<kms-host>:<port>, every
+# ${KMS_URL}/v1/kv/data/… line follows.
+KMS_URL={{ mirror.KMS_URL }}
+# SECRET_MGT — where the passwords below come from (TESTSERVER-67): kms = their kms addresses, fetched at start ·
+# local = the real values written right here (no kms at all) · not set / empty → local
+SECRET_MGT={{ mirror.SECRET_MGT }}
+# every password keeps its kms address in the "# kms:" comment right above it — the rotation (connect_external/kms/):
+# transfer (values): log_transfer_kms2tempfile.sh / _local2tempfile_random_value.sh / _tempfile2local.sh /
+#   _local2kms.sh / _comment2local_kmsurl.sh · config (SECRET_MGT only): log_config_secret_mgt_local.sh / _kms.sh
+# kms: ${KMS_URL}/v1/kv/data/shared/anthropic
+ANTHROPIC_API_KEY={{ mirror.ANTHROPIC_API_KEY }}
