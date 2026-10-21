@@ -20,7 +20,7 @@ A new environment is a new folder next to `test/`. A new machine is one line in 
 
 | Project | Values | Renders | Playbook | Story |
 |---|---|---|---|---|
-| mycache | `inventories/dev/group_vars/mycache/main.yml` | `.env` · `cache-agent/agent.conf` | `mycache.yml` (check only) | 3.1 |
+| mycache | `inventories/dev/group_vars/mycache/env.yml` · `agent.yml` | `.env` · `cache-agent/agent.conf` | `mycache.yml` (check only) | 3.1 |
 
 ## How the rest joins: the single source of truth for every project
 

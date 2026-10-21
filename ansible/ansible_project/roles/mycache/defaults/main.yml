@@ -1,2 +1,2 @@
-# defaults for roles/mycache — the real values live in inventories/<env>/group_vars/mycache/main.yml
+# defaults for roles/mycache — the real values live in inventories/<env>/group_vars/mycache/ (env.yml · agent.yml)
 mycache_dir: "{{ workspace_root }}/projectspace/mycache"
