@@ -1,0 +1,7 @@
+# roles/mypostgresql_db — mypostgresql_db's config files, each rendered from its mirror (the single source of truth):
+#   values   inventories/<env>/myworkspace/<path>.yml
+#   template templates/myworkspace/<path>.j2
+#   target   <workspace_root>/<path>          (keeps its place, owner and mode; mypostgresql_db still starts alone from it)
+- name: "mypostgresql_db {{ item }}"
+  ansible.builtin.include_tasks: render_mirrored_file.yml
+  loop: "{{ mypostgresql_db_files }}"

@@ -1,0 +1,10 @@
+# restart mypostgresql_db with its OWN scripts (three-layer rule) — the same as the workspace: stop.sh, then start.sh
+# (SVC_RUN=1: no questions). The database is down a few seconds — this runs ONLY when a file really changed.
+- name: restart mypostgresql_db
+  ansible.builtin.shell: |
+    set -e
+    bash stop.sh
+    SVC_RUN=1 bash start.sh
+  args:
+    chdir: "{{ workspace_root }}/projectspace/mypostgresql_db"
+    executable: /bin/bash

@@ -1,0 +1,23 @@
+# shared/postgres.yml — PostgreSQL (mypostgresql_db) as every project reaches it on the DEV environment.
+# Owned by mypostgresql_db (servers first: the server defines every client's database + login; clients only refer to it).
+# Passwords: only kms ADDRESSES (${KMS_URL} = each reader's own kms address).
+shared_postgres:
+  host: "mypostgresql_db-container"                 # its name on my_docker_network
+  port: "5432"
+  databases:
+    docs:
+      user: "docs_user"
+      db: "mydocsdb"
+      password: "${KMS_URL}/v1/kv/data/mypostgresql_db/mydocsdb"
+    ums:
+      user: "ums_user"
+      db: "umsdb"
+      password: "${KMS_URL}/v1/kv/data/mypostgresql_db/umsdb"
+    odoo:
+      user: "odoo"
+      db: "myodoo"
+      password: "${KMS_URL}/v1/kv/data/mypostgresql_db/myodoo"
+    grafana:
+      user: "grafana"
+      db: "grafana"
+      password: "${KMS_URL}/v1/kv/data/mypostgresql_db/grafana"

@@ -1,0 +1,41 @@
+{# rendered by Ansible (confmgt) from inventories/<env>/myworkspace/ (the mirror) + shared/ — the comments are mypostgresql_db's own #}
+# DB Agent — Configuration (no secret — this file is in git)
+# A secret's value is its kms address — the agent fetches the real value itself when it starts
+# (connect_external/kms/kms.py, its own kms login). kms's base is named ONCE: KMS_URL (TESTSERVER-46) —
+# kms elsewhere: KMS_URL=https://<kms-host>:<port>, every ${KMS_URL}/v1/kv/data/… line follows.
+KMS_URL={{ mirror.KMS_URL }}
+# SECRET_MGT — where the passwords below come from (TESTSERVER-67): kms = their kms addresses, fetched at start ·
+# local = the real values written right here (no kms at all) · not set / empty → local
+SECRET_MGT={{ mirror.SECRET_MGT }}
+# every password keeps its kms address in the "# kms:" comment right above it — the rotation (connect_external/kms/):
+# transfer (values): db_transfer_kms2tempfile.sh / _local2tempfile_random_value.sh / _tempfile2local.sh /
+#   _local2kms.sh / _comment2local_kmsurl.sh · config (SECRET_MGT only): db_config_secret_mgt_local.sh / _kms.sh
+PORT={{ mirror.PORT }}
+PG_PORT={{ mirror.PG_PORT }}
+PGDATA={{ mirror.PGDATA }}
+
+# ── The logins the agent keeps in PostgreSQL: <NAME>_USER + <NAME>_DB + <NAME>_PASSWORD ──
+# The folder <NAME>_DB/init/*.sql creates the role, the database and the grants (02 + non-grant
+# files only when the database is new). The password is set to the kms value at EVERY start.
+# kms: ${KMS_URL}/v1/kv/data/mypostgresql_db/postgres
+POSTGRES_PASSWORD={{ mirror.POSTGRES_PASSWORD }}
+DOCS_USER={{ mirror.DOCS_USER }}
+DOCS_DB={{ mirror.DOCS_DB }}
+# kms: ${KMS_URL}/v1/kv/data/mypostgresql_db/mydocsdb
+DOCS_PASSWORD={{ mirror.DOCS_PASSWORD }}
+UMS_USER={{ mirror.UMS_USER }}
+UMS_DB={{ mirror.UMS_DB }}
+# kms: ${KMS_URL}/v1/kv/data/mypostgresql_db/umsdb
+UMS_PASSWORD={{ mirror.UMS_PASSWORD }}
+ODOO_USER={{ mirror.ODOO_USER }}
+ODOO_DB={{ mirror.ODOO_DB }}
+# kms: ${KMS_URL}/v1/kv/data/mypostgresql_db/myodoo
+ODOO_PASSWORD={{ mirror.ODOO_PASSWORD }}
+GRAFANA_USER={{ mirror.GRAFANA_USER }}
+GRAFANA_DB={{ mirror.GRAFANA_DB }}
+# kms: ${KMS_URL}/v1/kv/data/mypostgresql_db/grafana
+GRAFANA_PASSWORD={{ mirror.GRAFANA_PASSWORD }}
+
+# ── The AI part of the agent ──
+# kms: ${KMS_URL}/v1/kv/data/shared/anthropic
+ANTHROPIC_API_KEY={{ mirror.ANTHROPIC_API_KEY }}

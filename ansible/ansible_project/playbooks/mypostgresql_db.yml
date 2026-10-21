@@ -1,0 +1,10 @@
+# mypostgresql_db.yml — mypostgresql_db's configuration from the single source of truth (CONFMGT epic [3]).
+#   check_playbook.sh → mypostgresql_db   dry run: shows every line that differs — writes nothing, restarts nothing
+#   apply_playbook.sh → mypostgresql_db   writes the changed files, then restarts mypostgresql_db with its OWN scripts — only when
+#                                 something really changed (nothing changed → changed=0, no restart)
+- name: mypostgresql_db configuration
+  hosts: mypostgresql_db
+  gather_facts: false
+  roles:
+    - shared                    # inventories/<env>/shared/ first: values used by 2+ projects
+    - mypostgresql_db
