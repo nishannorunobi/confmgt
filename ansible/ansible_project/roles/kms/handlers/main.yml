@@ -1,0 +1,4 @@
+# kms: NOT restarted automatically — only a message when a file changed
+- name: restart kms
+  ansible.builtin.debug:
+    msg: "kms config changed. NOT restarted automatically: a kms restart RE-SEALS it (CLAUDEWORK-110) — restart it yourself when you are ready to unseal: bash projectspace/kms/stop.sh · bash projectspace/kms/start.sh"

@@ -1,0 +1,4 @@
+# confmgt: NOT restarted automatically — only a message when a file changed
+- name: restart confmgt
+  ansible.builtin.debug:
+    msg: "confmgt config changed. NOT restarted automatically: confmgt cannot restart itself in the middle of its own run — restart it yourself: bash projectspace/confmgt/ansible/stop.sh · bash projectspace/confmgt/ansible/start.sh"

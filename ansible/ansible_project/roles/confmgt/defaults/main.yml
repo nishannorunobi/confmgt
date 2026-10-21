@@ -1,0 +1,5 @@
+# defaults for roles/confmgt — the values live in the mirror (inventories/<env>/myworkspace/<path>.yml) + shared/
+# its config files, as paths below ~/myworkspace — a new file = one line here + its mirrored values + its template
+confmgt_files:
+  - projectspace/confmgt/ansible/dockerspace/.env
+  - projectspace/confmgt/ansible/ansible-agent/agent.conf

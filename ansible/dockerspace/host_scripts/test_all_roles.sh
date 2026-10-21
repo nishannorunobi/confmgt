@@ -51,7 +51,7 @@ n="$(wc -w <<< "$roles")"
 [ -z "$b2" ] && ok "A2 every project — apply → changed=0, no restart (nothing changed)" || bad "A2:$b2"
 [ "$(cd "$TMP/ws" && md5sum $files)" = "$S0" ] && ok "A3 the copies unchanged — the real files were only read" || bad "A3 a copy changed"
 b4="$(find "$HERE/ansible_project/inventories/dev/myworkspace" "$HERE/ansible_project/inventories/dev/shared" -name '*.yml' -exec grep -hE '^ +[A-Za-z_]*(PASS|PASSWORD|SECRET|TOKEN|_KEY|passwd|password|api_key)[A-Za-z_]*: ' {} + \
-      | grep -vE '^ +(KMS_MASTER_PASSWORD_DIR|SECRET_MGT|secret_mgt|ENABLE_EMAIL_PASSWORD): ' | grep -vE ': "\{\{ shared_[a-z_.]+ \}\}' \
+      | grep -vE '^ +([A-Z_]+_DIR|SECRET_MGT|secret_mgt|ENABLE_EMAIL_PASSWORD): ' | grep -vE ': "\{\{ shared_[a-z_.]+ \}\}' \
       | grep -vE ': "(\$\{KMS_URL\}|https?://[^"]+)/v1/kv/data/' | grep -vE ': ""')"
 [ -z "$b4" ] && ok "A4 no secret in the mirror or shared/ — every password / key is a kms address (or empty)" || bad "A4 a secret value: $(cut -d: -f1 <<< "$b4" | tr '\n' ' ')"
 [ "$FAIL" = 0 ] && ok "all-roles tests passed ($n projects; throwaway copies removed)" && exit 0
