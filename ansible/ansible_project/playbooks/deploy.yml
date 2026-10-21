@@ -37,19 +37,19 @@
         force: false
         accept_hostkey: true
 
-    - name: "the project repos — clone, or pull: {{ repo.path }}"
+    - name: the project repos — clone, or pull (local changes in the machine → refused, never thrown away)
       when: ws_manage_git | default(false) | bool
       ansible.builtin.git:
-        repo: "{{ repo.repo }}"
-        dest: "{{ ws_dir }}/{{ repo.path }}"
-        version: "{{ repo.branch | default('main') }}"
+        repo: "{{ project_repo.repo }}"
+        dest: "{{ ws_dir }}/{{ project_repo.path }}"
+        version: "{{ project_repo.branch | default('main') }}"
         update: true
         force: false
         accept_hostkey: true
       loop: "{{ ws_project_repos | default([]) }}"
       loop_control:
-        loop_var: repo
-        label: "{{ repo.path }}"
+        loop_var: project_repo
+        label: "{{ project_repo.path }}"
 
     - name: Docker — the workspace's own dockerspace/01_check_and_install_docker.sh (installs only when missing)
       when: ws_manage_docker | default(false) | bool

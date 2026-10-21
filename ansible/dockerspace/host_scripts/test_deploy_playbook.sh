@@ -88,7 +88,7 @@ sleep 2
 o2="$(play p2)"
 sk() { for n in "git + curl" "GitHub answers" "the workspace — clone" "Docker — the workspace"; do grep -A1 "TASK \[$n" <<< "$1" | grep -q '^skipping: \[m1\]' || echo "$n"; done; }
 [ -z "$(sk "$o2")" ] && grep -qE 'm1 +: ok=1 +changed=0 .*failed=0' <<< "$o2" \
-  && ok "P2 switches off → git · GitHub · clone · Docker skipped, the workspace is there → the only ok" || bad "P2 $(grep -E 'm1 +:|fatal' <<< "$o2")"
+  && ok "P2 switches off → git · GitHub · clone · Docker skipped, the workspace is there → the only ok" || bad "P2 notskipped=[$(sk "$o2" | tr "\n" ,)] $(grep -E "m1 +:|fatal" <<< "$o2")"
 
 # ── P3: switches not set → off · again → changed=0 ───────────────────────────
 o3="$(play p3)"; o3b="$(play p3)"
