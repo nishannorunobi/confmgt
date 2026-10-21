@@ -148,7 +148,7 @@ SVC_NEEDS_KMS=(kms-keys mypostgresql_db db-agent mycache cache-agent mychannels 
 # A failure here stops start_all — nothing after them can work without them. kms counts as started only when READY
 # (status.sh --state = running: unsealed + foundation set up) — else nothing that needs kms is tried (startup kms-first).
 # A secret manager's target (kms) is critical only when it is needed (SECRET_MGT below).
-SVC_CRITICAL=(docker kms mypostgresql_db)
+SVC_CRITICAL=(docker kms)
 
 # ── The secret manager (TESTSERVER-83) ─────────────────────────────────────────
 # SECRET_MGT — which secret manager the workspace runs: local | kms | <a future provider>. The VALUE names the

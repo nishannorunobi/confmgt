@@ -2,6 +2,8 @@
 #   values   inventories/<env>/myworkspace/<path>.yml
 #   template templates/myworkspace/<path>.j2
 #   target   <workspace_root>/<path>          (keeps its place, owner and mode; mypostgresql_db still starts alone from it)
-- name: "mypostgresql_db {{ item }}"
+- name: "mypostgresql_db — its config files from the mirror"
   ansible.builtin.include_tasks: render_mirrored_file.yml
   loop: "{{ mypostgresql_db_files }}"
+  loop_control:
+    label: "{{ item }}"

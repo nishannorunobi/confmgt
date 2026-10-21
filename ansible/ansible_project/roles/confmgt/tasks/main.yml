@@ -1,4 +1,6 @@
 # roles/confmgt — its config files, each rendered from its mirror + shared/ (the single source of truth)
-- name: "confmgt {{ item }}"
+- name: "confmgt — its config files from the mirror"
   ansible.builtin.include_tasks: render_mirrored_file.yml
   loop: "{{ confmgt_files }}"
+  loop_control:
+    label: "{{ item }}"

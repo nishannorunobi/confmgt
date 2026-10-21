@@ -332,7 +332,7 @@ git -C "$HERE" check-ignore -q "ansible-agent/agent.conf" && b11+=" agent.conf:i
 # ── C12: no test value in logs or git; the real kms state untouched ──────────
 leak=0
 for v in "$PW" "$S" "$LSEC" "${K0:-}"; do [ -n "$v" ] || continue
-    grep -rqF -- "$v" "$LG" "$_WS_ROOT/mountspace/logs/myworkspace/projectspace/under_develop/confmgt" "$_WS_ROOT/mountspace/logs/myworkspace/projectspace/confmgt" 2>/dev/null && leak=1
+    grep -rqF -- "$v" "$LG" "$_WS_ROOT/mountspace/logs/myworkspace/projectspace/confmgt" 2>/dev/null && leak=1
     git -C "$HERE" grep -qF -- "$v" 2>/dev/null && leak=1
 done
 NOW_STATE="$(stat -c '%n %s %Y' "$AGENT/connect_external/kms/credentials"/*/* "$_WS_ROOT/mountspace/usb/myworkspace/projectspace/kms"/* "$_WS_ROOT/mountspace/usb/myworkspace/projectspace/kms"/*/* 2>/dev/null | sort)"

@@ -1,4 +1,6 @@
 # roles/workspace — its config files, each rendered from its mirror + shared/ (the single source of truth)
-- name: "workspace {{ item }}"
+- name: "workspace — its config files from the mirror"
   ansible.builtin.include_tasks: render_mirrored_file.yml
   loop: "{{ workspace_files }}"
+  loop_control:
+    label: "{{ item }}"

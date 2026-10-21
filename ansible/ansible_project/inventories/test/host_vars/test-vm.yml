@@ -1,7 +1,7 @@
 # test-vm — the test VM (myworkspace/test_server). Its SSH port 22 is forwarded to the PC's 127.0.0.1:2222
 # (test_server/test_vm.conf SSH_PORT). From the container the PC is host.docker.internal: there the PC's SSH relay
-# (test_server/deploy_test_vm.sh starts it, SSH_BIND_FOR_CONTAINERS) hands the connection on to the VM.
+# (test_server/05_deploy_test_vm.sh starts it, SSH_BIND_FOR_CONTAINERS) hands the connection on to the VM.
 ansible_host: host.docker.internal
 ansible_port: 2222
 ansible_user: nishan
-workspace_root: /home/nishan/myworkspace     # where the workspace is in the VM (deploy_test_vm.sh clones it there)
+workspace_root: /home/nishan/myworkspace     # where the workspace is in the VM (05_deploy_test_vm.sh clones it there)

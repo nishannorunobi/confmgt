@@ -38,7 +38,7 @@
         force: false
         accept_hostkey: true
 
-    - name: the branch of each project repo — ws_repo_branches "path=branch,…" (deploy_test_vm.sh sends the PC's)
+    - name: the branch of each project repo — ws_repo_branches "path=branch,…" (05_deploy_test_vm.sh sends the PC's)
       when: ws_manage_git | default(false) | bool
       ansible.builtin.set_fact:
         repo_branch: "{{ dict((ws_repo_branches | default('')).split(',') | select | map('split', '=')) }}"

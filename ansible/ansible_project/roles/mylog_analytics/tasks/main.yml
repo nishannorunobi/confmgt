@@ -1,4 +1,6 @@
 # roles/mylog_analytics — its config files, each rendered from its mirror + shared/ (the single source of truth)
-- name: "mylog_analytics {{ item }}"
+- name: "mylog_analytics — its config files from the mirror"
   ansible.builtin.include_tasks: render_mirrored_file.yml
   loop: "{{ mylog_analytics_files }}"
+  loop_control:
+    label: "{{ item }}"

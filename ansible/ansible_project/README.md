@@ -26,7 +26,7 @@ playbooks/deploy.yml          [git] → [Docker] → the workspace is there → 
 ```
 This PC: `bash ../deploy_on_this_pc.sh` — startup.sh runs it last (start-plan target deploy-dev) · `bash ../stop_on_this_pc.sh`
 (playbooks/stop.yml, reverse order) — shutdown runs it first.
-The test VM: `bash ~/myworkspace/test_server/deploy_test_vm.sh` — starts the VM + the SSH relay, gives Ansible its key in
+The test VM: `bash ~/myworkspace/test_server/05_deploy_test_vm.sh` — starts the VM + the SSH relay, gives Ansible its key in
 the VM, then asks the agent to apply `deploy` on `test` with the branch it runs from.
 
 ## The mirror — the single source of truth, laid out like the workspace
