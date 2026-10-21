@@ -5,6 +5,7 @@
 # dockerspace/host_scripts/test_deploy_playbook.sh checks the two lists are the same.
 deploy_projects:
   - {name: agents, targets: [agent-orchestrator]}                           # the host agents (docker-manager-agent · workspace-agent: start plan default no — not started)
+  - {name: workspace_agent, targets: []}                                    # config only — the workspace-agent's MCP config
   - {name: mycache, targets: [mycache]}                                     # cache-agent = its container's entry point
   - {name: mychannels, targets: [mychannels]}                               # channel-agent = its container's entry point
   - {name: mydocs, targets: [mydocs]}                                       # minimal Plane (mydocs-other stays in the start plan, default no)
