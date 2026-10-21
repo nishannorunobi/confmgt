@@ -1,0 +1,10 @@
+# workspace_agent.yml — workspace_agent's configuration from the single source of truth (CONFMGT epic [3]).
+#   check_playbook.sh → workspace_agent   dry run: shows every line that differs — writes nothing, restarts nothing
+#   apply_playbook.sh → workspace_agent   writes the changed files, then restarts workspace_agent with its OWN scripts — only when
+#                                 something really changed (nothing changed → changed=0, no restart)
+- name: workspace_agent configuration
+  hosts: workspace_agent
+  gather_facts: false
+  roles:
+    - shared                    # inventories/<env>/shared/ first: values used by 2+ projects
+    - workspace_agent

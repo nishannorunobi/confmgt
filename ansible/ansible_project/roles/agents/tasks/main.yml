@@ -1,0 +1,4 @@
+# roles/agents — its config files, each rendered from its mirror + shared/ (the single source of truth)
+- name: "agents {{ item }}"
+  ansible.builtin.include_tasks: render_mirrored_file.yml
+  loop: "{{ agents_files }}"

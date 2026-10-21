@@ -1,0 +1,9 @@
+# restart workspace_agent with its OWN scripts (three-layer rule) — the same steps the workspace uses. Runs ONLY when a file
+# really changed (never in a dry run).
+- name: restart workspace_agent
+  ansible.builtin.shell: |
+    set -e
+    bash connect_external/kms/mcp_json_from_kms.sh
+  args:
+    chdir: "{{ workspace_root }}/agents/workspace-agent"
+    executable: /bin/bash

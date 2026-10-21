@@ -1,0 +1,49 @@
+{# rendered by Ansible (confmgt) from inventories/<env>/myworkspace/ (the mirror) + shared/ — the comments are the project's own #}
+# shared.conf — settings every host agent shares. Tracked in git: it holds NO secret.
+# A secret's value is its kms ADDRESS; the start scripts fetch the values (connect_external/kms/
+# env_from_kms.sh → kms.py) into RAM and export them. The address is kms as seen from THIS PC.
+#   KEY=${KMS_URL}/v1/kv/data/<entry>            key inside the entry = KEY
+#   KEY=${KMS_URL}/v1/kv/data/<entry>#OTHER_KEY  the entry names it differently
+# A new secret: bash agents/connect_external/kms/add_new_secret_to_kms.sh   (asks name + value, writes the line)
+
+# ── Claude API key (shared by every agent; the one entry kv/shared/anthropic) ──
+# kms's base is named ONCE (TESTSERVER-46) — as seen from THIS PC: kms elsewhere → KMS_URL=https://<kms-host>:<port>,
+# every ${KMS_URL}/v1/kv/data/… line follows.
+KMS_URL={{ mirror.KMS_URL }}
+# SECRET_MGT — where the passwords below come from (TESTSERVER-67): kms = their kms addresses, fetched at start ·
+# local = the real values written right here (no kms at all) · not set / empty → local
+SECRET_MGT={{ mirror.SECRET_MGT }}
+# every password keeps its kms address in the "# kms:" comment right above it — the rotation (connect_external/kms/):
+# transfer (values): agents_transfer_kms2tempfile.sh / _local2tempfile_random_value.sh / _tempfile2local.sh /
+#   _local2kms.sh / _comment2local_kmsurl.sh · config (SECRET_MGT only): agents_config_secret_mgt_local.sh / _kms.sh
+# kms: ${KMS_URL}/v1/kv/data/shared/anthropic
+ANTHROPIC_API_KEY={{ mirror.ANTHROPIC_API_KEY }}
+
+# ── PostgreSQL login (ums) — the password is mypostgresql_db's, named UMS_PASSWORD there ──
+AGENT_DB_NAME={{ mirror.AGENT_DB_NAME }}
+AGENT_DB_USER={{ mirror.AGENT_DB_USER }}
+# kms: ${KMS_URL}/v1/kv/data/mypostgresql_db/umsdb#UMS_PASSWORD
+AGENT_DB_PASSWORD={{ mirror.AGENT_DB_PASSWORD }}
+AGENT_DB_PORT={{ mirror.AGENT_DB_PORT }}
+
+# ── Container names ───────────────────────────────────────────────────────────
+PG_CONTAINER={{ mirror.PG_CONTAINER }}
+UMS_CONTAINER={{ mirror.UMS_CONTAINER }}
+UMS_PORT={{ mirror.UMS_PORT }}
+
+# ── Email notifications (workspace-agent autonomous mode) ─────────────────────
+# SMTP_PASS is a Gmail App Password (https://myaccount.google.com/apppasswords) — the agents' own
+# secret, in kv/agents/shared. A new one: bash agents/connect_external/kms/add_new_secret_to_kms.sh SMTP_PASS
+SMTP_HOST={{ mirror.SMTP_HOST }}
+SMTP_PORT={{ mirror.SMTP_PORT }}
+SMTP_USER={{ mirror.SMTP_USER }}
+# kms: ${KMS_URL}/v1/kv/data/agents/shared
+SMTP_PASS={{ mirror.SMTP_PASS }}
+NOTIFY_EMAIL={{ mirror.NOTIFY_EMAIL }}
+
+# KMS_MASTER_PASSWORD_DIR — where kms's master_password folder is on this PC (TESTSERVER-34): no kms login yet → an agent's
+# start signs the agents up with the password in it, no question. Relative = to agents/. A path, no secret.
+KMS_MASTER_PASSWORD_DIR={{ mirror.KMS_MASTER_PASSWORD_DIR }}
+
+# How often the agent runs its autonomous maintenance cycle (seconds, default 3600 = 1 hour)
+AGENT_CYCLE_INTERVAL={{ mirror.AGENT_CYCLE_INTERVAL }}

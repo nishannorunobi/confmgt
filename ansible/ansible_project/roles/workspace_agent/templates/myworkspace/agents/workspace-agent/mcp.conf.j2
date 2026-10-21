@@ -1,0 +1,26 @@
+{# rendered by Ansible (confmgt) from inventories/<env>/myworkspace/ (the mirror) + shared/ — the comments are the project's own #}
+# mcp.conf — the settings behind Claude Code's .mcp.json. Tracked in git: it holds NO secret.
+# A secret's value is its kms ADDRESS; agents/workspace-agent/connect_external/kms/mcp_json_from_kms.sh (run by startup.sh)
+# fetches the values and fills .mcp.json.template → .mcp.json (600, git-ignored). The address is kms
+# as seen from THIS PC.
+#   KEY=${KMS_URL}/v1/kv/data/<entry>            key inside the entry = KEY
+#   KEY=${KMS_URL}/v1/kv/data/<entry>#OTHER_KEY  the entry names it differently
+# A new secret: bash agents/workspace-agent/connect_external/kms/add_new_secret_to_kms.sh   (asks name + value, writes the line)
+
+# ── Plane MCP server (plane-server): an API token issued in Plane (profile → API tokens) ──
+# kms's base is named ONCE (TESTSERVER-46) — as seen from THIS PC: kms elsewhere → KMS_URL=https://<kms-host>:<port>,
+# every ${KMS_URL}/v1/kv/data/… line follows.
+KMS_URL={{ mirror.KMS_URL }}
+# SECRET_MGT — where the passwords below come from (TESTSERVER-67): kms = their kms addresses, fetched at start ·
+# local = the real values written right here (no kms at all) · not set / empty → local
+SECRET_MGT={{ mirror.SECRET_MGT }}
+# every password keeps its kms address in the "# kms:" comment right above it — the rotation (connect_external/kms/):
+# transfer (values): workspace_transfer_kms2tempfile.sh / _local2tempfile_random_value.sh / _tempfile2local.sh /
+#   _local2kms.sh / _comment2local_kmsurl.sh · config (SECRET_MGT only): workspace_config_secret_mgt_local.sh / _kms.sh
+# kms: ${KMS_URL}/v1/kv/data/workspace/mcp
+PLANE_API_KEY={{ mirror.PLANE_API_KEY }}
+PLANE_API_HOST_URL={{ mirror.PLANE_API_HOST_URL }}
+
+# KMS_MASTER_PASSWORD_DIR — where kms's master_password folder is on this PC (TESTSERVER-36): no kms login yet →
+# mcp_json_from_kms.sh signs the workspace up with the password in it. Relative = to this folder. A path, no secret.
+KMS_MASTER_PASSWORD_DIR={{ mirror.KMS_MASTER_PASSWORD_DIR }}

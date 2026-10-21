@@ -1,0 +1,4 @@
+# roles/workspace_agent — its config files, each rendered from its mirror + shared/ (the single source of truth)
+- name: "workspace_agent {{ item }}"
+  ansible.builtin.include_tasks: render_mirrored_file.yml
+  loop: "{{ workspace_agent_files }}"
