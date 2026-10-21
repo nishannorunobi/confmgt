@@ -4,6 +4,7 @@
 # Every target here is in ~/myworkspace/svcmgt/svc_policy.conf SVC_VIA_DEPLOY too, and only those:
 # dockerspace/host_scripts/test_deploy_playbook.sh checks the two lists are the same.
 deploy_projects:
+  - {name: mypostgresql_db, targets: [mypostgresql_db, db-agent]}           # db-agent = its container's entry point (checked)
   - {name: agents, targets: [agent-orchestrator]}                           # the host agents (docker-manager-agent · workspace-agent: start plan default no — not started)
   - {name: workspace_agent, targets: []}                                    # config only — the workspace-agent's MCP config
   - {name: mycache, targets: [mycache]}                                     # cache-agent = its container's entry point
