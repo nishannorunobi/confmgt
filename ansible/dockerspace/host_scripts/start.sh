@@ -10,7 +10,9 @@
 # How         bash dockerspace/host_scripts/start.sh            from the EXISTING image (built once, then offline)
 #             bash dockerspace/host_scripts/start.sh --build    rebuild first (a version / requirements change)
 #
-# Steps       1. my_docker_network — created if missing (same name + subnet the workspace uses), so confmgt runs alone
+# Steps       0. the folders it mounts (.env LOG_DIR · KMS_MASTER_PASSWORD_DIR) — created when missing, so Docker never
+#                creates them root-owned in a wrong place (confmgt on its own machine: set both in .env)
+#             1. my_docker_network — created if missing (same name + subnet the workspace uses), so confmgt runs alone
 #             2. docker compose up -d (dockerspace/docker-compose.yml)
 #
 # Output      Container confmgt-ansible  Started
@@ -25,6 +27,11 @@ if [ -f "$_WS_ROOT/init/create_logging_path.sh" ]; then
 fi
 # ──────────────────────────────────────────────────────────────────────────────
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"       # dockerspace/
+for v in LOG_DIR KMS_MASTER_PASSWORD_DIR; do                   # the mounted folders: this machine's own paths (.env)
+    d="$(sed -nE "s/^$v=//p" .env 2>/dev/null | tail -1)"; [ -n "$d" ] || { [ $v = LOG_DIR ] && d=../../../../mountspace/logs; }
+    [ -n "$d" ] || continue
+    [ -d "$d" ] || { mkdir -p "$d" && echo -e "\033[36m[ INFO ]\033[0m $v: created $(cd "$d" && pwd)"; }
+done
 docker network inspect my_docker_network >/dev/null 2>&1 \
     || docker network create --subnet=172.28.0.0/16 my_docker_network >/dev/null
 if [ "${1:-}" = --build ]; then docker compose up -d --build; else docker compose up -d; fi

@@ -72,6 +72,18 @@ ANSIBLE_SSH_KEY_SECRET=${KMS_URL}/v1/kv/data/confmgt/ansible
 A machine lets Ansible in only when the public key from `show_public_key.sh` is in its `~/.ssh/authorized_keys`.
 The first contact is trusted and remembered in the data volume (`known_hosts`). A host key that changes later is refused.
 
+## On its own machine
+
+confmgt does not need the workspace. Clone it anywhere (e.g. `/opt/confmgt`) and set this machine's paths, nothing else:
+
+| File | Setting | On the PC (default) | On its own server (example) |
+|---|---|---|---|
+| `dockerspace/.env` | `LOG_DIR` | `../../../../mountspace/logs` | `/var/log/confmgt` |
+| `dockerspace/.env` | `KMS_MASTER_PASSWORD_DIR` | `../../../../mountspace/usb/…/master_password` | `/opt/confmgt-data/kms/master_password` |
+| `ansible-agent/agent.conf` | `KMS_URL` | `http://kms-openbao:8200` | `https://<kms-host>:<port>` |
+
+`start.sh` creates both folders when missing. Then `bash start.sh`.
+
 ## Agent API (`http://127.0.0.1:8897`)
 
 | Call | What |

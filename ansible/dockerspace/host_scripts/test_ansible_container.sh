@@ -29,6 +29,7 @@
 #             C14 wait_until_answering.sh: OK when it answers · the agent's own reason when it cannot · C15 status.sh: no traceback
 #             C16 container_scripts/env_check.sh inside: all OK · C17 the standard layout (CLAUDEWORK-98) + status.sh --state
 #             C18 authorize_ansible_on_this_pc.sh: the key into authorized_keys once (a temp file)
+#             C19 on its own machine: a copy outside the workspace with its own LOG_DIR / KMS_MASTER_PASSWORD_DIR
 # ─────────────────────────────────────────────────────────────────────────────
 case "${1:-}" in -h|--help) awk 'NR==1{next} /^# ─/{n++; if(n==2) exit; next} n==1{ sub(/^# ?/,""); if(!t){printf "\033[1m%s\033[0m\n",$0; t=1; next} l=substr($0,1,12); if(l ~ /^[A-Z][A-Za-z ]+$/){c=(l ~ /^Errors/)?"\033[33m":"\033[36m"; printf "%s%s\033[0m%s\n",c,l,substr($0,13)} else print }' "$0"; exit 0 ;; esac
 
@@ -299,6 +300,17 @@ for f in "$HERE"/*.sh; do case "$(basename "$f")" in start.sh|stop.sh|status.sh|
 s="$(cd "$HERE" && bash status.sh --state 2>&1)"; [[ "$s" =~ ^(running|stopped)$ ]] || b17+=" state:[$s]"
 [ -z "$b17" ] && ok "C17 standard layout: top = start/stop/status + your 3 commands · dockerspace/{compose, Dockerfile, .env, host_scripts/, container_scripts/} · status.sh --state = one word" \
   || bad "C17:$b17"
+
+# ── C19: confmgt ON ITS OWN MACHINE: a copy outside the workspace, its own paths in .env ─────────────────
+SRV="$WORK/x/opt/confmgt"; mkdir -p "$SRV"; (cd "$HERE" && tar --exclude=./ansible-agent/connect_external/kms/credentials -cf - .) | tar -xf - -C "$SRV"
+sed -i -e "s#^LOG_DIR=.*#LOG_DIR=$WORK/x/srv/log#" -e "s#^KMS_MASTER_PASSWORD_DIR=.*#KMS_MASTER_PASSWORD_DIR=$WORK/x/srv/mpw#" "$SRV/dockerspace/.env"
+STUB="$WORK/x/stubbin"; mkdir -p "$STUB"; printf '#!/bin/bash\necho "docker $*" >> %s/calls\n' "$WORK/x" > "$STUB/docker"; chmod +x "$STUB/docker"
+o19="$(PATH="$STUB:$PATH" bash "$SRV/dockerspace/host_scripts/start.sh" 2>&1)"; r19=$?
+cfg="$(cd "$SRV/dockerspace" && docker compose config 2>/dev/null)"
+[ $r19 = 0 ] && [ -d "$WORK/x/srv/log" ] && [ -d "$WORK/x/srv/mpw" ] && grep -q 'LOG_DIR: created' <<< "$o19" && grep -q 'compose up -d' "$WORK/x/calls" \
+  && grep -q "source: $WORK/x/srv/log" <<< "$cfg" && grep -q "source: $WORK/x/srv/mpw" <<< "$cfg" && ! grep -q 'mountspace/logs$' <<< "$(grep 'source:' <<< "$cfg")" \
+  && ok "C19 on its own machine (a copy outside the workspace): LOG_DIR + KMS_MASTER_PASSWORD_DIR from .env → both folders created, mounted from there, compose up" \
+  || bad "C19 rc=$r19 [$(tr '\n' '¦' <<< "$o19" | cut -c1-200)] calls=[$(cat "$WORK/x/calls" 2>/dev/null)]"
 
 # ── C11: static ──────────────────────────────────────────────────────────────
 b11=""

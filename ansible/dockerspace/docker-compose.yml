@@ -44,7 +44,7 @@ services:
       - ../ansible-agent:/ansible-agent                    # the agent + its kms login (connect_external/kms/credentials/)
       - ./container_scripts:/container_scripts:ro          # checks you run inside: bash /container_scripts/env_check.sh
       - ../ansible_project:/ansible_project:ro             # the Ansible project: inventories, playbooks, roles — read-only
-      - ../../../../mountspace/logs:/mountspace/logs
+      - ${LOG_DIR:-../../../../mountspace/logs}:/mountspace/logs   # LOG_DIR in .env — another machine sets its own
       # kms's master_password folder ONLY, read-only: no kms login yet → the ansible-agent signs itself up from it.
       # The owner keeps it empty most of the time. Where it is: KMS_MASTER_PASSWORD_DIR in .env
       - ${KMS_MASTER_PASSWORD_DIR}:/mountspace/usb/myworkspace/projectspace/kms/master_password:ro
