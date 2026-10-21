@@ -4,6 +4,7 @@
 # Every target here is in ~/myworkspace/svcmgt/svc_policy.conf SVC_VIA_DEPLOY too, and only those:
 # dockerspace/host_scripts/test_deploy_playbook.sh checks the two lists are the same.
 deploy_projects:
+  - {name: mychannels, targets: [mychannels]}                               # channel-agent = its container's entry point
   - {name: mydocs, targets: [mydocs]}                                       # minimal Plane (mydocs-other stays in the start plan, default no)
   - {name: mylog_analytics, targets: []}                                    # config only — not started by default (restart only when it runs)
   - {name: myodoo, targets: []}                                             # config only — not started by default (restart only when it runs)
