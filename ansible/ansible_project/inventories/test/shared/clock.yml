@@ -1,0 +1,3 @@
+# shared/clock.yml — the time zone of every project on the TEST environment (the test VM)
+shared_clock:
+  tz: "America/New_York"

@@ -13,6 +13,7 @@
 #             A3 the real files only read · A4 no secret in the mirror or shared/ (passwords / keys = kms addresses)
 #             A5 playbooks/deploy.yml with the REAL dev deploy_projects (CONFMGT [6]) on the copies: changed=0, each
 #                project's targets handed to svcmgt/start_targets.sh (a stub) in projects.yml's order, the copies unchanged
+#             A6 the TEST values (inventories/test/) render every project's real files too · A7 no secret in the test mirror
 # ─────────────────────────────────────────────────────────────────────────────
 case "${1:-}" in -h|--help) awk 'NR==1{next} /^# ─/{n++; if(n==2) exit; next} n==1{ sub(/^# ?/,""); if(!t){printf "\033[1m%s\033[0m\n",$0; t=1; next} l=substr($0,1,12); if(l ~ /^[A-Z][A-Za-z ]+$/){c=(l ~ /^Errors/)?"\033[33m":"\033[36m"; printf "%s%s\033[0m%s\n",c,l,substr($0,13)} else print }' "$0"; exit 0 ;; esac
 set -uo pipefail
@@ -53,6 +54,17 @@ n="$(wc -w <<< "$roles")"
 [ -z "$b2" ] && ok "A2 every project — apply → changed=0, no restart (nothing changed)" || bad "A2:$b2"
 [ "$(cd "$TMP/ws" && md5sum $files)" = "$S0" ] && ok "A3 the copies unchanged — the real files were only read" || bad "A3 a copy changed"
 
+# ── A6: the TEST values (inventories/test/myworkspace + shared/) render the same real files ──────
+mkdir -p "$P/inventories/t6"; cp -a "$P/inventories/dev/group_vars" "$HERE/ansible_project/inventories/test/myworkspace" "$HERE/ansible_project/inventories/test/shared" "$P/inventories/t6/"
+cp "$P/inventories/t/hosts.yml" "$P/inventories/t6/"
+b6=""
+for r in $roles; do
+    o="$(docker run --rm -v "$TMP/ws:/ws" -v "$P:/p" -w /p -e ANSIBLE_CONFIG=/p/ansible.cfg -e ANSIBLE_NOCOLOR=1 "$IMG" \
+          ansible-playbook -i inventories/t6 "playbooks/$r.yml" --check --diff 2>&1)"
+    grep -qE 'm1 +: ok=[0-9]+ +changed=0 ' <<< "$o" || b6+=" $r[$(grep -E '^[-+][A-Za-z_]|fatal|ERROR' <<< "$o" | head -2 | tr '\n' '¦')]"
+done
+[ -z "$b6" ] && ok "A6 every project ($n) renders its real files from the TEST values too → changed=0 (test = dev today; a VM-only value shows here)" || bad "A6:$b6"
+
 # ── A5: deploy.yml with the real dev deploy_projects, on the copies ──────────
 mkdir -p "$TMP/ws/svcmgt"; [ -f "$TMP/ws/svcmgt/svc_policy.conf" ] || cp "$REAL/svcmgt/svc_policy.conf" "$TMP/ws/svcmgt/"
 printf '#!/bin/bash\necho "$*" >> /ws/started\nfor t in "$@"; do echo "$t RUNNING"; done\n' > "$TMP/ws/svcmgt/start_targets.sh"
@@ -69,5 +81,9 @@ b4="$(find "$HERE/ansible_project/inventories/dev/myworkspace" "$HERE/ansible_pr
       | grep -vE '^ +([A-Z_]+_DIR|SECRET_MGT|secret_mgt|ENABLE_EMAIL_PASSWORD): ' | grep -vE ': "\{\{ shared_[a-z_.]+ \}\}' \
       | grep -vE ': "(\$\{KMS_URL\}|https?://[^"]+)/v1/kv/data/' | grep -vE ': ""')"
 [ -z "$b4" ] && ok "A4 no secret in the mirror or shared/ — every password / key is a kms address (or empty)" || bad "A4 a secret value: $(cut -d: -f1 <<< "$b4" | tr '\n' ' ')"
+b7="$(find "$HERE/ansible_project/inventories/test/myworkspace" "$HERE/ansible_project/inventories/test/shared" -name '*.yml' -exec grep -hE '^ +[A-Za-z_]*(PASS|PASSWORD|SECRET|TOKEN|_KEY|passwd|password|api_key)[A-Za-z_]*: ' {} + \
+      | grep -vE '^ +([A-Z_]+_DIR|SECRET_MGT|secret_mgt|ENABLE_EMAIL_PASSWORD): ' | grep -vE ': "\{\{ shared_[a-z_.]+ \}\}' \
+      | grep -vE ': "(\$\{KMS_URL\}|https?://[^"]+)/v1/kv/data/' | grep -vE ': ""')"
+[ -z "$b7" ] && ok "A7 no secret in the TEST mirror or shared/ either" || bad "A7 a secret value: $(cut -d: -f1 <<< "$b7" | tr '\n' ' ')"
 [ "$FAIL" = 0 ] && ok "all-roles tests passed ($n projects; throwaway copies removed)" && exit 0
 exit 1

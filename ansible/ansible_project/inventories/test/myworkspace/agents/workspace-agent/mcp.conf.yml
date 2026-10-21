@@ -1,0 +1,10 @@
+# agents/workspace-agent/mcp.conf — its OWN values on the TEST environment (the test VM) (mirror of ~/myworkspace/agents/workspace-agent/mcp.conf).
+# Values used by 2+ projects are NOT copied here: they point to shared/<topic>.yml · secrets: only kms ADDRESSES.
+# Change a value → check_playbook.sh (dry run) shows the line that would change.
+
+mirror:
+  KMS_URL: "{{ shared_kms.url_on_host }}"                       # → shared/kms.yml
+  SECRET_MGT: "{{ shared_kms.secret_mgt }}"                     # → shared/kms.yml
+  PLANE_API_KEY: "${KMS_URL}/v1/kv/data/workspace/mcp"
+  PLANE_API_HOST_URL: "http://localhost:8080"
+  KMS_MASTER_PASSWORD_DIR: "../../mountspace/usb/myworkspace/projectspace/kms/master_password"

@@ -1,0 +1,22 @@
+# agents/shared.conf — its OWN values on the TEST environment (the test VM) (mirror of ~/myworkspace/agents/shared.conf).
+# Values used by 2+ projects are NOT copied here: they point to shared/<topic>.yml · secrets: only kms ADDRESSES.
+# Change a value → check_playbook.sh (dry run) shows the line that would change.
+
+mirror:
+  KMS_URL: "{{ shared_kms.url_on_host }}"                       # → shared/kms.yml
+  SECRET_MGT: "{{ shared_kms.secret_mgt }}"                     # → shared/kms.yml
+  ANTHROPIC_API_KEY: "{{ shared_anthropic.api_key }}"           # → shared/anthropic.yml
+  AGENT_DB_NAME: "{{ shared_postgres.databases.ums.db }}"       # → shared/postgres.yml
+  AGENT_DB_USER: "{{ shared_postgres.databases.ums.user }}"     # → shared/postgres.yml
+  AGENT_DB_PASSWORD: "{{ shared_postgres.databases.ums.password }}#{{ shared_postgres.databases.ums.key }}"# → shared/postgres.yml
+  AGENT_DB_PORT: "{{ shared_postgres.port }}"                   # → shared/postgres.yml
+  PG_CONTAINER: "{{ shared_postgres.host }}"                    # → shared/postgres.yml
+  UMS_CONTAINER: "ums-app"
+  UMS_PORT: "8090"
+  SMTP_HOST: "smtp.gmail.com"
+  SMTP_PORT: "587"
+  SMTP_USER: "norunnabinishan@gmail.com"
+  SMTP_PASS: "${KMS_URL}/v1/kv/data/agents/shared"
+  NOTIFY_EMAIL: "norunnabinishan@gmail.com"
+  KMS_MASTER_PASSWORD_DIR: "../mountspace/usb/myworkspace/projectspace/kms/master_password"
+  AGENT_CYCLE_INTERVAL: "3600"

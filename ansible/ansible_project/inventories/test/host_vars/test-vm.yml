@@ -4,3 +4,4 @@
 ansible_host: host.docker.internal
 ansible_port: 2222
 ansible_user: nishan
+workspace_root: /home/nishan/myworkspace     # where the workspace is in the VM (deploy_test_vm.sh clones it there)
