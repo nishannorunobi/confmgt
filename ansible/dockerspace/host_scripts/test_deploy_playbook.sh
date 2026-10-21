@@ -17,6 +17,10 @@
 #             P4 no svc_policy.conf in ws_dir → FAILED (the workspace is not there)
 #             P5 deploy_on_this_pc.sh: --state stopped before · the key into a temp authorized_keys once · apply deploy dev
 #                → OK · --state running · the agent failing → exit 1 · --state partial
+#             P6 deploy_projects on the SSH machine (a fake project role + a fake svcmgt/start_targets.sh): in order, config
+#                rendered + restart once, targets STARTED · again → changed=0, no restart · a value changed → restart only ·
+#                a target that fails → the play stops, the projects after it are not tried
+#             P7 the real lists agree: inventories/dev deploy_projects targets == ~/myworkspace svc_policy.conf SVC_VIA_DEPLOY
 # ─────────────────────────────────────────────────────────────────────────────
 case "${1:-}" in -h|--help) awk 'NR==1{next} /^# ─/{n++; if(n==2) exit; next} n==1{ sub(/^# ?/,""); if(!t){printf "\033[1m%s\033[0m\n",$0; t=1; next} l=substr($0,1,12); if(l ~ /^[A-Z][A-Za-z ]+$/){c=(l ~ /^Errors/)?"\033[33m":"\033[36m"; printf "%s%s\033[0m%s\n",c,l,substr($0,13)} else print }' "$0"; exit 0 ;; esac
 set -uo pipefail
@@ -75,13 +79,14 @@ sleep 2
 
 # ── P2: dev-like ─────────────────────────────────────────────────────────────
 o2="$(play p2)"
-[ "$(grep -c '^skipping: \[m1\]' <<< "$o2")" = 4 ] && grep -qE 'm1 +: ok=1 +changed=0 .*failed=0 +skipped=4' <<< "$o2" \
-  && ok "P2 switches off → git · GitHub · clone · Docker skipped (4), the workspace is there → ok" || bad "P2 $(grep -E 'm1 +:|fatal' <<< "$o2")"
+sk() { for n in "git + curl" "GitHub answers" "the workspace — clone" "Docker — the workspace"; do grep -A1 "TASK \[$n" <<< "$1" | grep -q '^skipping: \[m1\]' || echo "$n"; done; }
+[ -z "$(sk "$o2")" ] && grep -qE 'm1 +: ok=1 +changed=0 .*failed=0' <<< "$o2" \
+  && ok "P2 switches off → git · GitHub · clone · Docker skipped, the workspace is there → the only ok" || bad "P2 $(grep -E 'm1 +:|fatal' <<< "$o2")"
 
 # ── P3: switches not set → off · again → changed=0 ───────────────────────────
 o3="$(play p3)"; o3b="$(play p3)"
-grep -qE 'm1 +: ok=1 +changed=0 .*failed=0 +skipped=4' <<< "$o3" && grep -qE 'm1 +: ok=1 +changed=0 .*failed=0' <<< "$o3b" \
-  && ok "P3 switches not set → off (skipped 4) · again → changed=0" || bad "P3 $(grep -E 'm1 +:|fatal' <<< "$o3")"
+[ -z "$(sk "$o3")" ] && grep -qE 'm1 +: ok=1 +changed=0 .*failed=0' <<< "$o3" && grep -qE 'm1 +: ok=1 +changed=0 .*failed=0' <<< "$o3b" \
+  && ok "P3 switches not set → off (all four skipped) · again → changed=0" || bad "P3 $(grep -E 'm1 +:|fatal' <<< "$o3")"
 
 # ── P4: no workspace ─────────────────────────────────────────────────────────
 o4="$(play p4)"
@@ -119,5 +124,38 @@ echo bad > "$WORK/mode"; o5c="$(run5)"; r5c=$?; s2="$(run5 --state)"
   && grep -q 'OK.*apply deploy on dev' <<< "$o5" && [ "$s1" = running ] && [ $r5c = 1 ] && [ "$s2" = partial ] \
   && ok "P5 deploy_on_this_pc.sh: --state stopped → key added once (temp authorized_keys) → apply deploy dev OK → running · agent fails → exit 1, partial" \
   || bad "P5 s0=$s0 r5=$r5 s1=$s1 r5c=$r5c s2=$s2 · $(tail -2 <<< "$o5" | tr '\n' '¦')"
+
+# ── P6: the project loop ─────────────────────────────────────────────────────
+R="$WORK/a/project/roles/fakeproj"; mkdir -p "$R/tasks" "$R/handlers" "$R/templates"
+printf -- '- name: fake config\n  ansible.builtin.template:\n    src: fake.j2\n    dest: "{{ ws_dir }}/{{ fake_file }}"\n  notify: restart fakeproj\n' > "$R/tasks/main.yml"
+printf -- '- name: restart fakeproj\n  ansible.builtin.shell: echo "restart {{ fake_file }}" >> {{ ws_dir }}/events\n' > "$R/handlers/main.yml"
+printf 'value={{ fake_value }}\n' > "$R/templates/fake.j2"
+docker exec "$M" sh -c '[ -e /bin/bash ] || { printf "#!/bin/sh\nexec sh \"\$@\"\n" > /bin/bash; chmod 755 /bin/bash; }'   # alpine: the playbook calls bash
+docker exec -u ansible "$M" sh -c 'cat > /home/ansible/ws/svcmgt/start_targets.sh <<"X"
+cd "$(dirname "$0")/.."; for t in "$@"; do
+  [ "$t" = bad ] && { echo "$t FAILED"; exit 1; }
+  if [ -f "up_$t" ]; then echo "$t RUNNING"; else touch "up_$t"; echo "start $t" >> events; echo "$t STARTED"; fi
+done
+X'
+p6() {   # VALUE [extra project]
+    mkinv p6 "ws_manage_git: false\nws_dir: /home/ansible/ws\nfake_value: $1\ndeploy_projects:\n  - {name: one, role: fakeproj, targets: [a1, a2]}\n${2:-}  - {name: two, role: fakeproj, targets: [b1]}\n"
+    mkdir -p "$WORK/a/project/inventories/p6/shared"; play p6 -e fake_file=fake.conf
+}
+ev() { docker exec "$M" sh -c 'cat /home/ansible/ws/events 2>/dev/null' | tr '\n' ',' ; }
+o6="$(p6 1)"; e1="$(ev)"; o6b="$(p6 1)"; e2="$(ev)"; o6c="$(p6 2)"; e3="$(ev)"
+docker exec "$M" sh -c 'rm -f /home/ansible/ws/up_* /home/ansible/ws/events'
+o6d="$(p6 1 '  - {name: broken, role: fakeproj, targets: [bad]}\n')"; e4="$(ev)"
+[ "$e1" = "restart fake.conf,start a1,start a2,start b1," ] && grep -qE 'm1 +: .*failed=0' <<< "$o6" \
+  && [ "$e2" = "$e1" ] && grep -qE 'm1 +: ok=[0-9]+ +changed=0 .*failed=0' <<< "$o6b" \
+  && [ "$e3" = "${e1}restart fake.conf," ] && grep -qE 'm1 +: .*failed=0' <<< "$o6c" \
+  && [ "$e4" = "restart fake.conf,start a1,start a2," ] && grep -qE 'm1 +: .*failed=1' <<< "$o6d" \
+  && ok "P6 deploy_projects: in order · config + restart once · STARTED · again changed=0 · a value changed → restart only · a failing target stops the play" \
+  || bad "P6 e1=[$e1] e2=[$e2] e3=[$e3] e4=[$e4] $(grep -E 'm1 +:|fatal|ERROR' <<< "$o6$o6d" | head -3 | tr '\n' '¦')"
+
+# ── P7: the two lists agree ──────────────────────────────────────────────────
+inv_t="$(inv dev dev-pc | python3 -c 'import json,sys; print(" ".join(sorted(t for p in json.load(sys.stdin).get("deploy_projects",[]) for t in p.get("targets",[]))))')"
+pol_t="$(bash -c 'source "$1"; printf "%s\n" "${SVC_VIA_DEPLOY[@]:-}" | sort | xargs' _ "$_WS_ROOT/svcmgt/svc_policy.conf")"
+[ "$inv_t" = "$pol_t" ] && ok "P7 inventories/dev deploy_projects targets == svc_policy.conf SVC_VIA_DEPLOY [${inv_t:-none}]" \
+  || bad "P7 inventory [$inv_t] ≠ svc_policy.conf [$pol_t]"
 
 [ $FAIL = 0 ] && ok "deploy playbook tests passed (throwaway machine + stand-in agent removed)" || { echo -e "\033[31m[FAILED]\033[0m deploy playbook tests"; exit 1; }

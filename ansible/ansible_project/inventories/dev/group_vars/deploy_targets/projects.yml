@@ -1,0 +1,6 @@
+# projects.yml — the projects playbooks/deploy.yml brings up on THIS PC, IN START ORDER (CONFMGT [6]; one per story).
+#   name     the project (its config role has the same name unless role: says otherwise)
+#   targets  its svc_policy.conf targets Ansible starts (svcmgt/start_targets.sh) — [] = config only
+# Every target here is in ~/myworkspace/svcmgt/svc_policy.conf SVC_VIA_DEPLOY too, and only those:
+# dockerspace/host_scripts/test_deploy_playbook.sh checks the two lists are the same.
+deploy_projects: []

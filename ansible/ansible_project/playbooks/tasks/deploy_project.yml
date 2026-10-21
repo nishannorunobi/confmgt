@@ -1,0 +1,21 @@
+# deploy_project.yml — ONE project of playbooks/deploy.yml (looped over deploy_projects, loop_var project):
+#   1. its config from the mirror — the project's own role (a changed file notifies the role's restart handler)
+#   2. the restart runs NOW if the config changed (the project's own scripts, in the handler)
+#   3. its targets up — the workspace's svcmgt/start_targets.sh runs each target's OWN start script from svc_policy.conf
+#      (already running → left alone: RUNNING; started → STARTED = changed)
+- name: "{{ project.name }} — config from the mirror"
+  ansible.builtin.include_role:
+    name: "{{ project.role | default(project.name) }}"
+
+- name: "{{ project.name }} — restart now if its config changed"
+  ansible.builtin.meta: flush_handlers
+
+- name: "{{ project.name }} — up: {{ project.targets | default([]) | join(' ') }}"
+  ansible.builtin.command: bash svcmgt/start_targets.sh {{ project.targets | join(' ') }}
+  args:
+    chdir: "{{ ws_dir }}"
+  environment:
+    SVC_RUN: "1"
+  register: up
+  changed_when: "' STARTED' in up.stdout"
+  when: project.targets | default([]) | length > 0

@@ -1,10 +1,11 @@
 # deploy.yml — the workspace on the deploy_targets machines of an inventory (CONFMGT [6]): dev = this PC, test = the test VM.
 #   check_playbook.sh → deploy → <env>   dry run — changes nothing
 #   apply_playbook.sh → deploy → <env>   [ws_manage_git] git → clone / pull ws_branch · [ws_manage_docker] Docker by the
-#                                         workspace's OWN script · the workspace is there. Run again → changed=0.
+#                                         workspace's OWN script · the workspace is there · each project of
+#                                         deploy_projects: config → restart if changed → up. Run again → changed=0.
 # How, per environment (a switch not set → off): inventories/<env>/group_vars/deploy_targets/ — dev: git + Docker OFF (your live checkout; Docker
 # from startup.sh) · test: both ON (ws_branch: a run may send its own — the story branch under test).
-# Each project joins in its own story ([6.3]…).
+# deploy_projects (dev): inventories/dev/group_vars/deploy_targets/projects.yml — one project per story ([6.4]…).
 - name: Deploy the workspace
   hosts: deploy_targets
   gather_facts: false
@@ -47,3 +48,15 @@
         path: "{{ ws_dir }}/svcmgt/svc_policy.conf"
       register: ws
       failed_when: not ws.stat.exists
+
+    - name: shared values first (inventories/<env>/shared/ — what 2+ projects use)
+      ansible.builtin.include_role:
+        name: shared
+      when: deploy_projects | default([]) | length > 0
+
+    - name: the projects, in start order (inventories/<env>/group_vars/deploy_targets/projects.yml)
+      ansible.builtin.include_tasks: tasks/deploy_project.yml
+      loop: "{{ deploy_projects | default([]) }}"
+      loop_control:
+        loop_var: project
+        label: "{{ project.name }}"
