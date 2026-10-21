@@ -23,7 +23,7 @@ SVC_TARGETS=(
     mycache cache-agent mychannels channel-agent
     mydocs mydocs-other
     mylog_analytics log-agent myodoo17 odoo-agent myodoo19
-    confmgt-ansible ansible-agent
+    confmgt-ansible ansible-agent deploy-dev
     updown
 )
 
@@ -40,6 +40,7 @@ declare -A SVC_DIR=(
     [myodoo17]=projectspace/myodoo             [odoo-agent]=projectspace/myodoo/odoo-agent
     [myodoo19]=projectspace/myodoo
     [confmgt-ansible]=projectspace/confmgt/ansible   [ansible-agent]=projectspace/confmgt/ansible/ansible-agent
+    [deploy-dev]=projectspace/confmgt/ansible
     [updown]=projectspace/updown
 )
 declare -A SVC_START=(
@@ -55,6 +56,7 @@ declare -A SVC_START=(
     [myodoo17]="start.sh --17"                 [odoo-agent]=host_start.sh
     [myodoo19]="start.sh --19"
     [confmgt-ansible]=start.sh                 [ansible-agent]=host_start.sh
+    [deploy-dev]=deploy_on_this_pc.sh
     [updown]=start.sh
 )
 declare -A SVC_STOP=(
@@ -85,6 +87,7 @@ declare -A SVC_STATE=(
     [myodoo17]="status.sh --state --17"        [odoo-agent]="host_status.sh --state"
     [myodoo19]="status.sh --state --19"
     [confmgt-ansible]="status.sh --state"      [ansible-agent]="host_status.sh --state"
+    [deploy-dev]="deploy_on_this_pc.sh --state"
     [updown]="status.sh --state"
 )
 
@@ -105,6 +108,7 @@ declare -A SVC_URL=(
     [myodoo17]=http://localhost:8069           [odoo-agent]=http://localhost:8896
     [myodoo19]=http://localhost:8089
     [confmgt-ansible]=-                        [ansible-agent]=http://localhost:8897/docs
+    [deploy-dev]=-
     [updown]=-
 )
 
@@ -116,8 +120,11 @@ declare -A SVC_URL=(
 # kms + kms-keys are NOT in this list: SECRET_MGT below decides them (TESTSERVER-83). kms's own start asks for the
 # shares / offers its one-time setup; kms-keys (TESTSERVER-46) right after it creates every component's missing kms
 # keys in one go (svcmgt/register_all_kms_keys.sh).
+# confmgt-ansible + ansible-agent + deploy-dev default to YES (CONFMGT [6.2], 2026-10-21): the LAST step, deploy-dev, is
+# Ansible deploying this PC (confmgt's deploy_on_this_pc.sh: playbook deploy, inventory dev) — the projects move into
+# it one per story ([6.3]…) and leave this list then. No stop script: a deploy is a one-shot (like kms-keys).
 SVC_START_TARGETS=(docker portainer mypostgresql_db db-agent agent-orchestrator
-                   mycache mychannels mydocs)
+                   mycache mychannels mydocs confmgt-ansible ansible-agent deploy-dev)
 # ── Who depends on whom (restart.sh warns before restarting these) ─────────────
 # Plain text, shown to a human; restart.sh only reads it to print the warning.
 declare -A SVC_USED_BY=(
@@ -128,7 +135,7 @@ declare -A SVC_USED_BY=(
 )
 # Targets that fetch their secrets from kms when they start: restart.sh refuses to
 # restart them while kms is sealed (they could not come back) — unless their component's own SECRET_MGT is not kms.
-SVC_NEEDS_KMS=(kms-keys mypostgresql_db db-agent mycache cache-agent mychannels channel-agent mydocs mydocs-other agent-orchestrator docker-manager-agent workspace-agent mylog_analytics log-agent myodoo19 odoo-agent confmgt-ansible ansible-agent)   # container agents = entry points; mydocs + host agents = fetch at start
+SVC_NEEDS_KMS=(kms-keys mypostgresql_db db-agent mycache cache-agent mychannels channel-agent mydocs mydocs-other agent-orchestrator docker-manager-agent workspace-agent mylog_analytics log-agent myodoo19 odoo-agent confmgt-ansible ansible-agent deploy-dev)   # container agents = entry points; mydocs + host agents = fetch at start
 
 # mydocs = minimal Plane (start_minimal_plane.sh, default yes); mydocs-other = admin / beat / minio (start_other_plane.sh) — NOT in
 # SVC_START_TARGETS, so the start plan shows it as "no" unless you switch it (owner, 2026-10-02).

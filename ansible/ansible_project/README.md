@@ -20,11 +20,13 @@ roles/<project>/templates/myworkspace/<path>.j2   the real file's shape (its own
 ## Deploy — the workspace onto a machine (CONFMGT [6])
 
 ```
-inventories/test/hosts.yml   deploy_targets: test-vm          dev has NO deploy_targets → the developer PC is never touched
-playbooks/deploy.yml          git → clone / pull ~/myworkspace → Docker by the workspace's own script   (run again → changed=0)
+inventories/dev/hosts.yml    deploy_targets: dev-pc           this PC: git + Docker OFF (your live checkout · Docker from startup.sh)
+inventories/test/hosts.yml   deploy_targets: test-vm          the test VM: git (clone / pull ws_branch) + Docker ON
+playbooks/deploy.yml          [git] → [Docker] → the workspace is there → (each project, [6.3]…)   (run again → changed=0)
 ```
-On the PC: `bash ~/myworkspace/test_server/deploy_test_vm.sh` — starts the VM + the SSH relay, gives Ansible its key in the VM,
-then asks the agent to apply `deploy` on `test`. Each project joins in its own story ([6.2]…).
+This PC: `bash ../deploy_on_this_pc.sh` — startup.sh runs it last (start-plan target deploy-dev).
+The test VM: `bash ~/myworkspace/test_server/deploy_test_vm.sh` — starts the VM + the SSH relay, gives Ansible its key in
+the VM, then asks the agent to apply `deploy` on `test` with the branch it runs from.
 
 ## The mirror — the single source of truth, laid out like the workspace
 

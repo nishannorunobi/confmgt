@@ -13,6 +13,7 @@ confmgt/ansible/
   show_public_key.sh                        the key to put on each machine (once per machine)
   check_playbook.sh                         dry run: what WOULD change — asks playbook · inventory · machines
   apply_playbook.sh                         the real run
+  deploy_on_this_pc.sh                      Ansible deploys the workspace on THIS PC (deploy · dev) — startup.sh's last step (deploy-dev)
   dockerspace/
     docker-compose.yml · Dockerfile · .env  the container (built once, then offline)
     host_scripts/      ON YOUR PC:  start.sh · stop.sh (Docker only) · logs.sh · clean.sh (⚠ forgets known_hosts)

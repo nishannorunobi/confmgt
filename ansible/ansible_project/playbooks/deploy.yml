@@ -1,14 +1,16 @@
-# deploy.yml — put the workspace on the deploy_targets machines (CONFMGT [6]; only inventories/test has that group).
-#   check_playbook.sh → deploy → test    dry run: what would be installed / pulled — changes nothing
-#   apply_playbook.sh → deploy → test    git (only when missing) → workspace clone, or pull → Docker by the workspace's
-#                                         OWN script. Run again → nothing changes (changed=0).
-# What is deployed: inventories/test/group_vars/deploy_targets/ (ws_branch: a run may send its own — the story branch
-# under test). Each project joins in its own story ([6.2]…).
+# deploy.yml — the workspace on the deploy_targets machines of an inventory (CONFMGT [6]): dev = this PC, test = the test VM.
+#   check_playbook.sh → deploy → <env>   dry run — changes nothing
+#   apply_playbook.sh → deploy → <env>   [ws_manage_git] git → clone / pull ws_branch · [ws_manage_docker] Docker by the
+#                                         workspace's OWN script · the workspace is there. Run again → changed=0.
+# How, per environment (a switch not set → off): inventories/<env>/group_vars/deploy_targets/ — dev: git + Docker OFF (your live checkout; Docker
+# from startup.sh) · test: both ON (ws_branch: a run may send its own — the story branch under test).
+# Each project joins in its own story ([6.3]…).
 - name: Deploy the workspace
   hosts: deploy_targets
   gather_facts: false
   tasks:
     - name: git + curl (only when missing)
+      when: ws_manage_git | default(false) | bool
       become: true
       ansible.builtin.apt:
         name: [git, curl]
@@ -18,12 +20,14 @@
 
     - name: GitHub answers with this machine's key
       ansible.builtin.command: ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new git@github.com
+      when: ws_manage_git | default(false) | bool
       register: github
       changed_when: false
       failed_when: "'successfully authenticated' not in github.stderr"
       check_mode: false
 
     - name: the workspace — clone, or pull (local changes in the machine → refused, never thrown away)
+      when: ws_manage_git | default(false) | bool
       ansible.builtin.git:
         repo: "{{ ws_repo }}"
         dest: "{{ ws_dir }}"
@@ -33,6 +37,13 @@
         accept_hostkey: true
 
     - name: Docker — the workspace's own dockerspace/01_check_and_install_docker.sh (installs only when missing)
+      when: ws_manage_docker | default(false) | bool
       ansible.builtin.command: bash {{ ws_dir }}/dockerspace/01_check_and_install_docker.sh
       register: docker
       changed_when: "'Installing' in docker.stdout"
+
+    - name: the workspace is there (svcmgt/svc_policy.conf)
+      ansible.builtin.stat:
+        path: "{{ ws_dir }}/svcmgt/svc_policy.conf"
+      register: ws
+      failed_when: not ws.stat.exists

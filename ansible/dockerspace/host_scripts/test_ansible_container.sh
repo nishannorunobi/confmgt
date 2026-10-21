@@ -298,10 +298,10 @@ for f in start.sh stop.sh status.sh show_public_key.sh check_playbook.sh apply_p
          dockerspace/host_scripts/clean.sh dockerspace/host_scripts/confmgt_ansible_container_login.sh dockerspace/container_scripts/env_check.sh; do
     [ -f "$HERE/$f" ] || b17+=" missing:$f"
 done
-for f in "$HERE"/*.sh; do case "$(basename "$f")" in start.sh|stop.sh|status.sh|show_public_key.sh|check_playbook.sh|apply_playbook.sh|authorize_ansible_on_this_pc.sh) ;; *) b17+=" top:$(basename "$f")" ;; esac; done
+for f in "$HERE"/*.sh; do case "$(basename "$f")" in start.sh|stop.sh|status.sh|show_public_key.sh|check_playbook.sh|apply_playbook.sh|authorize_ansible_on_this_pc.sh|deploy_on_this_pc.sh) ;; *) b17+=" top:$(basename "$f")" ;; esac; done
 [ -e "$HERE/docker-compose.yml" ] && b17+=" top:docker-compose.yml"
 s="$(cd "$HERE" && bash status.sh --state 2>&1)"; [[ "$s" =~ ^(running|stopped)$ ]] || b17+=" state:[$s]"
-[ -z "$b17" ] && ok "C17 standard layout: top = start/stop/status + your 3 commands · dockerspace/{compose, Dockerfile, .env, host_scripts/, container_scripts/} · status.sh --state = one word" \
+[ -z "$b17" ] && ok "C17 standard layout: top = start/stop/status + your commands · dockerspace/{compose, Dockerfile, .env, host_scripts/, container_scripts/} · status.sh --state = one word" \
   || bad "C17:$b17"
 
 # ── C19: confmgt ON ITS OWN MACHINE: a copy outside the workspace, its own paths in .env ─────────────────

@@ -1,5 +1,7 @@
 # workspace.yml — WHICH workspace playbooks/deploy.yml puts on the deploy_targets, and where (one topic per file).
 # GitHub reaches the machine with its own key (the test VM: test_server/deploy_test_vm.sh gives it one).
+ws_manage_git: true        # clone / pull ws_branch (a fresh machine)
+ws_manage_docker: true     # install Docker with the workspace's own script when missing
 ws_repo: git@github.com:nishannorunobi/myworkspace.git
 ws_branch: main            # the default — test_server/deploy_test_vm.sh sends the story branch it runs from (extra_vars)
 ws_dir: "/home/{{ ansible_user }}/myworkspace"
