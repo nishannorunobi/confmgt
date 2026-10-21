@@ -124,12 +124,12 @@ declare -A SVC_URL=(
 # confmgt-ansible + ansible-agent + deploy-dev default to YES (CONFMGT [6.2], 2026-10-21): the LAST step, deploy-dev, is
 # Ansible deploying this PC (confmgt's deploy_on_this_pc.sh: playbook deploy, inventory dev) — the projects move into
 # it one per story ([6.3]…) and leave this list then. No stop script: a deploy is a one-shot (like kms-keys).
-SVC_START_TARGETS=(docker portainer mypostgresql_db db-agent agent-orchestrator mycache
-                   confmgt-ansible ansible-agent deploy-dev)
+SVC_START_TARGETS=(docker portainer mypostgresql_db db-agent agent-orchestrator confmgt-ansible
+                   ansible-agent deploy-dev)
 # Targets ANSIBLE starts (CONFMGT [6]): deploy-dev's playbook deploy brings each up with svcmgt/start_targets.sh — they
 # leave SVC_START_TARGETS and the start plan shows them as "via deploy-dev". confmgt's inventories/dev
 # group_vars/deploy_targets/projects.yml lists the same targets (its test_deploy_playbook.sh checks both lists).
-SVC_VIA_DEPLOY=(mychannels mydocs)
+SVC_VIA_DEPLOY=(mycache mychannels mydocs)
 # ── Who depends on whom (restart.sh warns before restarting these) ─────────────
 # Plain text, shown to a human; restart.sh only reads it to print the warning.
 declare -A SVC_USED_BY=(
