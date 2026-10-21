@@ -60,7 +60,8 @@ grep -q 'dev-pc' <<< "$(grp dev)" && grep -q 'test-vm' <<< "$(grp test)" \
   && grep -q '"ws_manage_git": false' <<< "$d" && grep -q '"ws_manage_docker": false' <<< "$d" \
   && grep -q '"ws_manage_git": true' <<< "$t" && grep -q '"ws_manage_docker": true' <<< "$t" \
   && ! grep -q '"ws_project_repos"' <<< "$d" && grep -q '"ws_project_repos"' <<< "$t" \
-  && ok "P1 inventories: dev → dev-pc, git + Docker OFF, no project repos · test → test-vm, both ON + ws_project_repos" || bad "P1 dev=$(tr -d '\n ' <<< "$d" | cut -c1-200)"
+  && ! grep -q '"ws_base_packages"' <<< "$d" && grep -q '"python3-venv"' <<< "$t" \
+  && ok "P1 inventories: dev → dev-pc, git + Docker OFF, no project repos, no packages · test → test-vm, both ON + ws_project_repos + base packages" || bad "P1 dev=$(tr -d '\n ' <<< "$d" | cut -c1-200)"
 
 # ── the SSH test machine + a temp key + a temp project copy with inventory t ──
 mkdir -p "$WORK/a"; cp -a "$PROJ" "$WORK/a/project"; ssh-keygen -q -t ed25519 -N '' -C confmgt-ansible -f "$WORK/a/key"
@@ -86,7 +87,7 @@ sleep 2
 
 # ── P2: dev-like ─────────────────────────────────────────────────────────────
 o2="$(play p2)"
-sk() { for n in "git + curl" "GitHub answers" "the workspace — clone" "Docker — the workspace"; do grep -A1 "TASK \[$n" <<< "$1" | grep -q '^skipping: \[m1\]' || echo "$n"; done; }
+sk() { for n in "the base packages" "GitHub answers" "the workspace — clone" "Docker — the workspace"; do grep -A1 "TASK \[$n" <<< "$1" | grep -q '^skipping: \[m1\]' || echo "$n"; done; }
 [ -z "$(sk "$o2")" ] && grep -qE 'm1 +: ok=1 +changed=0 .*failed=0' <<< "$o2" \
   && ok "P2 switches off → git · GitHub · clone · Docker skipped, the workspace is there → the only ok" || bad "P2 notskipped=[$(sk "$o2" | tr "\n" ,)] $(grep -E "m1 +:|fatal" <<< "$o2")"
 

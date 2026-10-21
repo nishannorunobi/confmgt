@@ -1,6 +1,7 @@
 # workspace.yml — WHICH workspace playbooks/deploy.yml puts on the deploy_targets, and where (one topic per file).
 # GitHub reaches the machine with its own key (the test VM: test_server/deploy_test_vm.sh gives it one).
 ws_manage_git: true        # clone / pull ws_branch (a fresh machine)
+ws_base_packages: [git, curl, python3-venv]   # a fresh Ubuntu lacks python3-venv (the host agents build their venv)
 ws_manage_docker: true     # install Docker with the workspace's own script when missing
 ws_kms_setup: true         # the VM's OWN kms, unattended — random secrets made in the VM (CONFMGT [6.17])
 ws_repo: git@github.com:nishannorunobi/myworkspace.git
