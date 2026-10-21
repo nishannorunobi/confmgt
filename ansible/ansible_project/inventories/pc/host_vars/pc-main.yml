@@ -1,0 +1,7 @@
+# pc-main — this PC. From the container the PC is host.docker.internal; its SSH server listens on port 22.
+# Ansible may log in once its public key is in ~/.ssh/authorized_keys: bash authorize_ansible_on_this_pc.sh
+ansible_host: host.docker.internal
+ansible_port: 22
+ansible_user: nishan
+# where the workspace is on this machine — every project's folder is below it
+workspace_root: /home/nishan/myworkspace

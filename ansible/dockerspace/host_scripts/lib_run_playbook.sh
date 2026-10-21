@@ -6,7 +6,7 @@
 #
 # Steps       1. the agent answers? (no → how to start it)
 #             2. what can run: the agent's /playbooks (found in ansible_project/ at run time)
-#             3. no names given → asks, Enter = the default (playbook ping · inventory test · all machines)
+#             3. no names given → asks, Enter = the default (playbook ping · inventory pc · all machines)
 #             4. POST /check or /apply → the output, the result, where the full log is
 # ─────────────────────────────────────────────────────────────────────────────
 run_playbook() {
@@ -27,15 +27,15 @@ run_playbook() {
                 echo -e "\033[33m[ PLAN ]\033[0m apply needs a terminal to choose (or the names): bash $here/apply_playbook.sh <playbook> <inventory>"
                 echo "         playbooks: $books · inventories: $invs"; return 3
             fi
-            pb=ping; inv="${inv:-test}"
+            pb=ping; inv="${inv:-pc}"
         else
             echo -e "\033[36m[ INFO ]\033[0m playbooks: \033[1m$books\033[0m · inventories: \033[1m$invs\033[0m"
             read -r -p "Playbook  [ping]: " pb </dev/tty;  pb="${pb:-ping}"
-            read -r -p "Inventory [test]: " inv </dev/tty; inv="${inv:-test}"
+            read -r -p "Inventory [pc]:   " inv </dev/tty; inv="${inv:-pc}"
             read -r -p "Machines  [all]:  " lim </dev/tty
         fi
     fi
-    inv="${inv:-test}"
+    inv="${inv:-pc}"
     local body out rc
     body="$(python3 -c 'import json,sys; a=sys.argv; print(json.dumps({"playbook":a[1],"inventory":a[2],"limit":a[3] or None}))' "$pb" "$inv" "$lim")"
     echo -e "\033[1m==> $mode: $pb on $inv${lim:+ (machines: $lim)}\033[0m"

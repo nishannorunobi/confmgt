@@ -9,13 +9,15 @@ Ansible reaches machines over SSH: it writes a project's files there and runs th
 ```
 confmgt/ansible/
   start.sh · stop.sh · status.sh            start / stop / see it (status.sh --state = one word for scripts)
+  authorize_ansible_on_this_pc.sh           let Ansible log in to THIS PC (its key → ~/.ssh/authorized_keys, once)
   show_public_key.sh                        the key to put on each machine (once per machine)
   check_playbook.sh                         dry run: what WOULD change — asks playbook · inventory · machines
   apply_playbook.sh                         the real run
   dockerspace/
     docker-compose.yml · Dockerfile · .env  the container (built once, then offline)
     host_scripts/      ON YOUR PC:  start.sh · stop.sh (Docker only) · logs.sh · clean.sh (⚠ forgets known_hosts)
-                                    confmgt_ansible_container_login.sh (a shell inside) · test_ansible_container.sh
+                                    confmgt_ansible_container_login.sh (a shell inside)
+                                    test_ansible_container.sh · test_mycache_role.sh
     container_scripts/ INSIDE:      env_check.sh  (after logging in: bash /container_scripts/env_check.sh)
   ansible-agent/                    the agent — the container's entry point (kms → SSH key in RAM → API)
   ansible_project/                  plain Ansible: inventories · playbooks · roles (runs without Docker too)
@@ -66,7 +68,7 @@ ANSIBLE_SSH_KEY_SECRET=${KMS_URL}/v1/kv/data/confmgt/ansible
 ## The machines
 
 `ansible_project/inventories/<env>/` holds the machines, one folder per environment.
-`test` is the test VM, reached through the PC's port 2222 as `host.docker.internal`.
+`pc` is this PC (default), reached as `host.docker.internal` port 22 — `bash authorize_ansible_on_this_pc.sh` lets Ansible in. `test` is a placeholder for a test VM.
 A machine lets Ansible in only when the public key from `show_public_key.sh` is in its `~/.ssh/authorized_keys`.
 The first contact is trusted and remembered in the data volume (`known_hosts`). A host key that changes later is refused.
 

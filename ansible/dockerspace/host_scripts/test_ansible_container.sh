@@ -28,6 +28,7 @@
 #             C13 the register script by hand on the PC: the PC's kms + the usual master_password, nothing asked
 #             C14 wait_until_answering.sh: OK when it answers · the agent's own reason when it cannot · C15 status.sh: no traceback
 #             C16 container_scripts/env_check.sh inside: all OK · C17 the standard layout (CLAUDEWORK-98) + status.sh --state
+#             C18 authorize_ansible_on_this_pc.sh: the key into authorized_keys once (a temp file)
 # ─────────────────────────────────────────────────────────────────────────────
 case "${1:-}" in -h|--help) awk 'NR==1{next} /^# ─/{n++; if(n==2) exit; next} n==1{ sub(/^# ?/,""); if(!t){printf "\033[1m%s\033[0m\n",$0; t=1; next} l=substr($0,1,12); if(l ~ /^[A-Z][A-Za-z ]+$/){c=(l ~ /^Errors/)?"\033[33m":"\033[36m"; printf "%s%s\033[0m%s\n",c,l,substr($0,13)} else print }' "$0"; exit 0 ;; esac
 
@@ -177,6 +178,15 @@ docker restart "$A" >/dev/null; up; PUB2="$(curl -s "$API/public-key")"
   && ok "C2 public key ssh-ed25519 … confmgt-ansible · private key 600 in RAM only · restart → the same key" \
   || bad "C2 pub='${PUB:0:30}…' perm=$perm ondisk=$ondisk same=$([ "$PUB" = "$PUB2" ] && echo y || echo n)"
 
+# ── C18: authorize_ansible_on_this_pc.sh — the key into authorized_keys (a TEMP file), once ─────────
+AKF="$WORK/akhome/.ssh/authorized_keys"
+o18="$(ANSIBLE_AGENT_URL="$API" AUTHORIZED_KEYS_FILE="$AKF" bash "$HERE/authorize_ansible_on_this_pc.sh" 2>&1)"; r18=$?
+o18b="$(ANSIBLE_AGENT_URL="$API" AUTHORIZED_KEYS_FILE="$AKF" bash "$HERE/authorize_ansible_on_this_pc.sh" 2>&1)"
+[ $r18 = 0 ] && grep -q "key added to $AKF" <<< "$o18" && grep -q "already in $AKF" <<< "$o18b" && [ "$(grep -cxF -- "$PUB2" "$AKF")" = 1 ] \
+  && [ "$(stat -c %a "$AKF")" = 600 ] && [ "$(stat -c %a "$(dirname "$AKF")")" = 700 ] \
+  && ok "C18 authorize_ansible_on_this_pc.sh: the public key added once (600, folder 700) · again → 'already there'" \
+  || bad "C18 rc=$r18 [$(tail -1 <<< "$o18")] [$(tail -1 <<< "$o18b")]"
+
 # ── the SSH test machine: Ansible's public key in its authorized_keys ────────
 docker run -d --name "$M" --network "$NET" "$MIMG" >/dev/null
 printf '%s\n' "$PUB" > "$WORK/ak"; docker cp "$WORK/ak" "$M:/home/ansible/.ssh/authorized_keys" >/dev/null
@@ -189,7 +199,7 @@ o16="$(docker exec "$A" bash /container_scripts/env_check.sh 2>&1)"; r16=$?
 
 # ── C3: discovery ────────────────────────────────────────────────────────────
 pl="$(curl -s "$API/playbooks")"
-[ "$(echo "$pl" | j '" ".join(d["playbooks"])')" = "ping zz_marker zz_sleep" ] && [ "$(echo "$pl" | j '" ".join(d["inventories"])')" = "t test" ] \
+[ "$(echo "$pl" | j '" ".join(d["playbooks"])')" = "mycache ping zz_marker zz_sleep" ] && [ "$(echo "$pl" | j '" ".join(d["inventories"])')" = "pc t test" ] \
   && ok "C3 /playbooks finds playbooks/*.yml + inventories/<env>/ by itself (a new file = a new choice)" || bad "C3 $pl"
 
 # ── C4: check / apply on the SSH machine ─────────────────────────────────────
@@ -284,7 +294,7 @@ for f in start.sh stop.sh status.sh show_public_key.sh check_playbook.sh apply_p
          dockerspace/host_scripts/clean.sh dockerspace/host_scripts/confmgt_ansible_container_login.sh dockerspace/container_scripts/env_check.sh; do
     [ -f "$HERE/$f" ] || b17+=" missing:$f"
 done
-for f in "$HERE"/*.sh; do case "$(basename "$f")" in start.sh|stop.sh|status.sh|show_public_key.sh|check_playbook.sh|apply_playbook.sh) ;; *) b17+=" top:$(basename "$f")" ;; esac; done
+for f in "$HERE"/*.sh; do case "$(basename "$f")" in start.sh|stop.sh|status.sh|show_public_key.sh|check_playbook.sh|apply_playbook.sh|authorize_ansible_on_this_pc.sh) ;; *) b17+=" top:$(basename "$f")" ;; esac; done
 [ -e "$HERE/docker-compose.yml" ] && b17+=" top:docker-compose.yml"
 s="$(cd "$HERE" && bash status.sh --state 2>&1)"; [[ "$s" =~ ^(running|stopped)$ ]] || b17+=" state:[$s]"
 [ -z "$b17" ] && ok "C17 standard layout: top = start/stop/status + your 3 commands · dockerspace/{compose, Dockerfile, .env, host_scripts/, container_scripts/} · status.sh --state = one word" \
