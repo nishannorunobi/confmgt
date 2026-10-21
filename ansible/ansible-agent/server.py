@@ -16,7 +16,7 @@ Endpoints
   GET  /runs/last     the last run: what, when, exit code, output
 
 Rules     names only from the lists above (anything else → 400) · extra_vars: lower-case names, plain values
-          (letters digits . _ / - only) · one run at a time (busy → 409) ·
+          (letters digits . _ / - = , only — passed as JSON, never through a shell) · one run at a time (busy → 409) ·
           a run longer than RUN_TIMEOUT seconds (agent.conf, default 1800) is stopped · every run's output is kept
           in its own log file (the newest 50 kept)
 """
@@ -43,7 +43,7 @@ KEEP_RUNS = 50
 NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")              # a playbook / inventory name
 LIMIT = re.compile(r"^[A-Za-z0-9_.,:*!&\[\]-]+$")              # Ansible's --limit pattern, plain characters only
 VAR_NAME = re.compile(r"^[a-z][a-z0-9_]{0,63}$")                # an extra_vars name
-VAR_VALUE = re.compile(r"^[A-Za-z0-9._/-]{1,200}$")             # an extra_vars value: a branch, a tag, a name
+VAR_VALUE = re.compile(r"^[A-Za-z0-9._/=,-]{1,2000}$")          # an extra_vars value: a branch, a tag, a name, path=branch,…
 
 
 def _timeout() -> int:
@@ -110,7 +110,7 @@ def _run(req: Run, check: bool) -> dict:
         raise HTTPException(400, "limit: host / group names and , : * ! & only")
     for k, v in (req.extra_vars or {}).items():
         if not VAR_NAME.match(k) or not isinstance(v, str) or not VAR_VALUE.match(v):
-            raise HTTPException(400, "extra_vars: lower-case names, values of letters digits . _ / - only")
+            raise HTTPException(400, "extra_vars: lower-case names, values of letters digits . _ / - = , only")
     book = _playbook_file(req.playbook)
     key = KEY_DIR / "id_ed25519"
     if not key.is_file():

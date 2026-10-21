@@ -221,9 +221,10 @@ c2="$(code "$(post check '{"playbook":"ping","inventory":"prod"}')")"
 c3="$(code "$(post apply '{"playbook":"../playbooks/ping","inventory":"t"}')")"
 c4="$(code "$(post check '{"playbook":"ping","inventory":"t","limit":"m1; rm -rf /"}')")"
 c5="$(code "$(post check '{"playbook":"ping","inventory":"t","extra_vars":{"ws_branch":"x; rm -rf /"}}')")"
+c8="$(code "$(post check '{"playbook":"ping","inventory":"t","extra_vars":{"ws_repo_branches":"projectspace/kms=story/X-1,projectspace/mydocs=main"}}')")"
 c6="$(code "$(post check '{"playbook":"ping","inventory":"t","extra_vars":{"Bad-Name":"main"}}')")"
 c7="$(code "$(post check '{"playbook":"ping","inventory":"t","extra_vars":{"ws_branch":"story/CONFMGT-1-x"}}')")"
-[ "$c1$c2$c3$c4$c5$c6$c7" = 400400400400400400200 ] && ok "C5 unknown playbook / inventory, a path, a bad limit, a bad extra_vars value / name → 400, nothing run · a plain branch → 200" || bad "C5 codes $c1 $c2 $c3 $c4 $c5 $c6 $c7"
+[ "$c1$c2$c3$c4$c5$c6$c7$c8" = 400400400400400400200200 ] && ok "C5 unknown playbook / inventory, a path, a bad limit, a bad extra_vars value / name → 400, nothing run · a plain branch, a path=branch list → 200" || bad "C5 codes $c1 $c2 $c3 $c4 $c5 $c6 $c7 $c8"
 
 # ── C6: one run at a time ────────────────────────────────────────────────────
 post apply '{"playbook":"zz_sleep","inventory":"t"}' > "$WORK/busy" & bp=$!
