@@ -43,7 +43,8 @@ fi
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"              # confmgt/ansible (this file: dockerspace/host_scripts/)
 AGENT="$HERE/ansible-agent"
-KMSP="${KMS_PROJECT:-$_WS_ROOT/projectspace/kms}"                       # test-only: the kms image + bootstrap
+d="$_WS_ROOT"; while [ "$d" != / ] && [ ! -f "$d/projectspace/kms/dockerspace/.env" ]; do d="$(dirname "$d")"; done
+KMSP="${KMS_PROJECT:-$d/projectspace/kms}"                               # test-only: the kms image + bootstrap (a test copy → the workspace's)
 OPENBAO_IMAGE="$(grep -E '^OPENBAO_IMAGE=' "$KMSP/dockerspace/.env" | cut -d= -f2-)"   # only the image — never kms's folders
 T=confmgt-test-kms; A=confmgt-test-ansible; M=confmgt-test-machine; NET=confmgt-testnet
 KP=8133; AP=8134; export KMS_URL=http://127.0.0.1:$KP; API=http://127.0.0.1:$AP
