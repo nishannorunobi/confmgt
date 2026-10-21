@@ -1,0 +1,7 @@
+# roles/mychannels — mychannels's config files, each rendered from its mirror (the single source of truth):
+#   values   inventories/<env>/myworkspace/<path>.yml
+#   template templates/myworkspace/<path>.j2
+#   target   <workspace_root>/<path>          (keeps its place, owner and mode; mychannels still starts alone from it)
+- name: "mychannels {{ item }}"
+  ansible.builtin.include_tasks: render_mirrored_file.yml
+  loop: "{{ mychannels_files }}"

@@ -1,0 +1,20 @@
+{# rendered by Ansible (confmgt) from inventories/<env>/myworkspace/ (the mirror) + shared/ — the comments are mychannels' own #}
+# Channel Agent — Configuration (no secret — this file is in git)
+# A secret's value is its kms address — the agent fetches the real value itself when it starts
+# (connect_external/kms/kms.py, its own kms login). kms elsewhere: https://<kms-host>:<port>/v1/kv/data/…
+# kms's base is named ONCE (TESTSERVER-46): kms elsewhere → KMS_URL=https://<kms-host>:<port>, every
+# ${KMS_URL}/v1/kv/data/… line follows.
+KMS_URL={{ mirror.KMS_URL }}
+# SECRET_MGT — where the passwords below come from (TESTSERVER-67): kms = their kms addresses, fetched at start ·
+# local = the real values written right here (no kms at all) · not set / empty → local
+SECRET_MGT={{ mirror.SECRET_MGT }}
+# every password keeps its kms address in the "# kms:" comment right above it — the rotation (connect_external/kms/):
+# transfer (values): channels_transfer_kms2tempfile.sh / _local2tempfile_random_value.sh / _tempfile2local.sh /
+#   _local2kms.sh / _comment2local_kmsurl.sh · config (SECRET_MGT only): channels_config_secret_mgt_local.sh / _kms.sh
+PORT={{ mirror.PORT }}
+RABBITMQ_USER={{ mirror.RABBITMQ_USER }}
+RABBITMQ_MGMT_PORT={{ mirror.RABBITMQ_MGMT_PORT }}
+# kms: ${KMS_URL}/v1/kv/data/shared/anthropic
+ANTHROPIC_API_KEY={{ mirror.ANTHROPIC_API_KEY }}
+# kms: ${KMS_URL}/v1/kv/data/mychannels/rabbitmq
+RABBITMQ_PASS={{ mirror.RABBITMQ_PASS }}

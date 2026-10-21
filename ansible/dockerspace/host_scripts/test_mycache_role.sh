@@ -2,7 +2,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # test_mycache_role.sh — automatic tests for stories 3.1 + 3.2: Ansible renders mycache's 2 files (check) and writes + restarts (apply)
 #
-# What for    Proves that inventories/dev/group_vars/mycache/ + roles/mycache render mycache's REAL .env and agent.conf
+# What for    Proves that the mirror + shared/ + roles/mycache render mycache's REAL .env and agent.conf
 #             byte for byte — on a THROWAWAY copy of those files, inside this checkout's image. Nothing real is touched.
 #
 # Who         Claude (Test 3a in the branch · 3c on main), or you.

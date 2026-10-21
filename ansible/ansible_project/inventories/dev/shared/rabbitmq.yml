@@ -1,0 +1,8 @@
+# shared/rabbitmq.yml — RabbitMQ (mychannels) as every project reaches it on the DEV environment.
+# Owned by mychannels (servers first: the server defines its connection; clients like Plane only refer to it).
+shared_rabbitmq:
+  amqp_port: "5672"
+  mgmt_port: "15672"
+  user: "admin"
+  vhost: "/"
+  password: "${KMS_URL}/v1/kv/data/mychannels/rabbitmq"        # a kms ADDRESS, never the password

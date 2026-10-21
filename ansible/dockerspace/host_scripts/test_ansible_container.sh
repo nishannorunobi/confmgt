@@ -199,7 +199,7 @@ o16="$(docker exec "$A" bash /container_scripts/env_check.sh 2>&1)"; r16=$?
 
 # ── C3: discovery ────────────────────────────────────────────────────────────
 pl="$(curl -s "$API/playbooks")"
-[ "$(echo "$pl" | j '" ".join(d["playbooks"])')" = "mycache ping zz_marker zz_sleep" ] && [ "$(echo "$pl" | j '" ".join(d["inventories"])')" = "dev t test" ] \
+[ "$(echo "$pl" | j '" ".join(d["playbooks"])')" = "mycache mychannels ping zz_marker zz_sleep" ] && [ "$(echo "$pl" | j '" ".join(d["inventories"])')" = "dev t test" ] \
   && ok "C3 /playbooks finds playbooks/*.yml + inventories/<env>/ by itself (a new file = a new choice)" || bad "C3 $pl"
 
 # ── C4: check / apply on the SSH machine ─────────────────────────────────────

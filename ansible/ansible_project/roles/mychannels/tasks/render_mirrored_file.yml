@@ -1,0 +1,10 @@
+# one mirrored file: its values → the variable `mirror` → its template → the real file
+- name: "values of {{ item }}"
+  ansible.builtin.include_vars:
+    file: "{{ inventory_dir }}/myworkspace/{{ item }}.yml"
+
+- name: "{{ item }}"
+  ansible.builtin.template:
+    src: "myworkspace/{{ item }}.j2"
+    dest: "{{ workspace_root }}/{{ item }}"
+  notify: restart mychannels                     # only when this file really changed (never in a dry run)

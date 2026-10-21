@@ -1,0 +1,10 @@
+# restart mychannels with its OWN scripts (three-layer rule: Ansible never runs docker for a project) — the same steps
+# the workspace uses: stop.sh, then ensure_running.sh (SVC_RUN=1: no questions, the project's startup mode)
+- name: restart mychannels
+  ansible.builtin.shell: |
+    set -e
+    bash stop.sh
+    SVC_RUN=1 bash ensure_running.sh
+  args:
+    chdir: "{{ workspace_root }}/projectspace/mychannels"
+    executable: /bin/bash
