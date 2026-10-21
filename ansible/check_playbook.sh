@@ -11,7 +11,7 @@
 #
 # Output      ok: [test-vm] … · [  OK  ] check ping on test: exit 0 after 2.1 s · full log: …/runs/…log
 #
-# Errors      the agent does not answer → bash ensure_running.sh · UNREACHABLE → the machine lacks the public key
+# Errors      the agent does not answer → bash start.sh · UNREACHABLE → the machine lacks the public key
 #             (bash show_public_key.sh) or is off
 #
 # Next        bash apply_playbook.sh
@@ -25,5 +25,5 @@ if [ -f "$_WS_ROOT/init/create_logging_path.sh" ]; then
     setup_logging
 fi
 # ──────────────────────────────────────────────────────────────────────────────
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib_run_playbook.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/dockerspace/host_scripts/lib_run_playbook.sh"
 run_playbook check "$@"

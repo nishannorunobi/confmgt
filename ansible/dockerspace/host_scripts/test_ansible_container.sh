@@ -8,7 +8,7 @@
 #
 # Who         Claude (Test 3a in the branch · 3c on main after the deploy), or you.
 #
-# How         bash test_ansible_container.sh        (≈2 min; the first run builds the SSH test machine's image once)
+# How         bash dockerspace/host_scripts/test_ansible_container.sh        (≈2 min; the first run builds the SSH test machine's image once)
 #
 # Checks      C0  sign-up: own login + files (600), may read confmgt/ansible-agent + confmgt/ansible only · creates a missing key
 #             C1  kms mode, no login + key missing → the agent signs itself up (its sign-up creates the key), fetches it,
@@ -27,6 +27,7 @@
 #             C12 no test value in logs or git
 #             C13 the register script by hand on the PC: the PC's kms + the usual master_password, nothing asked
 #             C14 wait_until_answering.sh: OK when it answers · the agent's own reason when it cannot · C15 status.sh: no traceback
+#             C16 container_scripts/env_check.sh inside: all OK · C17 the standard layout (CLAUDEWORK-98) + status.sh --state
 # ─────────────────────────────────────────────────────────────────────────────
 case "${1:-}" in -h|--help) awk 'NR==1{next} /^# ─/{n++; if(n==2) exit; next} n==1{ sub(/^# ?/,""); if(!t){printf "\033[1m%s\033[0m\n",$0; t=1; next} l=substr($0,1,12); if(l ~ /^[A-Z][A-Za-z ]+$/){c=(l ~ /^Errors/)?"\033[33m":"\033[36m"; printf "%s%s\033[0m%s\n",c,l,substr($0,13)} else print }' "$0"; exit 0 ;; esac
 
@@ -40,7 +41,7 @@ if [ -f "$_WS_ROOT/init/create_logging_path.sh" ]; then
 fi
 # ──────────────────────────────────────────────────────────────────────────────
 
-HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"                    # confmgt/ansible
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"              # confmgt/ansible (this file: dockerspace/host_scripts/)
 AGENT="$HERE/ansible-agent"
 KMSP="${KMS_PROJECT:-$_WS_ROOT/projectspace/kms}"                       # test-only: the kms image + bootstrap
 OPENBAO_IMAGE="$(grep -E '^OPENBAO_IMAGE=' "$KMSP/dockerspace/.env" | cut -d= -f2-)"   # only the image — never kms's folders
@@ -68,7 +69,7 @@ body() { sed '$d' <<< "$1"; }
 
 # ── images: this checkout (test tag) + the SSH test machine ──────────────────
 docker build -q -t "$IMG" -f "$HERE/dockerspace/Dockerfile" \
-    $(sed -nE 's/^(PYTHON_IMAGE|PYTHON_DIGEST|ANSIBLE_CORE_VERSION)=(.*)/--build-arg \1=\2/p' "$HERE/.env") "$HERE" >/dev/null \
+    $(sed -nE 's/^(PYTHON_IMAGE|PYTHON_DIGEST|ANSIBLE_CORE_VERSION)=(.*)/--build-arg \1=\2/p' "$HERE/dockerspace/.env") "$HERE" >/dev/null \
     || { bad "the test image did not build"; exit 1; }
 if ! docker image inspect "$MIMG" >/dev/null 2>&1; then
     printf 'FROM alpine:3\nRUN apk add --no-cache openssh python3 && ssh-keygen -A && adduser -D ansible && echo "ansible:*" | chpasswd -e \\\n && mkdir -p /home/ansible/.ssh && chown ansible /home/ansible/.ssh && chmod 700 /home/ansible/.ssh\nCMD ["/usr/sbin/sshd","-D","-e"]\n' \
@@ -129,7 +130,7 @@ run_agent() {   # run_agent <agent.conf text> [with-login] — a fresh COPY of a
     docker run -d --name "$A" --network "$NET" -p 127.0.0.1:$AP:8897 --tmpfs /run \
         -e LOG_MIRROR_ROOT=/mountspace/logs/t -e KMS_MASTER_PASSWORD_FILE=/mpw/master_password -e KMS_ALLOWED_CIDRS \
         -e ANSIBLE_PROJECT_DIR=/ansible_project -e ANSIBLE_DATA_DIR=/data -e PYTHONUNBUFFERED=1 -e PYTHONDONTWRITEBYTECODE=1 \
-        -v "$AD:/ansible-agent" -v "$PD:/ansible_project:ro" -v "$WORK/x/data:/data" -v "$LG:/mountspace/logs" -v "$(dirname "$MPF"):/mpw:ro" \
+        -v "$AD:/ansible-agent" -v "$PD:/ansible_project:ro" -v "$HERE/dockerspace/container_scripts:/container_scripts:ro" -v "$WORK/x/data:/data" -v "$LG:/mountspace/logs" -v "$(dirname "$MPF"):/mpw:ro" \
         "$IMG" /opt/venv/bin/python /ansible-agent/supervisor.py >/dev/null
 }
 up() { for _ in $(seq 1 40); do curl -fs -o /dev/null --max-time 2 "$API/health" && return 0
@@ -179,6 +180,11 @@ docker restart "$A" >/dev/null; up; PUB2="$(curl -s "$API/public-key")"
 docker run -d --name "$M" --network "$NET" "$MIMG" >/dev/null
 printf '%s\n' "$PUB" > "$WORK/ak"; docker cp "$WORK/ak" "$M:/home/ansible/.ssh/authorized_keys" >/dev/null
 docker exec "$M" sh -c 'chown ansible /home/ansible/.ssh/authorized_keys && chmod 600 /home/ansible/.ssh/authorized_keys'
+
+# ── C16: env_check.sh inside the container (what you run after logging in) ───
+o16="$(docker exec "$A" bash /container_scripts/env_check.sh 2>&1)"; r16=$?
+[ $r16 = 0 ] && [ "$(grep -c '\[  OK  \]' <<< "$o16")" = 6 ] && ok "C16 env_check.sh inside the container: ansible · SSH key 600 · project read-only · playbooks · agent · /data — all OK" \
+  || bad "C16 rc=$r16 $(grep ERROR <<< "$o16" | head -2 | tr '\n' '¦')"
 
 # ── C3: discovery ────────────────────────────────────────────────────────────
 pl="$(curl -s "$API/playbooks")"
@@ -270,14 +276,27 @@ o13="$(env -u KMS_URL -u KMS_TOKEN -u KMS_MASTER_PASSWORD_FILE KMS_HOST_URL="$KM
   && ok "C13 register script by hand on the PC: kms's container name unknown → the PC's kms · password from the usual master_password file, nothing asked" \
   || bad "C13 rc=$r13 [$(grep -E 'ERROR|INFO' <<< "$o13" | head -3 | tr '\n' '¦')]"
 
+# ── C17: the standard layout (CLAUDEWORK-98) — the names say where a script runs ──
+b17=""
+for f in start.sh stop.sh status.sh show_public_key.sh check_playbook.sh apply_playbook.sh README.md \
+         dockerspace/docker-compose.yml dockerspace/Dockerfile dockerspace/.env dockerspace/host_scripts/start.sh dockerspace/host_scripts/stop.sh \
+         dockerspace/host_scripts/clean.sh dockerspace/host_scripts/confmgt_ansible_container_login.sh dockerspace/container_scripts/env_check.sh; do
+    [ -f "$HERE/$f" ] || b17+=" missing:$f"
+done
+for f in "$HERE"/*.sh; do case "$(basename "$f")" in start.sh|stop.sh|status.sh|show_public_key.sh|check_playbook.sh|apply_playbook.sh) ;; *) b17+=" top:$(basename "$f")" ;; esac; done
+[ -e "$HERE/docker-compose.yml" ] && b17+=" top:docker-compose.yml"
+s="$(cd "$HERE" && bash status.sh --state 2>&1)"; [[ "$s" =~ ^(running|stopped)$ ]] || b17+=" state:[$s]"
+[ -z "$b17" ] && ok "C17 standard layout: top = start/stop/status + your 3 commands · dockerspace/{compose, Dockerfile, .env, host_scripts/, container_scripts/} · status.sh --state = one word" \
+  || bad "C17:$b17"
+
 # ── C11: static ──────────────────────────────────────────────────────────────
 b11=""
-for f in "$HERE"/*.sh "$AGENT"/*.sh "$AGENT"/connect_external/kms/*.sh; do
+for f in "$HERE"/*.sh "$HERE"/dockerspace/host_scripts/*.sh "$HERE"/dockerspace/container_scripts/*.sh "$AGENT"/*.sh "$AGENT"/connect_external/kms/*.sh; do
     case "$(basename "$f")" in lib_run_playbook.sh|kms_conf.sh) continue ;; esac
     head -2 "$f" | grep -q '^# ─' || { b11+=" $(basename "$f"):header"; continue; }
     out="$(bash "$f" --help 2>&1 </dev/null)"; [ "$(wc -l <<< "$out")" -ge 2 ] || b11+=" $(basename "$f"):help"
 done
-grep -E '^[A-Z_]*(PASS|PASSWORD|SECRET|TOKEN|API_KEY)[A-Z_]*=.+' "$HERE/.env" | grep -vq '^KMS_MASTER_PASSWORD_DIR=' && b11+=" .env:secret"
+grep -E '^[A-Z_]*(PASS|PASSWORD|SECRET|TOKEN|API_KEY)[A-Z_]*=.+' "$HERE/dockerspace/.env" | grep -vq '^KMS_MASTER_PASSWORD_DIR=' && b11+=" .env:secret"
 grep -E '^[A-Z_]*(PASS|PASSWORD|SECRET|TOKEN|_KEY)=.+' "$AGENT/agent.conf" | grep -vqE '=(https?://[^ ]+|\$\{KMS_URL\})/v1/kv/' && b11+=" agent.conf:secret"
 git -C "$HERE" check-ignore -q "ansible-agent/connect_external/kms/credentials/x/secret_id" || b11+=" credentials:not-ignored"
 git -C "$HERE" check-ignore -q "ansible-agent/agent.conf" && b11+=" agent.conf:ignored"

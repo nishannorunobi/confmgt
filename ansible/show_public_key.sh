@@ -12,7 +12,7 @@
 # Output      ssh-ed25519 AAAA… confmgt-ansible
 #             + the one command to add it on the machine (for the test VM: from the PC, via test_server)
 #
-# Errors      the agent does not answer → bash ensure_running.sh
+# Errors      the agent does not answer → bash start.sh
 # ─────────────────────────────────────────────────────────────────────────────
 case "${1:-}" in -h|--help) awk 'NR==1{next} /^# ─/{n++; if(n==2) exit; next} n==1{ sub(/^# ?/,""); if(!t){printf "\033[1m%s\033[0m\n",$0; t=1; next} l=substr($0,1,12); if(l ~ /^[A-Z][A-Za-z ]+$/){c=(l ~ /^Errors/)?"\033[33m":"\033[36m"; printf "%s%s\033[0m%s\n",c,l,substr($0,13)} else print }' "$0"; exit 0 ;; esac
 set -uo pipefail
@@ -24,9 +24,9 @@ if [ -f "$_WS_ROOT/init/create_logging_path.sh" ]; then
 fi
 # ──────────────────────────────────────────────────────────────────────────────
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PORT="$(grep -E '^AGENT_PORT=' "$HERE/.env" 2>/dev/null | cut -d= -f2)"; URL="${ANSIBLE_AGENT_URL:-http://127.0.0.1:${PORT:-8897}}"
+PORT="$(grep -E '^AGENT_PORT=' "$HERE/dockerspace/.env" 2>/dev/null | cut -d= -f2)"; URL="${ANSIBLE_AGENT_URL:-http://127.0.0.1:${PORT:-8897}}"
 KEY="$(curl -fsS --max-time 5 "$URL/public-key" 2>/dev/null)" \
-    || { echo -e "\033[31m[ERROR]\033[0m  the ansible-agent does not answer on $URL — start it: bash $HERE/ensure_running.sh"; exit 1; }
+    || { echo -e "\033[31m[ERROR]\033[0m  the ansible-agent does not answer on $URL — start it: bash $HERE/start.sh"; exit 1; }
 echo -e "\033[1m==> Ansible's public key\033[0m"
 echo "$KEY"
 echo ""

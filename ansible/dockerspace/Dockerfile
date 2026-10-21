@@ -4,10 +4,10 @@
 # What for    Ansible runs in its own container (CONFMGT-3); the ansible-agent (the entry point) needs Python and its
 #             packages. Built ONCE (needs the internet once), then the image is kept and every later start is offline.
 #
-# Who         docker compose (start.sh builds it when missing).
+# Who         docker compose (dockerspace/host_scripts/start.sh builds it when missing).
 #
 # How         bash start.sh                          (builds it when missing)
-#             docker compose build ansible           (rebuild after a version / requirements change)
+#             bash dockerspace/host_scripts/start.sh --build   (rebuild after a version / requirements change)
 #
 # Steps       1. FROM python:3-alpine pinned by digest (.env PYTHON_IMAGE + PYTHON_DIGEST)
 #             2. + openssh-client (Ansible's transport) · bash + curl (the agent runs its own signup_with_kms.sh)

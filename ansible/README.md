@@ -4,13 +4,24 @@ Ansible in its own container: the workspace's configuration management (CONFMGT-
 The **ansible-agent** is the container's entry point. It gets the SSH key's secret from kms, makes the key in RAM, and runs playbooks when you ask.
 Ansible reaches machines over SSH: it writes a project's files there and runs that project's own scripts.
 
+## Where is what — the names say where a script runs
+
 ```
-bash start.sh              start (builds the image once, then offline)
-bash show_public_key.sh    the key to put on each machine (once per machine)
-bash check_playbook.sh     dry run: what WOULD change — asks playbook [ping] · inventory [test] · machines [all]
-bash apply_playbook.sh     the real run
-bash status.sh · logs.sh · stop.sh · destroy.sh · ansible_container_login.sh
+confmgt/ansible/
+  start.sh · stop.sh · status.sh            start / stop / see it (status.sh --state = one word for scripts)
+  show_public_key.sh                        the key to put on each machine (once per machine)
+  check_playbook.sh                         dry run: what WOULD change — asks playbook · inventory · machines
+  apply_playbook.sh                         the real run
+  dockerspace/
+    docker-compose.yml · Dockerfile · .env  the container (built once, then offline)
+    host_scripts/      ON YOUR PC:  start.sh · stop.sh (Docker only) · logs.sh · clean.sh (⚠ forgets known_hosts)
+                                    confmgt_ansible_container_login.sh (a shell inside) · test_ansible_container.sh
+    container_scripts/ INSIDE:      env_check.sh  (after logging in: bash /container_scripts/env_check.sh)
+  ansible-agent/                    the agent — the container's entry point (kms → SSH key in RAM → API)
+  ansible_project/                  plain Ansible: inventories · playbooks · roles (runs without Docker too)
 ```
+
+Everything is a script: `bash <name>.sh`. You never type docker, curl or other commands.
 
 ## How it fits together
 
@@ -47,7 +58,7 @@ ANSIBLE_SSH_KEY_SECRET=${KMS_URL}/v1/kv/data/confmgt/ansible
 |---|---|---|---|
 | `ANSIBLE_SSH_KEY_SECRET` | Ansible's SSH key (made in RAM) | kms `kv/confmgt/ansible` | the ansible-agent (`supervisor.py` → `connect_external/kms/kms.py`) |
 
-- `.env` holds the image versions, the port and TZ. It has no secret and is tracked in git.
+- `dockerspace/.env` holds the image versions, the port and TZ. It has no secret and is tracked in git.
 - The agent's kms login is in `ansible-agent/connect_external/kms/credentials/`. It is git-ignored, and the agent signs up by itself the first time.
 - Without kms, set `SECRET_MGT=local` in `agent.conf` and write the value there. The rotation scripts in `connect_external/kms/` move values both ways.
 - **A new secret means a new key.** Run `show_public_key.sh` again and put the new key on the machines.
@@ -74,5 +85,5 @@ Every run's output is kept in `mountspace/logs/myworkspace/projectspace/confmgt/
 ## Test
 
 ```
-bash test_ansible_container.sh      throwaway kms + this checkout's image + a throwaway SSH machine (≈2 min)
+bash dockerspace/host_scripts/test_ansible_container.sh      throwaway kms + this checkout's image + a throwaway SSH machine (≈2 min)
 ```

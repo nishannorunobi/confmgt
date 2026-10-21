@@ -4,7 +4,7 @@
 #
 # What for    Stop the container. The SSH key is gone with it (it lived in RAM); the next start makes it again.
 #
-# Who         You, or the workspace shutdown (via ensure_stopped.sh).
+# Who         You, or the workspace shutdown (svcmgt). Safe to run again: already stopped → says so.
 #
 # How         bash stop.sh
 #
@@ -30,7 +30,10 @@ cd "$SCRIPT_DIR"
 
 GREEN="\033[32m"; YELLOW="\033[33m"; BOLD="\033[1m"; RESET="\033[0m"
 
+if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -qx confmgt-ansible; then
+    echo -e "${GREEN}[  OK  ]${RESET} Ansible (confmgt) already stopped"; exit 0
+fi
 echo -e "${YELLOW}==> Stopping Ansible (confmgt)...${RESET}"
-docker compose down
+bash dockerspace/host_scripts/stop.sh
 echo -e "${GREEN}    Ansible stopped. known_hosts is kept in its Docker volume.${RESET}"
 echo -e "    Run ${BOLD}./start.sh${RESET} to bring it back up."

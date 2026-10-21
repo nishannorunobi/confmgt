@@ -1,4 +1,5 @@
-# confmgt/ansible — the Ansible container (compose project name below: its volume is confmgt-ansible_confmgt-ansible-data)
+# confmgt/ansible/dockerspace/docker-compose.yml — the Ansible container (relative paths = from this dockerspace/ folder;
+# compose project name below: its volume is confmgt-ansible_confmgt-ansible-data)
 name: confmgt-ansible
 
 # ── Container logs capped (CLAUDEWORK-4): json-file logs otherwise grow without bound in /var/lib/docker ──
@@ -13,7 +14,7 @@ services:
     logging: *logs
     # confmgt's own image = Python + pinned ansible-core + the ssh client (dockerspace/Dockerfile) — built once, then offline
     build:
-      context: .
+      context: ..                    # the project folder (confmgt/ansible) — only ansible-agent/requirements.txt is sent
       dockerfile: dockerspace/Dockerfile
       args:
         PYTHON_IMAGE: ${PYTHON_IMAGE}
@@ -40,9 +41,10 @@ services:
       PYTHONDONTWRITEBYTECODE: "1"   # no root-owned __pycache__ in the mounted ansible-agent/ folder
     volumes:
       - confmgt-ansible-data:/data                        # known_hosts (trust on first use) + the last runs
-      - ./ansible-agent:/ansible-agent                    # the agent + its kms login (connect_external/kms/credentials/)
-      - ./ansible_project:/ansible_project:ro             # the Ansible project: inventories, playbooks, roles — read-only
-      - ../../../mountspace/logs:/mountspace/logs
+      - ../ansible-agent:/ansible-agent                    # the agent + its kms login (connect_external/kms/credentials/)
+      - ./container_scripts:/container_scripts:ro          # checks you run inside: bash /container_scripts/env_check.sh
+      - ../ansible_project:/ansible_project:ro             # the Ansible project: inventories, playbooks, roles — read-only
+      - ../../../../mountspace/logs:/mountspace/logs
       # kms's master_password folder ONLY, read-only: no kms login yet → the ansible-agent signs itself up from it.
       # The owner keeps it empty most of the time. Where it is: KMS_MASTER_PASSWORD_DIR in .env
       - ${KMS_MASTER_PASSWORD_DIR}:/mountspace/usb/myworkspace/projectspace/kms/master_password:ro

@@ -6,13 +6,14 @@
 #             (ansible-agent/agent.conf = kms address), makes the key in RAM and serves its API on :8897.
 #             Ansible itself runs only when asked (check_playbook.sh · apply_playbook.sh).
 #
-# Who         You, or the workspace startup (via ensure_running.sh).
+# Who         You, or the workspace startup (svcmgt). Safe to run again: already running → says so.
 #
 # How         bash start.sh
 #
-# Steps       1. first time only: the ansible-agent signs itself up with kms as it starts (your kms password from
+# Steps       0. already running and answering → says so, exit 0
+#             1. first time only: the ansible-agent signs itself up with kms as it starts (your kms password from
 #                kms's master_password, .env KMS_MASTER_PASSWORD_DIR) — file empty → asks here, by hand only
-#             2. docker compose up -d — builds the image once (internet once), then:
+#             2. dockerspace/host_scripts/start.sh — the network + docker compose up (builds the image once), then:
 #                inside: ansible-agent/supervisor.py → kms → the SSH key in RAM → the agent API
 #             3. waits until the agent answers (ansible-agent/wait_until_answering.sh) — else its reason, exit 1
 #
@@ -38,15 +39,19 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 GREEN="\033[32m"; BOLD="\033[1m"; RESET="\033[0m"
-[ -f ".env" ] || { echo -e "\033[31m[ERROR]${RESET} .env not found."; exit 1; }
-source .env      # image versions, port — no secret
+[ -f "dockerspace/.env" ] || { echo -e "\033[31m[ERROR]${RESET} dockerspace/.env not found."; exit 1; }
+source dockerspace/.env      # image versions, port — no secret
+# 0. already running and answering → nothing to do (idempotent: the workspace startup may call this any time)
+if curl -fsS --max-time 3 -o /dev/null "http://127.0.0.1:${AGENT_PORT:-8897}/health" 2>/dev/null; then
+    echo -e "${GREEN}[  OK  ]${RESET} Ansible (confmgt) already running — agent on http://127.0.0.1:${AGENT_PORT:-8897}"; exit 0
+fi
 # The ansible-agent fetches its secret inside the container (its connect_external/kms/) — and signs itself up with kms
 # when it has no login yet: with the owner's kms password from kms's master_password folder (.env
 # KMS_MASTER_PASSWORD_DIR), mounted read-only. Before the start, this script only checks that the agent CAN sign up —
 # else the container would stop and be restarted again and again. Started by hand in a terminal with the file
 # empty → it signs up here and asks your kms password.
 MASTER_PW_DIR="${KMS_MASTER_PASSWORD_DIR:-}"
-[ -n "$MASTER_PW_DIR" ] && [ "${MASTER_PW_DIR#/}" = "$MASTER_PW_DIR" ] && MASTER_PW_DIR="$SCRIPT_DIR/$MASTER_PW_DIR"
+[ -n "$MASTER_PW_DIR" ] && [ "${MASTER_PW_DIR#/}" = "$MASTER_PW_DIR" ] && MASTER_PW_DIR="$SCRIPT_DIR/dockerspace/$MASTER_PW_DIR"   # .env: relative to dockerspace/
 MASTER_PW="$MASTER_PW_DIR/master_password"
 _SM="$(sed -nE 's/^SECRET_MGT[[:space:]]*=[[:space:]]*//p' ansible-agent/agent.conf 2>/dev/null | tail -1 | tr -d "\"'\r" | tr 'A-Z' 'a-z' | xargs)"
 if [ "$_SM" = kms ] && ! ls ansible-agent/connect_external/kms/credentials/*/secret_id >/dev/null 2>&1; then   # SECRET_MGT=local (or not set): no kms
@@ -62,7 +67,7 @@ fi
 [ -n "$MASTER_PW_DIR" ] && mkdir -p "$MASTER_PW_DIR" 2>/dev/null || true
 
 echo -e "${BOLD}==> Starting Ansible ${ANSIBLE_CORE_VERSION} (confmgt)...${RESET}"
-docker compose up -d
+bash dockerspace/host_scripts/start.sh || exit 1
 # "started" is not "ready": the agent first needs kms — wait for its answer, else say why (CONFMGT-13)
 bash ansible-agent/wait_until_answering.sh || exit 1
 
@@ -75,4 +80,4 @@ echo -e "    Agent     : ${BOLD}http://${AGENT_HOST}:${AGENT_PORT}${RESET} (Ansi
 echo ""
 echo -e "    ${BOLD}./show_public_key.sh${RESET} — the key to put on each machine"
 echo -e "    ${BOLD}./check_playbook.sh${RESET}  — dry run · ${BOLD}./apply_playbook.sh${RESET} — real run"
-echo -e "    ${BOLD}./logs.sh${RESET} · ${BOLD}./status.sh${RESET} · ${BOLD}./stop.sh${RESET} · ${BOLD}./destroy.sh${RESET}"
+echo -e "    ${BOLD}./status.sh${RESET} · ${BOLD}./stop.sh${RESET} · logs + login + clean: ${BOLD}dockerspace/host_scripts/${RESET}"

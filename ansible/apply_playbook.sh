@@ -23,5 +23,5 @@ if [ -f "$_WS_ROOT/init/create_logging_path.sh" ]; then
     setup_logging
 fi
 # ──────────────────────────────────────────────────────────────────────────────
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib_run_playbook.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/dockerspace/host_scripts/lib_run_playbook.sh"
 run_playbook apply "$@"

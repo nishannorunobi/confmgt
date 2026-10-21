@@ -13,10 +13,10 @@ run_playbook() {
     local mode="$1"; shift
     local here port url list pb inv lim tty=
     here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    port="$(grep -E '^AGENT_PORT=' "$here/.env" 2>/dev/null | cut -d= -f2)"; url="${ANSIBLE_AGENT_URL:-http://127.0.0.1:${port:-8897}}"
+    port="$(grep -E '^AGENT_PORT=' "$here/../.env" 2>/dev/null | cut -d= -f2)"; url="${ANSIBLE_AGENT_URL:-http://127.0.0.1:${port:-8897}}"
     { : </dev/tty; } 2>/dev/null && tty=1
     list="$(curl -fsS --max-time 5 "$url/playbooks" 2>/dev/null)" \
-        || { echo -e "\033[31m[ERROR]\033[0m  the ansible-agent does not answer on $url — start it: bash $here/ensure_running.sh"; return 1; }
+        || { echo -e "\033[31m[ERROR]\033[0m  the ansible-agent does not answer on $url — start it: bash $(cd "$here/../.." && pwd)/start.sh"; return 1; }
     local books invs
     books="$(python3 -c 'import json,sys; print(" ".join(json.load(sys.stdin)["playbooks"]))' <<< "$list")"
     invs="$(python3 -c 'import json,sys; print(" ".join(json.load(sys.stdin)["inventories"]))' <<< "$list")"

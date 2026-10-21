@@ -18,7 +18,7 @@
 # Output      [  OK  ] ansible-agent answers on http://127.0.0.1:8897 (SSH key ready)
 #             [ERROR]  the ansible-agent does not answer — why: kms's master_password is empty — put your kms password …
 #
-# Note        settings: .env AGENT_PORT · overrides (tests): ANSIBLE_AGENT_URL, CONFMGT_CONTAINER, WAIT_SECONDS
+# Note        settings: dockerspace/.env AGENT_PORT · overrides (tests): ANSIBLE_AGENT_URL, CONFMGT_CONTAINER, WAIT_SECONDS
 # ─────────────────────────────────────────────────────────────────────────────
 case "${1:-}" in -h|--help) awk 'NR==1{next} /^# ─/{n++; if(n==2) exit; next} n==1{ sub(/^# ?/,""); if(!t){printf "\033[1m%s\033[0m\n",$0; t=1; next} l=substr($0,1,12); if(l ~ /^[A-Z][A-Za-z ]+$/){c=(l ~ /^Errors/)?"\033[33m":"\033[36m"; printf "%s%s\033[0m%s\n",c,l,substr($0,13)} else print }' "$0"; exit 0 ;; esac
 set -uo pipefail
@@ -27,7 +27,7 @@ _WS_ROOT="$(d="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ ! -d "$d/
 if [ -f "$_WS_ROOT/init/create_logging_path.sh" ]; then source "$_WS_ROOT/init/create_logging_path.sh"; setup_logging; fi
 # ──────────────────────────────────────────────────────────────────────────────
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PORT="$(grep -E '^AGENT_PORT=' "$HERE/../.env" 2>/dev/null | cut -d= -f2)"
+PORT="$(grep -E '^AGENT_PORT=' "$HERE/../dockerspace/.env" 2>/dev/null | cut -d= -f2)"
 URL="${ANSIBLE_AGENT_URL:-http://127.0.0.1:${PORT:-8897}}"
 C="${CONFMGT_CONTAINER:-confmgt-ansible}"
 WAIT="${WAIT_SECONDS:-60}"; [[ "$WAIT" =~ ^[0-9]+$ ]] || WAIT=60
