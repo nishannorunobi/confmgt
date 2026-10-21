@@ -69,7 +69,9 @@ info "asked by: $BY · keys: $*"
 MINE=
 if [ -n "${KMS_TOKEN:-}" ]; then TOKEN="$KMS_TOKEN"; info "kms owner login: handed over"
 else
-    PWF="${KMS_MASTER_PASSWORD_FILE:-$_WS_ROOT/mountspace/usb/myworkspace/projectspace/kms/master_password/master_password}"   # the usual place on the PC
+    MP=mountspace/usb/myworkspace/projectspace/kms/master_password/master_password          # the usual place on the PC:
+    d="$_WS_ROOT"; while [ "$d" != / ] && [ ! -f "$d/$MP" ]; do d="$(dirname "$d")"; done   # the nearest one up (a test copy → the workspace's)
+    PWF="${KMS_MASTER_PASSWORD_FILE:-$d/$MP}"
     if grep -q '[^[:space:]]' "$PWF" 2>/dev/null; then SRC="kms's master_password"; PW_IN() { head -1 "$PWF" | tr -d '\r\n'; }
     elif { : </dev/tty; } 2>/dev/null; then SRC="typed"; ask "kms password for $OWNER (hidden): "; read -r -s _pw </dev/tty; echo >&2; PW_IN() { printf '%s' "$_pw"; }
     else bad "no kms owner login — put your kms password into kms's master_password (mountspace/usb/myworkspace/projectspace/kms/master_password/master_password), or run by hand: bash $0 $*"; exit 1; fi
