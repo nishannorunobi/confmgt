@@ -6,10 +6,10 @@
 #
 # Who         You.
 #
-# How         bash apply_playbook.sh                       asks: playbook [ping] · inventory [pc] · machines [all]
-#             bash apply_playbook.sh ping pc             the same without questions
+# How         bash apply_playbook.sh                       asks: playbook [ping] · inventory [dev] · machines [all]
+#             bash apply_playbook.sh ping dev             the same without questions
 #
-# Output      changed: [test-vm] … · [  OK  ] apply ping on pc: exit 0 after 2.3 s · full log: …/runs/…log
+# Output      changed: [test-vm] … · [  OK  ] apply ping on dev: exit 0 after 2.3 s · full log: …/runs/…log
 #
 # Errors      no terminal and no names → only the plan is shown (exit 3): nothing is applied unseen
 #             UNREACHABLE → the machine lacks the public key (bash show_public_key.sh) or is off

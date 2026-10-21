@@ -2,7 +2,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # authorize_ansible_on_this_pc.sh — let Ansible (confmgt) log in to THIS PC: its public key → ~/.ssh/authorized_keys
 #
-# What for    Ansible configures this PC over SSH (inventory pc). It may log in only when its public key is in your
+# What for    Ansible configures this PC over SSH (inventory dev). It may log in only when its public key is in your
 #             ~/.ssh/authorized_keys. One command instead of copy-pasting the key.
 #
 # Who         You, once per machine — and again after ANSIBLE_SSH_KEY_SECRET changed in kms (a new key).
@@ -17,7 +17,7 @@
 #
 # Errors      the agent does not answer → bash start.sh
 #
-# Next        bash check_playbook.sh  → mycache · pc  (dry run: changed=0)
+# Next        bash check_playbook.sh  → mycache · dev  (dry run: changed=0)
 # ─────────────────────────────────────────────────────────────────────────────
 case "${1:-}" in -h|--help) awk 'NR==1{next} /^# ─/{n++; if(n==2) exit; next} n==1{ sub(/^# ?/,""); if(!t){printf "\033[1m%s\033[0m\n",$0; t=1; next} l=substr($0,1,12); if(l ~ /^[A-Z][A-Za-z ]+$/){c=(l ~ /^Errors/)?"\033[33m":"\033[36m"; printf "%s%s\033[0m%s\n",c,l,substr($0,13)} else print }' "$0"; exit 0 ;; esac
 set -uo pipefail
@@ -42,4 +42,4 @@ else
     printf '%s\n' "$KEY" >> "$AK"
     echo -e "\033[32m[  OK  ]\033[0m Ansible's key added to $AK"
 fi
-echo "         next: bash $HERE/check_playbook.sh   → playbook mycache · inventory pc (dry run)"
+echo "         next: bash $HERE/check_playbook.sh   → playbook mycache · inventory dev (dry run)"

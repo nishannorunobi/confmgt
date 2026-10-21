@@ -68,7 +68,7 @@ ANSIBLE_SSH_KEY_SECRET=${KMS_URL}/v1/kv/data/confmgt/ansible
 ## The machines
 
 `ansible_project/inventories/<env>/` holds the machines, one folder per environment.
-`pc` is this PC (default), reached as `host.docker.internal` port 22 — `bash authorize_ansible_on_this_pc.sh` lets Ansible in. `test` is a placeholder for a test VM.
+`dev` is the developer PC (default), reached as `host.docker.internal` port 22 — `bash authorize_ansible_on_this_pc.sh` lets Ansible in. `test` is a placeholder for a test VM.
 A machine lets Ansible in only when the public key from `show_public_key.sh` is in its `~/.ssh/authorized_keys`.
 The first contact is trusted and remembered in the data volume (`known_hosts`). A host key that changes later is refused.
 

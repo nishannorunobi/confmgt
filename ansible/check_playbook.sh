@@ -6,10 +6,10 @@
 #
 # Who         You.
 #
-# How         bash check_playbook.sh                       asks: playbook [ping] · inventory [pc] · machines [all]
-#             bash check_playbook.sh mycache pc             the same without questions
+# How         bash check_playbook.sh                       asks: playbook [ping] · inventory [dev] · machines [all]
+#             bash check_playbook.sh mycache dev             the same without questions
 #
-# Output      ok: [pc-main] … changed=0 · [  OK  ] check mycache on pc: exit 0 after 2.1 s · full log: …/runs/…log
+# Output      ok: [dev-pc] … changed=0 · [  OK  ] check mycache on dev: exit 0 after 2.1 s · full log: …/runs/…log
 #
 # Errors      the agent does not answer → bash start.sh · UNREACHABLE → the machine lacks the public key
 #             (bash show_public_key.sh) or is off

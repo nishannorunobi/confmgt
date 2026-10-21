@@ -2,14 +2,14 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # test_mycache_role.sh — automatic tests for story 3.1: Ansible renders mycache's 2 files from the source of truth
 #
-# What for    Proves that inventories/pc/group_vars/mycache/ + roles/mycache render mycache's REAL .env and agent.conf
+# What for    Proves that inventories/dev/group_vars/mycache/ + roles/mycache render mycache's REAL .env and agent.conf
 #             byte for byte — on a THROWAWAY copy of those files, inside this checkout's image. Nothing real is touched.
 #
 # Who         Claude (Test 3a in the branch · 3c on main), or you.
 #
 # How         bash dockerspace/host_scripts/test_mycache_role.sh        (≈30 s)
 #
-# Checks      M1 dry run with the PC's real values against a copy of mycache's real files → changed=0
+# Checks      M1 dry run with the dev environment's real values against a copy of mycache's real files → changed=0
 #             M2 one value changed (TZ) → the dry run shows exactly that line, changed=1 · the file on disk unchanged
 #             M3 apply (no --check) → refused: "check-only until story 3.2" · the files unchanged
 #             M4 the source of truth holds no secret: every password / key line is a kms address
@@ -38,7 +38,7 @@ W="$TMP/ws/projectspace/mycache"; mkdir -p "$W/cache-agent"
 cp "$MYCACHE/.env" "$W/.env"; cp "$MYCACHE/cache-agent/agent.conf" "$W/cache-agent/agent.conf"
 P="$TMP/p"; cp -a "$HERE/ansible_project" "$P"; mkdir -p "$P/inventories/t/group_vars"
 printf 'all:\n  children:\n    mycache:\n      hosts:\n        m1:\n          ansible_connection: local\n          workspace_root: /ws\n' > "$P/inventories/t/hosts.yml"
-cp -a "$P/inventories/pc/group_vars/." "$P/inventories/t/group_vars/"              # the PC's REAL values
+cp -a "$P/inventories/dev/group_vars/." "$P/inventories/t/group_vars/"              # the DEV environment's REAL values
 run() { docker run --rm -v "$TMP/ws:/ws" -v "$P:/p" -w /p -e ANSIBLE_CONFIG=/p/ansible.cfg -e ANSIBLE_NOCOLOR=1 "$IMG" \
           ansible-playbook -i inventories/t playbooks/mycache.yml "$@" 2>&1; }
 sum() { md5sum "$W/.env" "$W/cache-agent/agent.conf" | cut -c1-32 | tr '\n' ' '; }
@@ -46,7 +46,7 @@ S0="$(sum)"
 
 o="$(run --check --diff)"; r=$?
 [ $r = 0 ] && grep -qE 'm1 +: ok=[0-9]+ +changed=0 ' <<< "$o" && [ "$(sum)" = "$S0" ] \
-  && ok "M1 the PC's values render mycache's real .env + agent.conf byte for byte → changed=0" \
+  && ok "M1 the dev values render mycache's real .env + agent.conf byte for byte → changed=0" \
   || bad "M1 rc=$r $(grep -E 'changed=|^[-+][A-Z]|FAILED|ERROR' <<< "$o" | head -6 | tr '\n' '¦')"
 
 sed -i 's#^  TZ: .*#  TZ: "Europe/Berlin"#' "$P/inventories/t/group_vars/mycache/main.yml"
@@ -60,7 +60,7 @@ o="$(run)"; r=$?
 [ $r != 0 ] && grep -q 'mycache.yml is check-only until story 3.2' <<< "$o" && [ "$(sum)" = "$S0" ] \
   && ok "M3 apply → refused ('check-only until story 3.2'), the files unchanged" || bad "M3 rc=$r $(tail -3 <<< "$o" | tr '\n' '¦')"
 
-b4="$(grep -E '^  [A-Z_]*(PASS|PASSWORD|SECRET|TOKEN|_KEY)[A-Z_]*: ' "$HERE/ansible_project/inventories/pc/group_vars/mycache/main.yml" | grep -vE '^  (KMS_MASTER_PASSWORD_DIR|SECRET_MGT): ' | grep -vE ': "(\$\{KMS_URL\}|https?://[^"]+)/v1/kv/data/')"   # a folder path / the mode: no secret
+b4="$(grep -E '^  [A-Z_]*(PASS|PASSWORD|SECRET|TOKEN|_KEY)[A-Z_]*: ' "$HERE/ansible_project/inventories/dev/group_vars/mycache/main.yml" | grep -vE '^  (KMS_MASTER_PASSWORD_DIR|SECRET_MGT): ' | grep -vE ': "(\$\{KMS_URL\}|https?://[^"]+)/v1/kv/data/')"   # a folder path / the mode: no secret
 [ -z "$b4" ] && ok "M4 the source of truth holds no secret — every password / key is a kms address" || bad "M4 a secret value: $(cut -d: -f1 <<< "$b4" | tr '\n' ' ')"
 
 [ "$FAIL" = 0 ] && ok "mycache role tests passed (throwaway copy removed; the real mycache files were only read)" && exit 0

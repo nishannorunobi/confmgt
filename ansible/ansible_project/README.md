@@ -6,7 +6,7 @@ Docker and the agent only add the SSH key from kms and the API.
 ## The folders
 
 ```
-ansible.cfg                                   Ansible's settings (default inventory: pc = this PC)
+ansible.cfg                                   Ansible's settings (default inventory: dev = the developer PC)
 inventories/<env>/hosts.yml                   the machines of one environment
 inventories/<env>/host_vars/<machine>.yml     how to reach one machine (address, port, user)
 inventories/<env>/group_vars/all/<topic>.yml  values for EVERY machine of the environment, one topic per file
@@ -20,7 +20,7 @@ A new environment is a new folder next to `test/`. A new machine is one line in 
 
 | Project | Values | Renders | Playbook | Story |
 |---|---|---|---|---|
-| mycache | `inventories/pc/group_vars/mycache/main.yml` | `.env` · `cache-agent/agent.conf` | `mycache.yml` (check only) | 3.1 |
+| mycache | `inventories/dev/group_vars/mycache/main.yml` | `.env` · `cache-agent/agent.conf` | `mycache.yml` (check only) | 3.1 |
 
 ## How the rest joins: the single source of truth for every project
 
