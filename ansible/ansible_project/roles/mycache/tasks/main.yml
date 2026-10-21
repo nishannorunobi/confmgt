@@ -1,11 +1,7 @@
-# roles/mycache — mycache's two config files, rendered from group_vars/mycache/ (the single source of truth).
-# The files keep their place, owner and mode; mycache still starts alone from them, without Ansible.
-- name: mycache .env
-  ansible.builtin.template:
-    src: env.j2
-    dest: "{{ mycache_dir }}/.env"
-
-- name: mycache cache-agent/agent.conf
-  ansible.builtin.template:
-    src: agent.conf.j2
-    dest: "{{ mycache_dir }}/cache-agent/agent.conf"
+# roles/mycache — mycache's config files, each rendered from its mirror (the single source of truth):
+#   values   inventories/<env>/myworkspace/<path>.yml
+#   template templates/myworkspace/<path>.j2
+#   target   <workspace_root>/<path>          (keeps its place, owner and mode; mycache still starts alone from it)
+- name: "mycache {{ item }}"
+  ansible.builtin.include_tasks: render_mirrored_file.yml
+  loop: "{{ mycache_files }}"

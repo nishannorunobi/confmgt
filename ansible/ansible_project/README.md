@@ -6,35 +6,29 @@ Docker and the agent only add the SSH key from kms and the API.
 ## The folders
 
 ```
-ansible.cfg                                   Ansible's settings (default inventory: dev = the developer PC)
-inventories/<env>/hosts.yml                   the machines of one environment
-inventories/<env>/host_vars/<machine>.yml     how to reach one machine (address, port, user)
-inventories/<env>/group_vars/all/<topic>.yml  values for EVERY machine of the environment, one topic per file
-playbooks/<name>.yml                          what can run — the agent finds every file here by itself
-roles/<project>/                              one project's configuration (later stories)
+ansible.cfg                                       Ansible's settings (default inventory: dev = the developer PC)
+inventories/<env>/hosts.yml                       the machines of one environment (dev · test · staging · prod)
+inventories/<env>/host_vars/<machine>.yml         how to reach one machine (address, port, user, workspace_root)
+inventories/<env>/group_vars/all/<topic>.yml      Ansible's own settings for every machine (e.g. connection)
+inventories/<env>/myworkspace/<path>.yml          THE MIRROR: the values of ~/myworkspace/<path>, one file per real config file
+playbooks/<name>.yml                              what can run — the agent finds every file here by itself
+roles/<project>/templates/myworkspace/<path>.j2   the real file's shape (its own comments), values from the mirror
 ```
 
-A new environment is a new folder next to `test/`. A new machine is one line in `hosts.yml` plus its `host_vars` file. A new playbook is a new file in `playbooks/`. You never edit code to add any of these.
-
-## Who has joined (epic [3], one story per step)
-
-| Project | Values | Renders | Playbook | Story |
-|---|---|---|---|---|
-| mycache | `inventories/dev/group_vars/mycache/env.yml` · `agent.yml` | `.env` · `cache-agent/agent.conf` | `mycache.yml` (check only) | 3.1 |
-
-## How the rest joins: the single source of truth for every project
-
-Each project joins in its own story. It only **adds** files:
+## The mirror — the single source of truth, laid out like the workspace
 
 ```
-inventories/<env>/group_vars/all/kms.yml        workspace-wide values, once per environment (KMS_URL, SECRET_MGT …)
-inventories/<env>/group_vars/<project>/*.yml    one project's values
-inventories/<env>/hosts.yml                     + the group <project>: which machines run it
-roles/<project>/templates/<its file>.j2         renders the project's own .env / agent.conf from those values
-playbooks/<project>.yml                         applies the role to its group
+inventories/dev/myworkspace/projectspace/mycache/.env.yml                 → ~/myworkspace/projectspace/mycache/.env
+inventories/dev/myworkspace/projectspace/mycache/cache-agent/agent.conf.yml → ~/myworkspace/projectspace/mycache/cache-agent/agent.conf
 ```
+Find a setting by the path you already know (like the mirror logs in mountspace/logs/myworkspace/…).
+Each environment has its own mirror with the same paths and its own values.
 
-The project still runs alone from its rendered file, without Ansible.
+| Project | Mirrored files | Playbook | Story |
+|---|---|---|---|
+| mycache | `.env` · `cache-agent/agent.conf` | `mycache.yml` (check only) | 3.1 |
+
+A project joins (one story each): its files in the mirror + their templates + a role listing them + a playbook — no core change.
 
 ## Run it
 

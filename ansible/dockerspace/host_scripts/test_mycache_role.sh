@@ -38,7 +38,7 @@ W="$TMP/ws/projectspace/mycache"; mkdir -p "$W/cache-agent"
 cp "$MYCACHE/.env" "$W/.env"; cp "$MYCACHE/cache-agent/agent.conf" "$W/cache-agent/agent.conf"
 P="$TMP/p"; cp -a "$HERE/ansible_project" "$P"; mkdir -p "$P/inventories/t/group_vars"
 printf 'all:\n  children:\n    mycache:\n      hosts:\n        m1:\n          ansible_connection: local\n          workspace_root: /ws\n' > "$P/inventories/t/hosts.yml"
-cp -a "$P/inventories/dev/group_vars/." "$P/inventories/t/group_vars/"              # the DEV environment's REAL values
+cp -a "$P/inventories/dev/group_vars/." "$P/inventories/t/group_vars/"; cp -a "$P/inventories/dev/myworkspace" "$P/inventories/t/"   # the DEV environment's REAL values (the mirror)
 run() { docker run --rm -v "$TMP/ws:/ws" -v "$P:/p" -w /p -e ANSIBLE_CONFIG=/p/ansible.cfg -e ANSIBLE_NOCOLOR=1 "$IMG" \
           ansible-playbook -i inventories/t playbooks/mycache.yml "$@" 2>&1; }
 sum() { md5sum "$W/.env" "$W/cache-agent/agent.conf" | cut -c1-32 | tr '\n' ' '; }
@@ -49,7 +49,7 @@ o="$(run --check --diff)"; r=$?
   && ok "M1 the dev values render mycache's real .env + agent.conf byte for byte → changed=0" \
   || bad "M1 rc=$r $(grep -E 'changed=|^[-+][A-Z]|FAILED|ERROR' <<< "$o" | head -6 | tr '\n' '¦')"
 
-sed -i 's#^  TZ: .*#  TZ: "Europe/Berlin"#' "$P/inventories/t/group_vars/mycache/env.yml"
+sed -i 's#^  TZ: .*#  TZ: "Europe/Berlin"#' "$P/inventories/t/myworkspace/projectspace/mycache/.env.yml"
 o="$(run --check --diff)"; r=$?
 [ $r = 0 ] && grep -qE 'm1 +: ok=[0-9]+ +changed=1 ' <<< "$o" && grep -qx -- '-TZ=America/New_York' <<< "$o" && grep -qx -- '+TZ=Europe/Berlin' <<< "$o" \
   && [ "$(grep -cE '^[-+][A-Za-z_]+=' <<< "$o")" = 2 ] && [ "$(sum)" = "$S0" ] \
@@ -60,7 +60,7 @@ o="$(run)"; r=$?
 [ $r != 0 ] && grep -q 'mycache.yml is check-only until story 3.2' <<< "$o" && [ "$(sum)" = "$S0" ] \
   && ok "M3 apply → refused ('check-only until story 3.2'), the files unchanged" || bad "M3 rc=$r $(tail -3 <<< "$o" | tr '\n' '¦')"
 
-b4="$(grep -hE '^  [A-Z_]*(PASS|PASSWORD|SECRET|TOKEN|_KEY)[A-Z_]*: ' "$HERE"/ansible_project/inventories/dev/group_vars/mycache/*.yml | grep -vE '^  (KMS_MASTER_PASSWORD_DIR|SECRET_MGT): ' | grep -vE ': "(\$\{KMS_URL\}|https?://[^"]+)/v1/kv/data/')"   # a folder path / the mode: no secret
+b4="$(grep -hE '^  [A-Z_]*(PASS|PASSWORD|SECRET|TOKEN|_KEY)[A-Z_]*: ' $(find "$HERE/ansible_project/inventories/dev/myworkspace" -name "*.yml") | grep -vE '^  (KMS_MASTER_PASSWORD_DIR|SECRET_MGT): ' | grep -vE ': "(\$\{KMS_URL\}|https?://[^"]+)/v1/kv/data/')"   # a folder path / the mode: no secret
 [ -z "$b4" ] && ok "M4 the source of truth holds no secret — every password / key is a kms address" || bad "M4 a secret value: $(cut -d: -f1 <<< "$b4" | tr '\n' ' ')"
 
 [ "$FAIL" = 0 ] && ok "mycache role tests passed (throwaway copy removed; the real mycache files were only read)" && exit 0

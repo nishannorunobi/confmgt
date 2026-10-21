@@ -1,0 +1,10 @@
+# projectspace/mycache/cache-agent/agent.conf — its values on the DEV environment (mirror of ~/myworkspace/projectspace/mycache/cache-agent/agent.conf; CONFMGT epic [3]).
+# Rendered by roles/mycache (templates/myworkspace/… mirrors it too) · secrets: only kms ADDRESSES, never a value.
+# Change a value → check_playbook.sh (dry run) shows the line that would change.
+
+mirror:
+  KMS_URL: "http://kms-openbao:8200"
+  SECRET_MGT: "kms"
+  PORT: "8892"
+  ANTHROPIC_API_KEY: "${KMS_URL}/v1/kv/data/shared/anthropic"
+  REDIS_PASSWORD: "${KMS_URL}/v1/kv/data/mycache/redis"

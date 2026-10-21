@@ -1,18 +1,18 @@
-{# rendered by Ansible (confmgt) from inventories/<env>/group_vars/mycache/ — the comments are mycache's own #}
+{# rendered by Ansible (confmgt) from inventories/<env>/myworkspace/ (the mirror) — the comments are mycache's own #}
 # Cache Agent — Configuration (no secret — this file is in git)
 # A secret's value is its kms address — the agent fetches the real value itself when it starts
 # (connect_external/kms/fetch_from_kms.py, its own kms login). kms elsewhere: https://<kms-host>:<port>/v1/kv/data/…
 # kms's base is named ONCE (TESTSERVER-46): kms elsewhere → KMS_URL=https://<kms-host>:<port>, every
 # ${KMS_URL}/v1/kv/data/… line follows.
-KMS_URL={{ mycache_agent_conf.KMS_URL }}
+KMS_URL={{ mirror.KMS_URL }}
 # SECRET_MGT — where the passwords below come from (TESTSERVER-67): kms = their kms addresses, fetched at start ·
 # local = the real values written right here (no kms at all) · not set / empty → local
-SECRET_MGT={{ mycache_agent_conf.SECRET_MGT }}
+SECRET_MGT={{ mirror.SECRET_MGT }}
 # every password keeps its kms address in the "# kms:" comment right above it — the rotation (connect_external/kms/):
 # transfer (values): cache_transfer_kms2tempfile.sh / _local2tempfile_random_value.sh / _tempfile2local.sh /
 #   _local2kms.sh / _comment2local_kmsurl.sh · config (SECRET_MGT only): cache_config_secret_mgt_local.sh / _kms.sh
-PORT={{ mycache_agent_conf.PORT }}
+PORT={{ mirror.PORT }}
 # kms: ${KMS_URL}/v1/kv/data/shared/anthropic
-ANTHROPIC_API_KEY={{ mycache_agent_conf.ANTHROPIC_API_KEY }}
+ANTHROPIC_API_KEY={{ mirror.ANTHROPIC_API_KEY }}
 # kms: ${KMS_URL}/v1/kv/data/mycache/redis
-REDIS_PASSWORD={{ mycache_agent_conf.REDIS_PASSWORD }}
+REDIS_PASSWORD={{ mirror.REDIS_PASSWORD }}

@@ -1,2 +1,6 @@
-# defaults for roles/mycache — the real values live in inventories/<env>/group_vars/mycache/ (env.yml · agent.yml)
-mycache_dir: "{{ workspace_root }}/projectspace/mycache"
+# defaults for roles/mycache — the values live in the mirror: inventories/<env>/myworkspace/<the file's path>.yml
+# mycache's config files, as paths below ~/myworkspace — a new file = one line here + its mirrored values
+# (inventories/<env>/myworkspace/<path>.yml) + its template (templates/myworkspace/<path>.j2)
+mycache_files:
+  - projectspace/mycache/.env
+  - projectspace/mycache/cache-agent/agent.conf
