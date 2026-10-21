@@ -3,6 +3,10 @@
 - name: restart myodoo
   ansible.builtin.shell: |
     set -e
+    # only when it runs: Odoo 19 is "no" in the start plan — a changed config must never START it (CONFMGT [6.5])
+    if [ "$(bash status.sh --state --19 2>/dev/null | tail -1 | awk '{print $NF}')" = stopped ]; then
+        echo "myodoo 19 is stopped — not started; the new config is used at its next start"; exit 0
+    fi
     bash stop.sh --19
     SVC_RUN=1 bash start.sh --19
   args:

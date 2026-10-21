@@ -21,6 +21,8 @@
 #                rendered + restart once, targets STARTED · again → changed=0, no restart · a value changed → restart only ·
 #                a target that fails → the play stops, the projects after it are not tried
 #             P7 the real lists agree: inventories/dev deploy_projects targets == ~/myworkspace svc_policy.conf SVC_VIA_DEPLOY
+#             P8 a config-only project's REAL restart handler (default "no" in the start plan) on stub scripts: stopped →
+#                nothing started, a message · running → its own stop + start
 # ─────────────────────────────────────────────────────────────────────────────
 case "${1:-}" in -h|--help) awk 'NR==1{next} /^# ─/{n++; if(n==2) exit; next} n==1{ sub(/^# ?/,""); if(!t){printf "\033[1m%s\033[0m\n",$0; t=1; next} l=substr($0,1,12); if(l ~ /^[A-Z][A-Za-z ]+$/){c=(l ~ /^Errors/)?"\033[33m":"\033[36m"; printf "%s%s\033[0m%s\n",c,l,substr($0,13)} else print }' "$0"; exit 0 ;; esac
 set -uo pipefail
@@ -157,5 +159,29 @@ inv_t="$(inv dev dev-pc | python3 -c 'import json,sys; print(" ".join(sorted(t f
 pol_t="$(bash -c 'source "$1"; printf "%s\n" "${SVC_VIA_DEPLOY[@]:-}" | sort | xargs' _ "$_WS_ROOT/svcmgt/svc_policy.conf")"
 [ "$inv_t" = "$pol_t" ] && ok "P7 inventories/dev deploy_projects targets == svc_policy.conf SVC_VIA_DEPLOY [${inv_t:-none}]" \
   || bad "P7 inventory [$inv_t] ≠ svc_policy.conf [$pol_t]"
+
+# ── P8: restart handlers that must never START a stopped project ────────────
+h8=""
+for spec in "myodoo:projectspace/myodoo:--19"; do
+    IFS=: read -r role dir arg <<< "$spec"
+    docker exec -u ansible "$M" sh -c "mkdir -p /home/ansible/ws/$dir && cd /home/ansible/ws/$dir && rm -f calls
+        printf '#!/bin/sh\ncat state\n' > status.sh; printf '#!/bin/sh\necho \"stop \$*\" >> calls\n' > stop.sh; printf '#!/bin/sh\necho \"start \$*\" >> calls\n' > start.sh"
+    printf -- '- hosts: deploy_targets\n  gather_facts: false\n  vars: {workspace_root: /home/ansible/ws}\n  tasks:\n    - ansible.builtin.include_tasks: ../roles/%s/handlers/main.yml\n' "$role" > "$WORK/a/project/playbooks/h8.yml"
+    for s in stopped running; do
+        docker exec -u ansible "$M" sh -c "cd /home/ansible/ws/$dir && echo 'x $s' > state && rm -f calls"
+        o8="$(docker run --rm --network "$NET" -v "$WORK/a:/a" -w /a/project -e HOME=/tmp -e ANSIBLE_CONFIG=/a/project/ansible.cfg \
+            -e ANSIBLE_PRIVATE_KEY_FILE=/a/key -e ANSIBLE_NOCOLOR=1 -e ANSIBLE_LOCAL_TEMP=/tmp/al \
+            -e "ANSIBLE_SSH_ARGS=-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/a/known_hosts" \
+            "$IMG" ansible-playbook -i inventories/p2 playbooks/h8.yml -v 2>&1)"
+        c="$(docker exec "$M" sh -c "cat /home/ansible/ws/$dir/calls 2>/dev/null" | tr '\n' ',')"
+        case "$s" in
+            stopped) [ -z "$c" ] && grep -q 'is stopped — not started' <<< "$o8" || h8+=" $role/stopped[$c]" ;;
+            running) [ "$c" = "stop $arg,start $arg," ] || h8+=" $role/running[$c]" ;;
+        esac
+    done
+done
+rm -f "$WORK/a/project/playbooks/h8.yml"
+[ -z "$h8" ] && ok "P8 restart handlers of config-only projects (myodoo): stopped → nothing started, a message · running → own stop + start" \
+  || bad "P8:$h8"
 
 [ $FAIL = 0 ] && ok "deploy playbook tests passed (throwaway machine + stand-in agent removed)" || { echo -e "\033[31m[FAILED]\033[0m deploy playbook tests"; exit 1; }
