@@ -10,11 +10,21 @@ ansible.cfg                                       Ansible's settings (default in
 inventories/<env>/hosts.yml                       the machines of one environment (dev · test · staging · prod)
 inventories/<env>/host_vars/<machine>.yml         how to reach one machine (address, port, user, workspace_root)
 inventories/<env>/group_vars/all/<topic>.yml      Ansible's own settings for every machine (e.g. connection)
+inventories/test/group_vars/deploy_targets/        WHICH workspace playbooks/deploy.yml puts on the deploy_targets (repo · branch · folder)
 inventories/<env>/shared/<topic>.yml             SHARED: values used by 2+ projects, once (kms · clock · anthropic · rabbitmq · postgres …)
 inventories/<env>/myworkspace/<path>.yml          THE MIRROR: only that project's own values of ~/myworkspace/<path>, one file per real config file
 playbooks/<name>.yml                              what can run — the agent finds every file here by itself
 roles/<project>/templates/myworkspace/<path>.j2   the real file's shape (its own comments), values from the mirror
 ```
+
+## Deploy — the workspace onto a machine (CONFMGT [6])
+
+```
+inventories/test/hosts.yml   deploy_targets: test-vm          dev has NO deploy_targets → the developer PC is never touched
+playbooks/deploy.yml          git → clone / pull ~/myworkspace → Docker by the workspace's own script   (run again → changed=0)
+```
+On the PC: `bash ~/myworkspace/test_server/deploy_test_vm.sh` — starts the VM + the SSH relay, gives Ansible its key in the VM,
+then asks the agent to apply `deploy` on `test`. Each project joins in its own story ([6.2]…).
 
 ## The mirror — the single source of truth, laid out like the workspace
 

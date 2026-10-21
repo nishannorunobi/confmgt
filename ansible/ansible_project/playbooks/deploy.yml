@@ -1,0 +1,37 @@
+# deploy.yml — put the workspace on the deploy_targets machines (CONFMGT [6]; only inventories/test has that group).
+#   check_playbook.sh → deploy → test    dry run: what would be installed / pulled — changes nothing
+#   apply_playbook.sh → deploy → test    git (only when missing) → workspace clone, or pull → Docker by the workspace's
+#                                         OWN script. Run again → nothing changes (changed=0).
+# What is deployed: inventories/test/group_vars/deploy_targets/. Each project joins in its own story ([6.2]…).
+- name: Deploy the workspace
+  hosts: deploy_targets
+  gather_facts: false
+  tasks:
+    - name: git + curl (only when missing)
+      become: true
+      ansible.builtin.apt:
+        name: [git, curl]
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: GitHub answers with this machine's key
+      ansible.builtin.command: ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new git@github.com
+      register: github
+      changed_when: false
+      failed_when: "'successfully authenticated' not in github.stderr"
+      check_mode: false
+
+    - name: the workspace — clone, or pull (local changes in the machine → refused, never thrown away)
+      ansible.builtin.git:
+        repo: "{{ ws_repo }}"
+        dest: "{{ ws_dir }}"
+        version: "{{ ws_branch }}"
+        update: true
+        force: false
+        accept_hostkey: true
+
+    - name: Docker — the workspace's own dockerspace/01_check_and_install_docker.sh (installs only when missing)
+      ansible.builtin.command: bash {{ ws_dir }}/dockerspace/01_check_and_install_docker.sh
+      register: docker
+      changed_when: "'Installing' in docker.stdout"
