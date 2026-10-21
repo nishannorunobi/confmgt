@@ -37,6 +37,7 @@ Each environment has its own mirror with the same paths and its own values.
 | mycache | `.env` · `cache-agent/agent.conf` (TZ · KMS_URL · SECRET_MGT · Anthropic → shared/) | `mycache.yml` (check · apply + restart via its own scripts) | 3.1 · 3.2 · 3.3 |
 | mychannels | `.env` · `channel-agent/agent.conf` (RabbitMQ → NEW shared/rabbitmq.yml, owned by mychannels) | `mychannels.yml` (check · apply + restart) | 3.4 |
 | mypostgresql_db | `db-agent/agent.conf` (databases, users, password addresses → NEW shared/postgres.yml, owned by mypostgresql_db) | `mypostgresql_db.yml` (check · apply + restart via its stop.sh + start.sh) | 3.5 |
+| mydocs (Plane) | `.env` (Postgres · Redis · RabbitMQ → shared/, NEW shared/redis.yml owned by mycache) | `mydocs.yml` (check · apply + restart via ensure_stopped/ensure_running) | 3.6 |
 
 A project joins (one story each): its files in the mirror + their templates + a role listing them + a playbook — no core change.
 

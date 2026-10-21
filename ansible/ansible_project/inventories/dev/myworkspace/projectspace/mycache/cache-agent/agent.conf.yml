@@ -7,4 +7,4 @@ mirror:
   SECRET_MGT: "{{ shared_kms.secret_mgt }}"               # → shared/kms.yml
   PORT: "8892"
   ANTHROPIC_API_KEY: "{{ shared_anthropic.api_key }}"     # → shared/anthropic.yml
-  REDIS_PASSWORD: "${KMS_URL}/v1/kv/data/mycache/redis"
+  REDIS_PASSWORD: "{{ shared_redis.password }}"           # → shared/redis.yml

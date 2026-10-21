@@ -1,0 +1,10 @@
+# restart mydocs with its OWN scripts (three-layer rule) — the same steps the workspace uses. Runs ONLY when a file
+# really changed (never in a dry run).
+- name: restart mydocs
+  ansible.builtin.shell: |
+    set -e
+    bash ensure_stopped.sh
+    SVC_RUN=1 bash ensure_running.sh
+  args:
+    chdir: "{{ workspace_root }}/projectspace/mydocs"
+    executable: /bin/bash

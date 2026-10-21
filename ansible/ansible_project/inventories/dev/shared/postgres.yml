@@ -9,15 +9,19 @@ shared_postgres:
       user: "docs_user"
       db: "mydocsdb"
       password: "${KMS_URL}/v1/kv/data/mypostgresql_db/mydocsdb"
+      key: "DOCS_PASSWORD"                     # the key inside that kms entry (clients name it: <address>#<key>)
     ums:
       user: "ums_user"
       db: "umsdb"
       password: "${KMS_URL}/v1/kv/data/mypostgresql_db/umsdb"
+      key: "UMS_PASSWORD"                     # the key inside that kms entry (clients name it: <address>#<key>)
     odoo:
       user: "odoo"
       db: "myodoo"
       password: "${KMS_URL}/v1/kv/data/mypostgresql_db/myodoo"
+      key: "ODOO_PASSWORD"                     # the key inside that kms entry (clients name it: <address>#<key>)
     grafana:
       user: "grafana"
       db: "grafana"
       password: "${KMS_URL}/v1/kv/data/mypostgresql_db/grafana"
+      key: "GRAFANA_PASSWORD"                     # the key inside that kms entry (clients name it: <address>#<key>)

@@ -1,0 +1,4 @@
+# defaults for roles/mydocs — the values live in the mirror (inventories/<env>/myworkspace/<path>.yml) + shared/
+# its config files, as paths below ~/myworkspace — a new file = one line here + its mirrored values + its template
+mydocs_files:
+  - projectspace/mydocs/.env

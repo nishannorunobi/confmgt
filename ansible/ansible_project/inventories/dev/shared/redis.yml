@@ -1,0 +1,7 @@
+# shared/redis.yml — Redis (mycache) as every project reaches it on the DEV environment.
+# Owned by mycache (servers first: the server defines its connection; clients like Plane only refer to it).
+shared_redis:
+  host: "mycache-redis"                        # its name on my_docker_network
+  port: "6379"
+  password: "${KMS_URL}/v1/kv/data/mycache/redis"   # a kms ADDRESS, never the password
+  key: "REDIS_PASSWORD"                        # the key inside that kms entry
