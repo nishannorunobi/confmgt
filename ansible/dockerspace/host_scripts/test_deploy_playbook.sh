@@ -59,7 +59,8 @@ d="$(inv dev dev-pc)"; t="$(inv test test-vm)"
 grep -q 'dev-pc' <<< "$(grp dev)" && grep -q 'test-vm' <<< "$(grp test)" \
   && grep -q '"ws_manage_git": false' <<< "$d" && grep -q '"ws_manage_docker": false' <<< "$d" \
   && grep -q '"ws_manage_git": true' <<< "$t" && grep -q '"ws_manage_docker": true' <<< "$t" \
-  && ok "P1 inventories: dev → dev-pc, git + Docker OFF · test → test-vm, both ON" || bad "P1 dev=$(tr -d '\n ' <<< "$d" | cut -c1-200)"
+  && ! grep -q '"ws_project_repos"' <<< "$d" && grep -q '"ws_project_repos"' <<< "$t" \
+  && ok "P1 inventories: dev → dev-pc, git + Docker OFF, no project repos · test → test-vm, both ON + ws_project_repos" || bad "P1 dev=$(tr -d '\n ' <<< "$d" | cut -c1-200)"
 
 # ── the SSH test machine + a temp key + a temp project copy with inventory t ──
 mkdir -p "$WORK/a"; cp -a "$PROJ" "$WORK/a/project"; ssh-keygen -q -t ed25519 -N '' -C confmgt-ansible -f "$WORK/a/key"

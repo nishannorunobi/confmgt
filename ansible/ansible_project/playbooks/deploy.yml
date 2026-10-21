@@ -1,6 +1,6 @@
 # deploy.yml — the workspace on the deploy_targets machines of an inventory (CONFMGT [6]): dev = this PC, test = the test VM.
 #   check_playbook.sh → deploy → <env>   dry run — changes nothing
-#   apply_playbook.sh → deploy → <env>   [ws_manage_git] git → clone / pull ws_branch · [ws_manage_docker] Docker by the
+#   apply_playbook.sh → deploy → <env>   [ws_manage_git] git → clone / pull ws_branch + ws_project_repos · [ws_manage_docker] Docker by the
 #                                         workspace's OWN script · the workspace is there · each project of
 #                                         deploy_projects: config → restart if changed → up. Run again → changed=0.
 # How, per environment (a switch not set → off): inventories/<env>/group_vars/deploy_targets/ — dev: git + Docker OFF (your live checkout; Docker
@@ -36,6 +36,20 @@
         update: true
         force: false
         accept_hostkey: true
+
+    - name: "the project repos — clone, or pull: {{ repo.path }}"
+      when: ws_manage_git | default(false) | bool
+      ansible.builtin.git:
+        repo: "{{ repo.repo }}"
+        dest: "{{ ws_dir }}/{{ repo.path }}"
+        version: "{{ repo.branch | default('main') }}"
+        update: true
+        force: false
+        accept_hostkey: true
+      loop: "{{ ws_project_repos | default([]) }}"
+      loop_control:
+        loop_var: repo
+        label: "{{ repo.path }}"
 
     - name: Docker — the workspace's own dockerspace/01_check_and_install_docker.sh (installs only when missing)
       when: ws_manage_docker | default(false) | bool
