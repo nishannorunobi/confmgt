@@ -1,0 +1,9 @@
+# shared/kms.yml — kms, the same for every project on the DEV environment (used by 2+ projects → here, once).
+# Projects refer to it by name ({{ shared_kms.… }}) — never a copy in their mirror.
+shared_kms:
+  url_in_containers: "http://kms-openbao:8200"   # how containers on my_docker_network reach kms (agents in Docker)
+  url_on_host: "http://127.0.0.1:8110"           # how scripts on the PC itself reach kms (mydocs, host agents)
+  # SECRET_MGT — where the projects' secrets come from. Possible values:
+  #     kms     (the workspace today)  each secret is its kms address, fetched at start
+  #     local                          the real values written in the projects' own files (no kms)
+  secret_mgt: "kms"

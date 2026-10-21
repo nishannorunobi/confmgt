@@ -1,0 +1,3 @@
+# shared/anthropic.yml — the Anthropic API key, shared by every agent: only its kms ADDRESS, never the key
+shared_anthropic:
+  api_key: "${KMS_URL}/v1/kv/data/shared/anthropic"

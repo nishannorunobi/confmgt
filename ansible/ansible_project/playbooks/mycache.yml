@@ -6,4 +6,5 @@
   hosts: mycache
   gather_facts: false
   roles:
+    - shared                    # inventories/<env>/shared/ first: values used by 2+ projects
     - mycache

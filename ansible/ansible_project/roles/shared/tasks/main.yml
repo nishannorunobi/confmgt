@@ -1,0 +1,7 @@
+# roles/shared — load every file of inventories/<env>/shared/ (values used by 2+ projects).
+# Every playbook lists this role FIRST, so any project's mirror can refer to shared_<topic>.… by name.
+# A new topic = a new file in shared/ — found here by itself, no code change.
+- name: shared values of this environment
+  ansible.builtin.include_vars:
+    dir: "{{ inventory_dir }}/shared"
+    extensions: [yml, yaml]

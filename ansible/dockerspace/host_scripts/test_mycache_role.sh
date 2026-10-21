@@ -15,7 +15,8 @@
 #             M5 apply with TZ changed → only that line written · restart via mycache's OWN scripts: stop.sh, then
 #                ensure_running.sh --no-ui (SVC_RUN=1) — stubs in the copy record the calls · agent.conf untouched
 #             M6 apply again → changed=0, no second restart (idempotent)
-#             M4 the source of truth holds no secret: every password / key line is a kms address
+#             M4 the source of truth (mirror + shared/) holds no secret: every password / key line is a kms address
+#             M7 a shared value changed (shared/clock.yml) → mycache's TZ line follows it
 # ─────────────────────────────────────────────────────────────────────────────
 case "${1:-}" in -h|--help) awk 'NR==1{next} /^# ─/{n++; if(n==2) exit; next} n==1{ sub(/^# ?/,""); if(!t){printf "\033[1m%s\033[0m\n",$0; t=1; next} l=substr($0,1,12); if(l ~ /^[A-Z][A-Za-z ]+$/){c=(l ~ /^Errors/)?"\033[33m":"\033[36m"; printf "%s%s\033[0m%s\n",c,l,substr($0,13)} else print }' "$0"; exit 0 ;; esac
 set -uo pipefail
@@ -45,7 +46,7 @@ printf '#!/bin/bash\necho "ensure_running $* SVC_RUN=${SVC_RUN:-}" >> /ws/calls\
 calls() { cat "$TMP/ws/calls" 2>/dev/null | tr '\n' '|'; }
 P="$TMP/p"; cp -a "$HERE/ansible_project" "$P"; mkdir -p "$P/inventories/t/group_vars"
 printf 'all:\n  children:\n    mycache:\n      hosts:\n        m1:\n          ansible_connection: local\n          workspace_root: /ws\n' > "$P/inventories/t/hosts.yml"
-cp -a "$P/inventories/dev/group_vars/." "$P/inventories/t/group_vars/"; cp -a "$P/inventories/dev/myworkspace" "$P/inventories/t/"   # the DEV environment's REAL values (the mirror)
+cp -a "$P/inventories/dev/group_vars/." "$P/inventories/t/group_vars/"; cp -a "$P/inventories/dev/myworkspace" "$P/inventories/dev/shared" "$P/inventories/t/"   # the DEV environment's REAL values (the mirror)
 run() { docker run --rm -v "$TMP/ws:/ws" -v "$P:/p" -w /p -e ANSIBLE_CONFIG=/p/ansible.cfg -e ANSIBLE_NOCOLOR=1 "$IMG" \
           ansible-playbook -i inventories/t playbooks/mycache.yml "$@" 2>&1; }
 sum() { md5sum "$W/.env" "$W/cache-agent/agent.conf" | cut -c1-32 | tr '\n' ' '; }
@@ -79,7 +80,15 @@ o="$(run)"; r=$?
 [ $r = 0 ] && grep -qE 'm1 +: ok=[0-9]+ +changed=0 ' <<< "$o" && [ "$(calls)" = "stop|ensure_running --no-ui SVC_RUN=1|" ] \
   && ok "M6 apply again → changed=0, no second restart (idempotent)" || bad "M6 rc=$r calls=[$(calls)]"
 
-b4="$(grep -hE '^  [A-Z_]*(PASS|PASSWORD|SECRET|TOKEN|_KEY)[A-Z_]*: ' $(find "$HERE/ansible_project/inventories/dev/myworkspace" -name "*.yml") | grep -vE '^  (KMS_MASTER_PASSWORD_DIR|SECRET_MGT): ' | grep -vE ': "(\$\{KMS_URL\}|https?://[^"]+)/v1/kv/data/')"   # a folder path / the mode: no secret
+# M7 a SHARED value changed (shared/clock.yml) → mycache's TZ line follows (the mirror refers to it, no copy)
+sed -i 's#^  TZ: .*#  TZ: "{{ shared_clock.tz }}"#' "$P/inventories/t/myworkspace/projectspace/mycache/.env.yml"
+sed -i 's#^  tz: .*#  tz: "Asia/Dhaka"#' "$P/inventories/t/shared/clock.yml"
+o="$(run --check --diff)"; r=$?
+[ $r = 0 ] && grep -qx -- '+TZ=Asia/Dhaka' <<< "$o" && grep -qE 'm1 +: ok=[0-9]+ +changed=1 ' <<< "$o" \
+  && ok "M7 shared/clock.yml changed → the dry run shows mycache's TZ line follow it (+TZ=Asia/Dhaka) — shared once, referred to by name" \
+  || bad "M7 rc=$r $(grep -E 'changed=|^[-+]TZ|FAILED|fatal' <<< "$o" | head -4 | tr '\n' '¦')"
+
+b4="$(grep -hE '^  [A-Za-z_]*(PASS|PASSWORD|SECRET|TOKEN|_KEY|api_key)[A-Za-z_]*: ' $(find "$HERE/ansible_project/inventories/dev/myworkspace" "$HERE/ansible_project/inventories/dev/shared" -name "*.yml") | grep -vE '^  (KMS_MASTER_PASSWORD_DIR|SECRET_MGT|secret_mgt): ' | grep -vE ': "\{\{ shared_[a-z_.]+ \}\}"' | grep -vE ': "(\$\{KMS_URL\}|https?://[^"]+)/v1/kv/data/')"   # a folder path / the mode: no secret
 [ -z "$b4" ] && ok "M4 the source of truth holds no secret — every password / key is a kms address" || bad "M4 a secret value: $(cut -d: -f1 <<< "$b4" | tr '\n' ' ')"
 
 [ "$FAIL" = 0 ] && ok "mycache role tests passed (throwaway copy removed; the real mycache files were only read)" && exit 0

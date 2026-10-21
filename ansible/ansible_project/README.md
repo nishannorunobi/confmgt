@@ -10,7 +10,8 @@ ansible.cfg                                       Ansible's settings (default in
 inventories/<env>/hosts.yml                       the machines of one environment (dev · test · staging · prod)
 inventories/<env>/host_vars/<machine>.yml         how to reach one machine (address, port, user, workspace_root)
 inventories/<env>/group_vars/all/<topic>.yml      Ansible's own settings for every machine (e.g. connection)
-inventories/<env>/myworkspace/<path>.yml          THE MIRROR: the values of ~/myworkspace/<path>, one file per real config file
+inventories/<env>/shared/<topic>.yml             SHARED: values used by 2+ projects, once (kms · clock · anthropic …)
+inventories/<env>/myworkspace/<path>.yml          THE MIRROR: only that project's own values of ~/myworkspace/<path>, one file per real config file
 playbooks/<name>.yml                              what can run — the agent finds every file here by itself
 roles/<project>/templates/myworkspace/<path>.j2   the real file's shape (its own comments), values from the mirror
 ```
@@ -21,12 +22,19 @@ roles/<project>/templates/myworkspace/<path>.j2   the real file's shape (its own
 inventories/dev/myworkspace/projectspace/mycache/.env.yml                 → ~/myworkspace/projectspace/mycache/.env
 inventories/dev/myworkspace/projectspace/mycache/cache-agent/agent.conf.yml → ~/myworkspace/projectspace/mycache/cache-agent/agent.conf
 ```
+A value used by 2+ projects is NOT in the mirror: it lives once in `shared/<topic>.yml`, and the mirrored file refers to it by name:
+```
+inventories/dev/shared/clock.yml       shared_clock.tz: "America/New_York"
+inventories/dev/myworkspace/projectspace/mycache/.env.yml      TZ: "{{ shared_clock.tz }}"
+```
+Every playbook loads `shared/` first (role `shared`); a new topic = a new file there.
+
 Find a setting by the path you already know (like the mirror logs in mountspace/logs/myworkspace/…).
 Each environment has its own mirror with the same paths and its own values.
 
 | Project | Mirrored files | Playbook | Story |
 |---|---|---|---|
-| mycache | `.env` · `cache-agent/agent.conf` | `mycache.yml` (check · apply + restart via its own scripts) | 3.1 · 3.2 |
+| mycache | `.env` · `cache-agent/agent.conf` (TZ · KMS_URL · SECRET_MGT · Anthropic → shared/) | `mycache.yml` (check · apply + restart via its own scripts) | 3.1 · 3.2 · 3.3 |
 
 A project joins (one story each): its files in the mirror + their templates + a role listing them + a playbook — no core change.
 

@@ -1,0 +1,3 @@
+# shared/clock.yml — the time zone of every project on the DEV environment
+shared_clock:
+  tz: "America/New_York"
