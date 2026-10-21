@@ -20,7 +20,7 @@
 #             P6 deploy_projects on the SSH machine (a fake project role + a fake svcmgt/start_targets.sh): in order, config
 #                rendered + restart once, targets STARTED · again → changed=0, no restart · a value changed → restart only ·
 #                a target that fails → the play stops, the projects after it are not tried
-#             P7 the real lists agree: inventories/dev deploy_projects targets == ~/myworkspace svc_policy.conf SVC_VIA_DEPLOY
+#             P7 the real lists agree: inventories/dev deploy_projects targets == ~/myworkspace svc_policy.conf SVC_VIA_DEPLOY · test == dev
 #             P8 a config-only project's REAL restart handler (default "no" in the start plan) on stub scripts: stopped →
 #                nothing started, a message · running → its own stop + start
 #             P9 playbooks/stop.yml on the SSH machine (a fake svcmgt/stop_targets.sh): projects in REVERSE order, each one's
@@ -162,8 +162,10 @@ o6d="$(p6 1 '  - {name: broken, role: fakeproj, targets: [bad]}\n')"; e4="$(ev)"
 # ── P7: the two lists agree ──────────────────────────────────────────────────
 inv_t="$(inv dev dev-pc | python3 -c 'import json,sys; print(" ".join(sorted(t for p in json.load(sys.stdin).get("deploy_projects",[]) for t in p.get("targets",[]))))')"
 pol_t="$(bash -c 'source "$1"; printf "%s\n" "${SVC_VIA_DEPLOY[@]:-}" | sort | xargs' _ "$_WS_ROOT/svcmgt/svc_policy.conf")"
-[ "$inv_t" = "$pol_t" ] && ok "P7 inventories/dev deploy_projects targets == svc_policy.conf SVC_VIA_DEPLOY [${inv_t:-none}]" \
-  || bad "P7 inventory [$inv_t] ≠ svc_policy.conf [$pol_t]"
+lst() { inv "$1" "$2" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin).get("deploy_projects",[]), sort_keys=True))'; }
+[ "$inv_t" = "$pol_t" ] && [ "$(lst dev dev-pc)" = "$(lst test test-vm)" ] \
+  && ok "P7 inventories/dev deploy_projects targets == svc_policy.conf SVC_VIA_DEPLOY [${inv_t:-none}] · the test list == the dev list" \
+  || bad "P7 inventory [$inv_t] vs svc_policy.conf [$pol_t] · test list = dev list: $([ "$(lst dev dev-pc)" = "$(lst test test-vm)" ] && echo yes || echo NO)"
 
 # ── P8: restart handlers that must never START a stopped project ────────────
 h8=""
