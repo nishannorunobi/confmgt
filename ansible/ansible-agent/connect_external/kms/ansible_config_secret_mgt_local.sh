@@ -5,7 +5,7 @@
 # What for    Switches this component to local: at its next start it uses the plain passwords in its fields, WITHOUT
 #             kms. It changes nothing else. Fill the fields first: ansible_transfer_tempfile2local.sh.
 # Who         You — or svcmgt/config_all_secret_mgt_local.sh (every component; also svc_policy.conf's SECRET_MGT).
-# How         bash projectspace/confmgt/ansible/ansible-agent/connect_external/kms/ansible_config_secret_mgt_local.sh      (safe to run again)
+# How         bash ccc/infra/ansible/ansible-agent/connect_external/kms/ansible_config_secret_mgt_local.sh      (safe to run again)
 # Steps       a password field still holding a kms address → refused, nothing changed · else SECRET_MGT=local
 # Output      [  OK  ] SECRET_MGT=local (was kms) — runs WITHOUT kms at its next start …
 # Next        restart the component · back to kms: ansible_transfer_local2kms.sh → _comment2local_kmsurl.sh → _config_secret_mgt_kms.sh

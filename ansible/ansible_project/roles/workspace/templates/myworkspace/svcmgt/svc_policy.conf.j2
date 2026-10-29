@@ -40,8 +40,8 @@ declare -A SVC_DIR=(
     [mylog_analytics]=projectspace/mylog_analytics   [log-agent]=projectspace/mylog_analytics/log-agent
     [myodoo17]=projectspace/myodoo             [odoo-agent]=projectspace/myodoo/odoo-agent
     [myodoo19]=projectspace/myodoo
-    [confmgt-ansible]=projectspace/confmgt/ansible   [ansible-agent]=projectspace/confmgt/ansible/ansible-agent
-    [deploy-dev]=projectspace/confmgt/ansible
+    [confmgt-ansible]=ccc/infra/ansible   [ansible-agent]=ccc/infra/ansible/ansible-agent
+    [deploy-dev]=ccc/infra/ansible
     [updown]=projectspace/updown
 )
 declare -A SVC_START=(
@@ -177,7 +177,7 @@ SECRET_MGT_COMPONENTS=(
     "mydocs (Plane)|projectspace/mydocs|docs"
     "agents (host)|agents|agents"
     "agents/workspace-agent (.mcp.json)|agents/workspace-agent|workspace"
-    "confmgt (ansible-agent)|projectspace/confmgt/ansible/ansible-agent|ansible"
+    "confmgt (ansible-agent)|ccc/infra/ansible/ansible-agent|ansible"
 )
 
 # ── What stop_all.sh stops (its plan defaults; shutdown.sh runs it) ───────────

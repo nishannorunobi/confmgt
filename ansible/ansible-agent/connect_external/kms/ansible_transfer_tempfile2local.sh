@@ -7,7 +7,7 @@
 #             (that is ansible_config_secret_mgt_local.sh, next). The temp file comes from ansible_transfer_kms2tempfile.sh
 #             (kms's values) or ansible_transfer_local2tempfile_random_value.sh (new random ones).
 # Who         You — or svcmgt/transfer_all_tempfile2local.sh (every component).
-# How         bash projectspace/confmgt/ansible/ansible-agent/connect_external/kms/ansible_transfer_tempfile2local.sh      (safe to run again)
+# How         bash ccc/infra/ansible/ansible-agent/connect_external/kms/ansible_transfer_tempfile2local.sh      (safe to run again)
 # Steps       each password field under its "# kms:" comment ← its value from the own temp file, else the shared one ·
 #             ALL OR NOTHING: a key not in the file · a kms address without its "# kms:" comment → nothing changed
 # Output      [  OK  ] file → password fields: 2 written · 0 the same — SECRET_MGT not touched …   (values never shown)

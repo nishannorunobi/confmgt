@@ -55,7 +55,7 @@ Each environment has its own mirror with the same paths and its own values.
 | myodoo | `odoo-agent/agent.conf` · `odoo-19/odoo.conf` (INI; database → shared/postgres.yml) | `myodoo.yml` (check · apply + restart Odoo 19 via stop/start --19) | 3.8 |
 | agents · workspace-agent | `agents/shared.conf` (ums db → shared/postgres.yml) · `agents/workspace-agent/mcp.conf` | `agents.yml` (restart-agents.sh) · `workspace_agent.yml` (mcp_json_from_kms.sh) | 3.9 |
 | workspace | `svcmgt/svc_policy.conf` (central SECRET_MGT → shared/kms.yml) | `workspace.yml` (check · apply; nothing to restart) | 3.10 |
-| kms · confmgt | `projectspace/kms/dockerspace/.env` · `projectspace/confmgt/ansible/dockerspace/.env` · `ansible-agent/agent.conf` | `kms.yml` · `confmgt.yml` (check · apply; NO automatic restart — a message) | 3.11 |
+| kms · confmgt | `projectspace/kms/dockerspace/.env` · `ccc/infra/ansible/dockerspace/.env` · `ansible-agent/agent.conf` | `kms.yml` · `confmgt.yml` (check · apply; NO automatic restart — a message) | 3.11 |
 
 A project joins (one story each): its files in the mirror + their templates + a role listing them + a playbook — no core change.
 

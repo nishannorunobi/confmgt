@@ -282,10 +282,10 @@ docker rm -f "$A" >/dev/null
 # ── C13: the register script by hand ON THE PC: agent.conf names kms as containers see it (unknown here) → the
 #         PC's kms (KMS_HOST_URL) · the password from the usual master_password file (a temp workspace) · no terminal ──
 kdel confmgt/ansible
-PC="$WORK/pc"; PK="$PC/projectspace/confmgt/ansible/ansible-agent/connect_external/kms"; mkdir -p "$PK" "$PC/mountspace/usb/myworkspace/projectspace/kms/master_password"
+PC="$WORK/pc"; PK="$PC/ccc/infra/ansible/ansible-agent/connect_external/kms"; mkdir -p "$PK" "$PC/mountspace/usb/myworkspace/projectspace/kms/master_password"
 cp "$AGENT/connect_external/kms/register_kms_ansible_keys_with_random_initial.sh" "$AGENT/connect_external/kms/kms_conf.sh" "$PK/"
 printf '%s\n' "$PW" > "$PC/mountspace/usb/myworkspace/projectspace/kms/master_password/master_password"
-printf 'KMS_URL=http://kms-not-from-the-pc.invalid:8200\nSECRET_MGT=kms\n# kms: ${KMS_URL}/v1/kv/data/confmgt/ansible\nANSIBLE_SSH_KEY_SECRET=${KMS_URL}/v1/kv/data/confmgt/ansible\n' > "$PC/projectspace/confmgt/ansible/ansible-agent/agent.conf"
+printf 'KMS_URL=http://kms-not-from-the-pc.invalid:8200\nSECRET_MGT=kms\n# kms: ${KMS_URL}/v1/kv/data/confmgt/ansible\nANSIBLE_SSH_KEY_SECRET=${KMS_URL}/v1/kv/data/confmgt/ansible\n' > "$PC/ccc/infra/ansible/ansible-agent/agent.conf"
 o13="$(env -u KMS_URL -u KMS_TOKEN -u KMS_MASTER_PASSWORD_FILE KMS_HOST_URL="$KMS_URL" bash "$PK/register_kms_ansible_keys_with_random_initial.sh" </dev/null 2>&1)"; r13=$?
 [ $r13 = 0 ] && grep -q "using this PC's kms at $KMS_URL" <<< "$o13" && grep -q "kms owner login: from kms's master_password" <<< "$o13" \
   && grep -q 'initial RANDOM value' <<< "$o13" && [[ "$(kget confmgt/ansible ANSIBLE_SSH_KEY_SECRET)" =~ ^[A-Za-z0-9]{32}$ ]] && ! grep -q 'password for' <<< "$o13" \
@@ -332,7 +332,7 @@ git -C "$HERE" check-ignore -q "ansible-agent/agent.conf" && b11+=" agent.conf:i
 # ── C12: no test value in logs or git; the real kms state untouched ──────────
 leak=0
 for v in "$PW" "$S" "$LSEC" "${K0:-}"; do [ -n "$v" ] || continue
-    grep -rqF -- "$v" "$LG" "$_WS_ROOT/mountspace/logs/myworkspace/projectspace/confmgt" 2>/dev/null && leak=1
+    grep -rqF -- "$v" "$LG" "$_WS_ROOT/mountspace/logs/myworkspace/ccc/infra" 2>/dev/null && leak=1
     git -C "$HERE" grep -qF -- "$v" 2>/dev/null && leak=1
 done
 NOW_STATE="$(stat -c '%n %s %Y' "$AGENT/connect_external/kms/credentials"/*/* "$_WS_ROOT/mountspace/usb/myworkspace/projectspace/kms"/* "$_WS_ROOT/mountspace/usb/myworkspace/projectspace/kms"/*/* 2>/dev/null | sort)"

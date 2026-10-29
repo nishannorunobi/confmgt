@@ -6,7 +6,7 @@
 #             login prompt — this is the way in. Type exit to come back; the container keeps running.
 # Steps       1. checks it runs (else: how to start it)
 #             2. a short reminder, then the shell (bash)
-# How         bash ~/myworkspace/projectspace/confmgt/ansible/dockerspace/host_scripts/confmgt_ansible_container_login.sh
+# How         bash ~/myworkspace/ccc/infra/ansible/dockerspace/host_scripts/confmgt_ansible_container_login.sh
 # Careful     the SSH key in /run/ansible-ssh opens the machines — look, do not copy it out.
 # Inside      checks: bash /container_scripts/env_check.sh
 # See also    the Ansible project inside: /ansible_project (read-only) · run by hand: ansible-playbook -i

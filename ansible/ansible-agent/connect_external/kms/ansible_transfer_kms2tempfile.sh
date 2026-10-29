@@ -6,9 +6,9 @@
 #             (ansible_transfer_tempfile2local.sh, when SECRET_MGT=local). The config itself is NOT changed.
 # Who         You — or svcmgt/transfer_all_kms2tempfile.sh (every component, one kms login; it also says which keys
 #             are shared — used by 2+ components — and those go to the shared file).
-# How         bash projectspace/confmgt/ansible/ansible-agent/connect_external/kms/ansible_transfer_kms2tempfile.sh      (safe to run again: rewrites the file)
+# How         bash ccc/infra/ansible/ansible-agent/connect_external/kms/ansible_transfer_kms2tempfile.sh      (safe to run again: rewrites the file)
 # Login       kms's master_password file · not there → asks your kms password in the terminal · no terminal → one line, stop
-# Files       mountspace/temp/myworkspace/projectspace/confmgt/ansible/ansible-agent/secrets.conf  (its own keys · chmod 600 · mirrors the workspace)
+# Files       mountspace/temp/myworkspace/ccc/infra/ansible/ansible-agent/secrets.conf  (its own keys · chmod 600 · mirrors the workspace)
 #             mountspace/temp/myworkspace/shared/secrets.conf          (keys used by 2+ components, from svcmgt)
 #             one line per kms key: <entry>#<KEY>=<value>, "used by" above it · a key kms lacks → NOT_FOUND_IN_KMS
 # Output      [  OK  ] kms → file: 2 in its own file · 0 in the shared file · 0 not found in kms — …   (values never shown)

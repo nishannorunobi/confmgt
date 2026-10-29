@@ -22,7 +22,7 @@ case "${1:-}" in -h|--help) awk 'NR==1{next} /^# ─/{n++; if(n==2) exit; next} 
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 _WS_ROOT="$(d="$HERE"; while [ ! -d "$d/mountspace" ] && [ "$d" != "/" ]; do d="$(dirname "$d")"; done; echo "$d")"
-STATE_FILE="${DEPLOY_STATE_FILE:-$_WS_ROOT/mountspace/data/myworkspace/projectspace/confmgt/ansible/deploy_on_this_pc.state}"
+STATE_FILE="${DEPLOY_STATE_FILE:-$_WS_ROOT/mountspace/data/myworkspace/ccc/infra/ansible/deploy_on_this_pc.state}"
 if [ "${1:-}" = --state ]; then                                   # start_all: the last deploy OK → running · failed → partial
     case "$(cat "$STATE_FILE" 2>/dev/null)" in ok*) echo running ;; failed*) echo partial ;; *) echo stopped ;; esac; exit 0
 fi

@@ -17,4 +17,4 @@ ws_project_repos:
   - {path: projectspace/mydocs, repo: "git@github.com:nishannorunobi/mydocs.git"}
   - {path: projectspace/mylog_analytics, repo: "git@github.com:nishannorunobi/mylog_analytics.git"}
   - {path: projectspace/myodoo, repo: "git@github.com:nishannorunobi/myodoo.git"}
-  - {path: projectspace/confmgt, repo: "git@github.com:nishannorunobi/confmgt.git"}
+  - {path: ccc/infra, repo: "git@github.com:nishannorunobi/confmgt.git"}

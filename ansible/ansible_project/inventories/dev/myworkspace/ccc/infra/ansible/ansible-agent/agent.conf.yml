@@ -1,4 +1,4 @@
-# projectspace/confmgt/ansible/ansible-agent/agent.conf — its OWN values on the TEST environment (the test VM) (mirror of ~/myworkspace/projectspace/confmgt/ansible/ansible-agent/agent.conf).
+# ccc/infra/ansible/ansible-agent/agent.conf — its OWN values on the DEV environment (mirror of ~/myworkspace/ccc/infra/ansible/ansible-agent/agent.conf).
 # Values used by 2+ projects are NOT copied here: they point to shared/<topic>.yml · secrets: only kms ADDRESSES.
 # Change a value → check_playbook.sh (dry run) shows the line that would change.
 

@@ -33,7 +33,7 @@ services:
       - "${AGENT_HOST}:${AGENT_PORT}:8897"
     env_file: .env                 # settings only (no secret — the SSH key's kms address is in ansible-agent/agent.conf)
     environment:
-      LOG_MIRROR_ROOT: /mountspace/logs/myworkspace/projectspace/confmgt/ansible
+      LOG_MIRROR_ROOT: /mountspace/logs/myworkspace/ccc/infra/ansible
       KMS_MASTER_PASSWORD_FILE: /mountspace/usb/myworkspace/projectspace/kms/master_password/master_password
       ANSIBLE_PROJECT_DIR: /ansible_project
       ANSIBLE_DATA_DIR: /data

@@ -96,7 +96,7 @@ confmgt does not need the workspace. Clone it anywhere (e.g. `/opt/confmgt`) and
 | `POST /check` · `POST /apply` | `{"playbook": "ping", "inventory": "test", "limit": "test-vm"}` — known names only, one run at a time (busy → 409), at most `RUN_TIMEOUT` s |
 | `GET /runs/last` | the last run: exit code, output, log file |
 
-Every run's output is kept in `mountspace/logs/myworkspace/projectspace/confmgt/ansible/ansible-agent/runs/`, which keeps the newest 50.
+Every run's output is kept in `mountspace/logs/myworkspace/ccc/infra/ansible/ansible-agent/runs/`, which keeps the newest 50.
 
 ## Test
 

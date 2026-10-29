@@ -7,7 +7,7 @@
 #             touched (that is ansible_config_secret_mgt_kms.sh, next). Send the plain values to kms BEFORE, they are gone
 #             from the fields after this: ansible_transfer_local2kms.sh.
 # Who         You — or svcmgt/transfer_all_comment2local_kmsurl.sh (every component).
-# How         bash projectspace/confmgt/ansible/ansible-agent/connect_external/kms/ansible_transfer_comment2local_kmsurl.sh      (safe to run again; no kms needed)
+# How         bash ccc/infra/ansible/ansible-agent/connect_external/kms/ansible_transfer_comment2local_kmsurl.sh      (safe to run again; no kms needed)
 # Output      [  OK  ] comments → password fields: 2 back to their kms address · 0 already — SECRET_MGT not touched …
 # Next        ansible_config_secret_mgt_kms.sh
 # ─────────────────────────────────────────────────────────────────────────────
