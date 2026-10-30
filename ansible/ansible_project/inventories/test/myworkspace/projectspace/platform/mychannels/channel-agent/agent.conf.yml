@@ -1,0 +1,12 @@
+# projectspace/platform/mychannels/channel-agent/agent.conf — its OWN values on the TEST environment (the test VM) (mirror of ~/myworkspace/projectspace/platform/mychannels/channel-agent/agent.conf).
+# Values used by 2+ projects are NOT copied here: they point to shared/<topic>.yml · secrets: only kms ADDRESSES.
+# Change a value → check_playbook.sh (dry run) shows the line that would change.
+
+mirror:
+  KMS_URL: "{{ shared_kms.url_in_containers }}"           # → shared/kms.yml
+  SECRET_MGT: "{{ shared_kms.secret_mgt }}"               # → shared/kms.yml
+  PORT: "8894"
+  RABBITMQ_USER: "{{ shared_rabbitmq.user }}"             # → shared/rabbitmq.yml
+  RABBITMQ_MGMT_PORT: "{{ shared_rabbitmq.mgmt_port }}"   # → shared/rabbitmq.yml
+  ANTHROPIC_API_KEY: "{{ shared_anthropic.api_key }}"     # → shared/anthropic.yml
+  RABBITMQ_PASS: "{{ shared_rabbitmq.password }}"         # → shared/rabbitmq.yml

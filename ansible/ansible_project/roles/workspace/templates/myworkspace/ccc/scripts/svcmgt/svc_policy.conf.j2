@@ -30,19 +30,19 @@ SVC_TARGETS=(
 
 declare -A SVC_DIR=(
     [docker]=iam_cloud_machine         [portainer]=iam_cloud_machine/docker/ui
-    [kms]=projectspace/kms                     [kms-keys]=ccc/scripts/svcmgt
-    [mypostgresql_db]=projectspace/mypostgresql_db   [db-agent]=projectspace/mypostgresql_db/db-agent
+    [kms]=projectspace/platform/kms                     [kms-keys]=ccc/scripts/svcmgt
+    [mypostgresql_db]=projectspace/platform/mypostgresql_db   [db-agent]=projectspace/platform/mypostgresql_db/db-agent
     [agent-orchestrator]=agents/agent-orchestrator   [docker-manager-agent]=agents/docker-manager-agent
     [workspace-agent]=agents/workspace-agent
-    [mycache]=projectspace/mycache             [cache-agent]=projectspace/mycache/cache-agent
-    [mychannels]=projectspace/mychannels       [channel-agent]=projectspace/mychannels/channel-agent
-    [mydocs]=projectspace/mydocs             [mydocs-other]=projectspace/mydocs
-    [mylog_analytics]=projectspace/mylog_analytics   [log-agent]=projectspace/mylog_analytics/log-agent
-    [myodoo17]=projectspace/myodoo             [odoo-agent]=projectspace/myodoo/odoo-agent
-    [myodoo19]=projectspace/myodoo
+    [mycache]=projectspace/platform/mycache             [cache-agent]=projectspace/platform/mycache/cache-agent
+    [mychannels]=projectspace/platform/mychannels       [channel-agent]=projectspace/platform/mychannels/channel-agent
+    [mydocs]=projectspace/apps/mydocs             [mydocs-other]=projectspace/apps/mydocs
+    [mylog_analytics]=projectspace/observability/mylog_analytics   [log-agent]=projectspace/observability/mylog_analytics/log-agent
+    [myodoo17]=projectspace/apps/myodoo             [odoo-agent]=projectspace/apps/myodoo/odoo-agent
+    [myodoo19]=projectspace/apps/myodoo
     [confmgt-ansible]=ccc/infra/ansible   [ansible-agent]=ccc/infra/ansible/ansible-agent
     [deploy-dev]=ccc/infra/ansible
-    [updown]=projectspace/updown
+    [updown]=projectspace/apps/updown
 )
 declare -A SVC_START=(
     [docker]=prepare_this_pc.sh                   [portainer]=start_docker_ui.sh
@@ -169,12 +169,12 @@ declare -A SECRET_MGT_PROVIDER=([kms]=kms [kms-keys]=kms)
 # A new component = one more line (kms-keys WARNs about
 # a register script found in no line).
 SECRET_MGT_COMPONENTS=(
-    "mypostgresql_db (db-agent)|projectspace/mypostgresql_db/db-agent|db"
-    "mycache (cache-agent)|projectspace/mycache/cache-agent|cache"
-    "mychannels (channel-agent)|projectspace/mychannels/channel-agent|channels"
-    "mylog_analytics (log-agent)|projectspace/mylog_analytics/log-agent|log"
-    "myodoo (odoo-agent)|projectspace/myodoo/odoo-agent|odoo"
-    "mydocs (Plane)|projectspace/mydocs|docs"
+    "mypostgresql_db (db-agent)|projectspace/platform/mypostgresql_db/db-agent|db"
+    "mycache (cache-agent)|projectspace/platform/mycache/cache-agent|cache"
+    "mychannels (channel-agent)|projectspace/platform/mychannels/channel-agent|channels"
+    "mylog_analytics (log-agent)|projectspace/observability/mylog_analytics/log-agent|log"
+    "myodoo (odoo-agent)|projectspace/apps/myodoo/odoo-agent|odoo"
+    "mydocs (Plane)|projectspace/apps/mydocs|docs"
     "agents (host)|agents|agents"
     "agents/workspace-agent (.mcp.json)|agents/workspace-agent|workspace"
     "confmgt (ansible-agent)|ccc/infra/ansible/ansible-agent|ansible"
@@ -191,5 +191,5 @@ SVC_STOP_TARGETS=(deploy-dev kms portainer mypostgresql_db agent-orchestrator
                   confmgt-ansible updown)
 
 # Folders with nothing to run (status_all.sh lists them as "no services").
-SVC_NO_SERVICES=(projectspace/myportfolio projectspace/nishannorunobi.github.io
-                 projectspace/potomacuniv projectspace/pc-maker)
+SVC_NO_SERVICES=(personalspace/myportfolio personalspace/nishannorunobi.github.io
+                 personalspace/potomacuniv personalspace/pc-maker)

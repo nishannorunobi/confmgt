@@ -25,8 +25,8 @@ if [ -f "$_WS_ROOT/ccc/scripts/lib/create_logging_path.sh" ]; then
 fi
 # ──────────────────────────────────────────────────────────────────────────────
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"             # confmgt/ansible
-d="$_WS_ROOT"; while [ "$d" != / ] && [ ! -f "$d/projectspace/mypostgresql_db/db-agent/agent.conf" ]; do d="$(dirname "$d")"; done
-MYPOSTGRESQL_DB="${MYPOSTGRESQL_DB_DIR:-$d/projectspace/mypostgresql_db}"                     # the REAL files — only READ, copied
+d="$_WS_ROOT"; while [ "$d" != / ] && [ ! -f "$d/projectspace/platform/mypostgresql_db/db-agent/agent.conf" ]; do d="$(dirname "$d")"; done
+MYPOSTGRESQL_DB="${MYPOSTGRESQL_DB_DIR:-$d/projectspace/platform/mypostgresql_db}"                     # the REAL files — only READ, copied
 IMG=confmgt-ansible:test-mypostgresql-db; FAIL=0; TMP="$(mktemp -d)"
 ok()  { echo -e "\033[32m[  OK  ]\033[0m $*"; }
 bad() { echo -e "\033[31m[ERROR]\033[0m  $*"; FAIL=1; }
@@ -35,7 +35,7 @@ docker build -q -t "$IMG" -f "$HERE/dockerspace/Dockerfile" \
     $(sed -nE 's/^(PYTHON_IMAGE|PYTHON_DIGEST|ANSIBLE_CORE_VERSION)=(.*)/--build-arg \1=\2/p' "$HERE/dockerspace/.env") "$HERE" >/dev/null \
     || { bad "the test image did not build"; exit 1; }
 # a throwaway workspace with a COPY of its db-agent/agent.conf · the Ansible project + an inventory t (this container, local)
-W="$TMP/ws/projectspace/mypostgresql_db"; mkdir -p "$W/db-agent"
+W="$TMP/ws/projectspace/platform/mypostgresql_db"; mkdir -p "$W/db-agent"
 cp "$MYPOSTGRESQL_DB/db-agent/agent.conf" "$W/db-agent/agent.conf"
 # its own stop.sh / start.sh as STUBS: they only write down that they were called (never the live database)
 printf '#!/bin/bash\necho stop >> /ws/calls\n' > "$W/stop.sh"
@@ -58,7 +58,7 @@ o="$(run)"; r=$?
 [ $r = 0 ] && grep -qE 'm1 +: ok=[0-9]+ +changed=0 ' <<< "$o" && [ "$(sum)" = "$S0" ] && [ -z "$(calls)" ] \
   && ok "M3 apply with nothing changed → changed=0, no restart" || bad "M3 rc=$r calls=[$(calls)] $(grep -E 'changed=|FAILED' <<< "$o" | head -3 | tr '\n' '¦')"
 
-sed -i 's#^  PORT: .*#  PORT: "8999"#' "$P/inventories/t/myworkspace/projectspace/mypostgresql_db/db-agent/agent.conf.yml"
+sed -i 's#^  PORT: .*#  PORT: "8999"#' "$P/inventories/t/myworkspace/projectspace/platform/mypostgresql_db/db-agent/agent.conf.yml"
 o="$(run --check --diff)"; r=$?
 [ $r = 0 ] && grep -qE 'm1 +: ok=[0-9]+ +changed=1 ' <<< "$o" && grep -qx -- '-PORT=8890' <<< "$o" && grep -qx -- '+PORT=8999' <<< "$o" \
   && [ "$(grep -cE '^[-+][A-Za-z_]+=' <<< "$o")" = 2 ] && [ "$(sum)" = "$S0" ] \
@@ -83,7 +83,7 @@ o="$(run --check --diff)"; r=$?
   && ok "M7 shared/postgres.yml port changed → the dry run shows its PG_PORT line follow it (+PG_PORT=5433)" \
   || bad "M7 rc=$r $(grep -E 'changed=|^[-+]PG_PORT|FAILED|fatal' <<< "$o" | head -4 | tr '\n' '¦')"
 
-b4="$(grep -hE '^  [A-Za-z_]*(PASS|PASSWORD|SECRET|TOKEN|_KEY|api_key)[A-Za-z_]*: ' $(find "$HERE/ansible_project/inventories/dev/myworkspace/projectspace/mypostgresql_db" "$HERE/ansible_project/inventories/dev/shared" -name "*.yml") | grep -vE '^  (KMS_MASTER_PASSWORD_DIR|SECRET_MGT|secret_mgt): ' | grep -vE ': "\{\{ shared_[a-z_.]+ \}\}"' | grep -vE ': "(\$\{KMS_URL\}|https?://[^"]+)/v1/kv/data/')"   # a folder path / the mode: no secret
+b4="$(grep -hE '^  [A-Za-z_]*(PASS|PASSWORD|SECRET|TOKEN|_KEY|api_key)[A-Za-z_]*: ' $(find "$HERE/ansible_project/inventories/dev/myworkspace/projectspace/platform/mypostgresql_db" "$HERE/ansible_project/inventories/dev/shared" -name "*.yml") | grep -vE '^  (KMS_MASTER_PASSWORD_DIR|SECRET_MGT|secret_mgt): ' | grep -vE ': "\{\{ shared_[a-z_.]+ \}\}"' | grep -vE ': "(\$\{KMS_URL\}|https?://[^"]+)/v1/kv/data/')"   # a folder path / the mode: no secret
 [ -z "$b4" ] && ok "M4 the source of truth holds no secret — every password / key is a kms address" || bad "M4 a secret value: $(cut -d: -f1 <<< "$b4" | tr '\n' ' ')"
 
 [ "$FAIL" = 0 ] && ok "mypostgresql_db role tests passed (throwaway copy removed; the real file was only read)" && exit 0

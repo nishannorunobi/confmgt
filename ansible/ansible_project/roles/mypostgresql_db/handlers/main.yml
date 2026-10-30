@@ -6,5 +6,5 @@
     bash stop.sh
     SVC_RUN=1 bash start.sh
   args:
-    chdir: "{{ workspace_root }}/projectspace/mypostgresql_db"
+    chdir: "{{ workspace_root }}/projectspace/platform/mypostgresql_db"
     executable: /bin/bash

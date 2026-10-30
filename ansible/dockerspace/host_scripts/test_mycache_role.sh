@@ -28,8 +28,8 @@ if [ -f "$_WS_ROOT/ccc/scripts/lib/create_logging_path.sh" ]; then
 fi
 # ──────────────────────────────────────────────────────────────────────────────
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"             # confmgt/ansible
-d="$_WS_ROOT"; while [ "$d" != / ] && [ ! -f "$d/projectspace/mycache/.env" ]; do d="$(dirname "$d")"; done
-MYCACHE="${MYCACHE_DIR:-$d/projectspace/mycache}"                     # the REAL files — only READ, copied
+d="$_WS_ROOT"; while [ "$d" != / ] && [ ! -f "$d/projectspace/platform/mycache/.env" ]; do d="$(dirname "$d")"; done
+MYCACHE="${MYCACHE_DIR:-$d/projectspace/platform/mycache}"                     # the REAL files — only READ, copied
 IMG=confmgt-ansible:test-mycache; FAIL=0; TMP="$(mktemp -d)"
 ok()  { echo -e "\033[32m[  OK  ]\033[0m $*"; }
 bad() { echo -e "\033[31m[ERROR]\033[0m  $*"; FAIL=1; }
@@ -38,7 +38,7 @@ docker build -q -t "$IMG" -f "$HERE/dockerspace/Dockerfile" \
     $(sed -nE 's/^(PYTHON_IMAGE|PYTHON_DIGEST|ANSIBLE_CORE_VERSION)=(.*)/--build-arg \1=\2/p' "$HERE/dockerspace/.env") "$HERE" >/dev/null \
     || { bad "the test image did not build"; exit 1; }
 # a throwaway workspace with a COPY of mycache's two files · the Ansible project + an inventory t (this container, local)
-W="$TMP/ws/projectspace/mycache"; mkdir -p "$W/cache-agent"
+W="$TMP/ws/projectspace/platform/mycache"; mkdir -p "$W/cache-agent"
 cp "$MYCACHE/.env" "$W/.env"; cp "$MYCACHE/cache-agent/agent.conf" "$W/cache-agent/agent.conf"
 # mycache's own start/stop as STUBS: they only write down that they were called (never the live mycache)
 printf '#!/bin/bash\necho stop >> /ws/calls\n' > "$W/stop.sh"
@@ -61,7 +61,7 @@ o="$(run)"; r=$?
 [ $r = 0 ] && grep -qE 'm1 +: ok=[0-9]+ +changed=0 ' <<< "$o" && [ "$(sum)" = "$S0" ] && [ -z "$(calls)" ] \
   && ok "M3 apply with nothing changed → changed=0, no restart" || bad "M3 rc=$r calls=[$(calls)] $(grep -E 'changed=|FAILED' <<< "$o" | head -3 | tr '\n' '¦')"
 
-sed -i 's#^  TZ: .*#  TZ: "Europe/Berlin"#' "$P/inventories/t/myworkspace/projectspace/mycache/.env.yml"
+sed -i 's#^  TZ: .*#  TZ: "Europe/Berlin"#' "$P/inventories/t/myworkspace/projectspace/platform/mycache/.env.yml"
 o="$(run --check --diff)"; r=$?
 [ $r = 0 ] && grep -qE 'm1 +: ok=[0-9]+ +changed=1 ' <<< "$o" && grep -qx -- '-TZ=America/New_York' <<< "$o" && grep -qx -- '+TZ=Europe/Berlin' <<< "$o" \
   && [ "$(grep -cE '^[-+][A-Za-z_]+=' <<< "$o")" = 2 ] && [ "$(sum)" = "$S0" ] \
@@ -81,14 +81,14 @@ o="$(run)"; r=$?
   && ok "M6 apply again → changed=0, no second restart (idempotent)" || bad "M6 rc=$r calls=[$(calls)]"
 
 # M7 a SHARED value changed (shared/clock.yml) → mycache's TZ line follows (the mirror refers to it, no copy)
-sed -i 's#^  TZ: .*#  TZ: "{{ shared_clock.tz }}"#' "$P/inventories/t/myworkspace/projectspace/mycache/.env.yml"
+sed -i 's#^  TZ: .*#  TZ: "{{ shared_clock.tz }}"#' "$P/inventories/t/myworkspace/projectspace/platform/mycache/.env.yml"
 sed -i 's#^  tz: .*#  tz: "Asia/Dhaka"#' "$P/inventories/t/shared/clock.yml"
 o="$(run --check --diff)"; r=$?
 [ $r = 0 ] && grep -qx -- '+TZ=Asia/Dhaka' <<< "$o" && grep -qE 'm1 +: ok=[0-9]+ +changed=1 ' <<< "$o" \
   && ok "M7 shared/clock.yml changed → the dry run shows mycache's TZ line follow it (+TZ=Asia/Dhaka) — shared once, referred to by name" \
   || bad "M7 rc=$r $(grep -E 'changed=|^[-+]TZ|FAILED|fatal' <<< "$o" | head -4 | tr '\n' '¦')"
 
-b4="$(grep -hE '^  [A-Za-z_]*(PASS|PASSWORD|SECRET|TOKEN|_KEY|api_key)[A-Za-z_]*: ' $(find "$HERE/ansible_project/inventories/dev/myworkspace/projectspace/mycache" -name "*.yml") | grep -vE '^  (KMS_MASTER_PASSWORD_DIR|SECRET_MGT|secret_mgt): ' | grep -vE ': "\{\{ shared_[a-z_.]+ \}\}"' | grep -vE ': "(\$\{KMS_URL\}|https?://[^"]+)/v1/kv/data/')"   # a folder path / the mode: no secret
+b4="$(grep -hE '^  [A-Za-z_]*(PASS|PASSWORD|SECRET|TOKEN|_KEY|api_key)[A-Za-z_]*: ' $(find "$HERE/ansible_project/inventories/dev/myworkspace/projectspace/platform/mycache" -name "*.yml") | grep -vE '^  (KMS_MASTER_PASSWORD_DIR|SECRET_MGT|secret_mgt): ' | grep -vE ': "\{\{ shared_[a-z_.]+ \}\}"' | grep -vE ': "(\$\{KMS_URL\}|https?://[^"]+)/v1/kv/data/')"   # a folder path / the mode: no secret
 [ -z "$b4" ] && ok "M4 the source of truth holds no secret — every password / key is a kms address" || bad "M4 a secret value: $(cut -d: -f1 <<< "$b4" | tr '\n' ' ')"
 
 [ "$FAIL" = 0 ] && ok "mycache role tests passed (throwaway copy removed; the real mycache files were only read)" && exit 0

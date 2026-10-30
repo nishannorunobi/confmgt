@@ -2,5 +2,5 @@
 # mycache's config files, as paths below ~/myworkspace — a new file = one line here + its mirrored values
 # (inventories/<env>/myworkspace/<path>.yml) + its template (templates/myworkspace/<path>.j2)
 mycache_files:
-  - projectspace/mycache/.env
-  - projectspace/mycache/cache-agent/agent.conf
+  - projectspace/platform/mycache/.env
+  - projectspace/platform/mycache/cache-agent/agent.conf

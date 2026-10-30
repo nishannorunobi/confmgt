@@ -32,13 +32,13 @@ the VM, then asks the agent to apply `deploy` on `test` with the branch it runs 
 ## The mirror — the single source of truth, laid out like the workspace
 
 ```
-inventories/dev/myworkspace/projectspace/mycache/.env.yml                 → ~/myworkspace/projectspace/mycache/.env
-inventories/dev/myworkspace/projectspace/mycache/cache-agent/agent.conf.yml → ~/myworkspace/projectspace/mycache/cache-agent/agent.conf
+inventories/dev/myworkspace/projectspace/platform/mycache/.env.yml                 → ~/myworkspace/projectspace/platform/mycache/.env
+inventories/dev/myworkspace/projectspace/platform/mycache/cache-agent/agent.conf.yml → ~/myworkspace/projectspace/platform/mycache/cache-agent/agent.conf
 ```
 A value used by 2+ projects is NOT in the mirror: it lives once in `shared/<topic>.yml`, and the mirrored file refers to it by name:
 ```
 inventories/dev/shared/clock.yml       shared_clock.tz: "America/New_York"
-inventories/dev/myworkspace/projectspace/mycache/.env.yml      TZ: "{{ shared_clock.tz }}"
+inventories/dev/myworkspace/projectspace/platform/mycache/.env.yml      TZ: "{{ shared_clock.tz }}"
 ```
 Every playbook loads `shared/` first (role `shared`); a new topic = a new file there.
 
@@ -55,7 +55,7 @@ Each environment has its own mirror with the same paths and its own values.
 | myodoo | `odoo-agent/agent.conf` · `odoo-19/odoo.conf` (INI; database → shared/postgres.yml) | `myodoo.yml` (check · apply + restart Odoo 19 via stop/start --19) | 3.8 |
 | agents · workspace-agent | `agents/shared.conf` (ums db → shared/postgres.yml) · `agents/workspace-agent/mcp.conf` | `agents.yml` (restart-agents.sh) · `workspace_agent.yml` (mcp_json_from_kms.sh) | 3.9 |
 | workspace | `ccc/scripts/svcmgt/svc_policy.conf` (central SECRET_MGT → shared/kms.yml) | `workspace.yml` (check · apply; nothing to restart) | 3.10 |
-| kms · confmgt | `projectspace/kms/dockerspace/.env` · `ccc/infra/ansible/dockerspace/.env` · `ansible-agent/agent.conf` | `kms.yml` · `confmgt.yml` (check · apply; NO automatic restart — a message) | 3.11 |
+| kms · confmgt | `projectspace/platform/kms/dockerspace/.env` · `ccc/infra/ansible/dockerspace/.env` · `ansible-agent/agent.conf` | `kms.yml` · `confmgt.yml` (check · apply; NO automatic restart — a message) | 3.11 |
 
 A project joins (one story each): its files in the mirror + their templates + a role listing them + a playbook — no core change.
 

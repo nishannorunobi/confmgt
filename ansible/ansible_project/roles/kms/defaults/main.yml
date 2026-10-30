@@ -1,4 +1,4 @@
 # defaults for roles/kms — the values live in the mirror (inventories/<env>/myworkspace/<path>.yml) + shared/
 # its config files, as paths below ~/myworkspace — a new file = one line here + its mirrored values + its template
 kms_files:
-  - projectspace/kms/dockerspace/.env
+  - projectspace/platform/kms/dockerspace/.env

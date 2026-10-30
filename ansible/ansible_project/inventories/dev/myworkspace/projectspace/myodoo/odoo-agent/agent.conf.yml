@@ -1,8 +1,0 @@
-# projectspace/myodoo/odoo-agent/agent.conf — its OWN values on the DEV environment (mirror of ~/myworkspace/projectspace/myodoo/odoo-agent/agent.conf).
-# Values used by 2+ projects are NOT copied here: they point to shared/<topic>.yml · secrets: only kms ADDRESSES.
-# Change a value → check_playbook.sh (dry run) shows the line that would change.
-
-mirror:
-  KMS_URL: "{{ shared_kms.url_in_containers }}"                 # → shared/kms.yml
-  SECRET_MGT: "{{ shared_kms.secret_mgt }}"                     # → shared/kms.yml
-  ANTHROPIC_API_KEY: "{{ shared_anthropic.api_key }}"           # → shared/anthropic.yml

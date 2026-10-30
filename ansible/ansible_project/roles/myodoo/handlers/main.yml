@@ -10,5 +10,5 @@
     bash stop.sh --19
     SVC_RUN=1 bash start.sh --19
   args:
-    chdir: "{{ workspace_root }}/projectspace/myodoo"
+    chdir: "{{ workspace_root }}/projectspace/apps/myodoo"
     executable: /bin/bash

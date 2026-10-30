@@ -10,5 +10,5 @@
     bash stop.sh
     SVC_RUN=1 bash start.sh
   args:
-    chdir: "{{ workspace_root }}/projectspace/mylog_analytics"
+    chdir: "{{ workspace_root }}/projectspace/observability/mylog_analytics"
     executable: /bin/bash

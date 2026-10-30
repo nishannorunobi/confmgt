@@ -1,5 +1,5 @@
 # defaults for roles/myodoo — the values live in the mirror (inventories/<env>/myworkspace/<path>.yml) + shared/
 # its config files, as paths below ~/myworkspace — a new file = one line here + its mirrored values + its template
 myodoo_files:
-  - projectspace/myodoo/odoo-agent/agent.conf
-  - projectspace/myodoo/odoo-19/odoo.conf
+  - projectspace/apps/myodoo/odoo-agent/agent.conf
+  - projectspace/apps/myodoo/odoo-19/odoo.conf

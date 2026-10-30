@@ -59,9 +59,9 @@ d="$(inv dev dev-pc)"; t="$(inv test test-vm)"
 grep -q 'dev-pc' <<< "$(grp dev)" && grep -q 'test-vm' <<< "$(grp test)" \
   && grep -q '"ws_manage_git": false' <<< "$d" && grep -q '"ws_manage_docker": false' <<< "$d" \
   && grep -q '"ws_manage_git": true' <<< "$t" && grep -q '"ws_manage_docker": true' <<< "$t" \
-  && ! grep -q '"ws_project_repos"' <<< "$d" && grep -q '"ws_project_repos"' <<< "$t" \
+  && ! grep -q '"ws_project_repos"' <<< "$d$t" && grep -q 'ccc/scripts/gitmgt/repos.conf' "$PROJ/playbooks/deploy.yml" \
   && ! grep -q '"ws_base_packages"' <<< "$d" && grep -q '"python3-venv"' <<< "$t" \
-  && ok "P1 inventories: dev → dev-pc, git + Docker OFF, no project repos, no packages · test → test-vm, both ON + ws_project_repos + base packages" || bad "P1 dev=$(tr -d '\n ' <<< "$d" | cut -c1-200)"
+  && ok "P1 inventories: dev → dev-pc, git + Docker OFF, no project repos, no packages · test → test-vm, both ON + base packages · the repo list comes from the workspace's repos.conf, never an inventory" || bad "P1 dev=$(tr -d '\n ' <<< "$d" | cut -c1-200)"
 
 # ── the SSH test machine + a temp key + a temp project copy with inventory t ──
 mkdir -p "$WORK/a"; cp -a "$PROJ" "$WORK/a/project"; ssh-keygen -q -t ed25519 -N '' -C confmgt-ansible -f "$WORK/a/key"
@@ -170,7 +170,7 @@ lst() { inv "$1" "$2" | python3 -c 'import json,sys; print(json.dumps(json.load(
 
 # ── P8: restart handlers that must never START a stopped project ────────────
 h8=""
-for spec in "myodoo:projectspace/myodoo:--19" "mylog_analytics:projectspace/mylog_analytics:"; do
+for spec in "myodoo:projectspace/apps/myodoo:--19" "mylog_analytics:projectspace/observability/mylog_analytics:"; do
     IFS=: read -r role dir arg <<< "$spec"
     docker exec -u ansible "$M" sh -c "mkdir -p /home/ansible/ws/$dir && cd /home/ansible/ws/$dir && rm -f calls
         printf '#!/bin/sh\ncat state\n' > status.sh; printf '#!/bin/sh\necho \"stop \$*\" >> calls\n' > stop.sh; printf '#!/bin/sh\necho \"start \$*\" >> calls\n' > start.sh"

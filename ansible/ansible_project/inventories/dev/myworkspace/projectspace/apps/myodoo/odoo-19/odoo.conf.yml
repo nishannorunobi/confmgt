@@ -1,0 +1,14 @@
+# projectspace/apps/myodoo/odoo-19/odoo.conf — its OWN values on the DEV environment (mirror of ~/myworkspace/projectspace/apps/myodoo/odoo-19/odoo.conf).
+# Values used by 2+ projects are NOT copied here: they point to shared/<topic>.yml · secrets: only kms ADDRESSES.
+# Change a value → check_playbook.sh (dry run) shows the line that would change.
+
+mirror:
+  admin_passwd: "${KMS_URL}/v1/kv/data/myodoo/odoo"
+  db_host: "{{ shared_postgres.host }}"                         # → shared/postgres.yml
+  db_port: "{{ shared_postgres.port }}"                         # → shared/postgres.yml
+  db_user: "{{ shared_postgres.databases.odoo.user }}"          # → shared/postgres.yml
+  db_password: "{{ shared_postgres.databases.odoo.password }}#{{ shared_postgres.databases.odoo.key }}"# → shared/postgres.yml
+  dbfilter: "^odoo19.*$"
+  addons_path: "/myodoo/odoo/addons,/myodoo/addons"
+  data_dir: "/mountspace/myodoo/odoo-19/data"
+  logfile: "/mountspace/logs/myworkspace/projectspace/apps/myodoo/odoo-19/odoo_log.log"

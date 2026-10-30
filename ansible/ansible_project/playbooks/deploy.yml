@@ -1,6 +1,6 @@
 # deploy.yml — the workspace on the deploy_targets machines of an inventory (CONFMGT [6]): dev = this PC, test = the test VM.
 #   check_playbook.sh → deploy → <env>   dry run — changes nothing
-#   apply_playbook.sh → deploy → <env>   [ws_manage_git] git → clone / pull ws_branch + ws_project_repos · [ws_manage_docker] Docker by the
+#   apply_playbook.sh → deploy → <env>   [ws_manage_git] git → clone / pull ws_branch + the deploy=yes repos of the workspace's ccc/scripts/gitmgt/repos.conf · [ws_manage_docker] Docker by the
 #                                         workspace's OWN script · [ws_kms_setup] kms unattended + keys + sign-ups
 #                                         · the workspace is there · each project of
 #                                         deploy_projects: config → restart if changed → up. Run again → changed=0.
@@ -43,6 +43,25 @@
       ansible.builtin.set_fact:
         repo_branch: "{{ dict((ws_repo_branches | default('')).split(',') | select | map('split', '=')) }}"
 
+    - name: THE repo list — ccc/scripts/gitmgt/repos.conf from this machine's own myworkspace clone (CLAUDEWORK-258)
+      when: ws_manage_git | default(false) | bool
+      ansible.builtin.slurp:
+        src: "{{ ws_dir }}/ccc/scripts/gitmgt/repos.conf"
+      register: repos_conf
+
+    - name: the project repos to deploy — every "folder | repo | yes" line of repos.conf (not myworkspace itself)
+      when: ws_manage_git | default(false) | bool
+      ansible.builtin.set_fact:
+        ws_project_repos: >-
+          {%- set out = [] -%}
+          {%- for l in (repos_conf.content | b64decode).splitlines() -%}
+            {%- set f = l.split('|') | map('trim') | list -%}
+            {%- if f | length >= 3 and f[0] and not f[0].startswith('#') and f[0] != '.' and f[2] == 'yes' -%}
+              {%- set _ = out.append({'path': f[0], 'repo': f[1]}) -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {{ out }}
+
     - name: the project repos — clone, or pull (local changes in the machine → refused, never thrown away)
       when: ws_manage_git | default(false) | bool
       ansible.builtin.git:
@@ -81,7 +100,7 @@
     # [ws_kms_setup] the machine's OWN kms, unattended — a test machine only (kms refuses anywhere else; CONFMGT [6.17])
     - name: kms — set up unattended (kms's own setup_unattended.sh; every secret random, made in this machine)
       when: ws_kms_setup | default(false) | bool
-      ansible.builtin.command: bash projectspace/kms/setup_unattended.sh
+      ansible.builtin.command: bash projectspace/platform/kms/setup_unattended.sh
       args:
         chdir: "{{ ws_dir }}"
       register: kms

@@ -45,8 +45,8 @@ fi
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"              # confmgt/ansible (this file: dockerspace/host_scripts/)
 AGENT="$HERE/ansible-agent"
-d="$_WS_ROOT"; while [ "$d" != / ] && [ ! -f "$d/projectspace/kms/dockerspace/.env" ]; do d="$(dirname "$d")"; done
-KMSP="${KMS_PROJECT:-$d/projectspace/kms}"                               # test-only: the kms image + bootstrap (a test copy → the workspace's)
+d="$_WS_ROOT"; while [ "$d" != / ] && [ ! -f "$d/projectspace/platform/kms/dockerspace/.env" ]; do d="$(dirname "$d")"; done
+KMSP="${KMS_PROJECT:-$d/projectspace/platform/kms}"                               # test-only: the kms image + bootstrap (a test copy → the workspace's)
 OPENBAO_IMAGE="$(grep -E '^OPENBAO_IMAGE=' "$KMSP/dockerspace/.env" | cut -d= -f2-)"   # only the image — never kms's folders
 T=confmgt-test-kms; A=confmgt-test-ansible; M=confmgt-test-machine; NET=confmgt-testnet
 KP=8133; AP=8134; export KMS_URL=http://127.0.0.1:$KP; API=http://127.0.0.1:$AP
@@ -221,7 +221,7 @@ c2="$(code "$(post check '{"playbook":"ping","inventory":"prod"}')")"
 c3="$(code "$(post apply '{"playbook":"../playbooks/ping","inventory":"t"}')")"
 c4="$(code "$(post check '{"playbook":"ping","inventory":"t","limit":"m1; rm -rf /"}')")"
 c5="$(code "$(post check '{"playbook":"ping","inventory":"t","extra_vars":{"ws_branch":"x; rm -rf /"}}')")"
-c8="$(code "$(post check '{"playbook":"ping","inventory":"t","extra_vars":{"ws_repo_branches":"projectspace/kms=story/X-1,projectspace/mydocs=main"}}')")"
+c8="$(code "$(post check '{"playbook":"ping","inventory":"t","extra_vars":{"ws_repo_branches":"projectspace/platform/kms=story/X-1,projectspace/apps/mydocs=main"}}')")"
 c6="$(code "$(post check '{"playbook":"ping","inventory":"t","extra_vars":{"Bad-Name":"main"}}')")"
 c7="$(code "$(post check '{"playbook":"ping","inventory":"t","extra_vars":{"ws_branch":"story/CONFMGT-1-x"}}')")"
 [ "$c1$c2$c3$c4$c5$c6$c7$c8" = 400400400400400400200200 ] && ok "C5 unknown playbook / inventory, a path, a bad limit, a bad extra_vars value / name → 400, nothing run · a plain branch, a path=branch list → 200" || bad "C5 codes $c1 $c2 $c3 $c4 $c5 $c6 $c7 $c8"

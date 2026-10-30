@@ -1,5 +1,5 @@
 # defaults for roles/mychannels — the values live in the mirror (inventories/<env>/myworkspace/<path>.yml) + shared/
 # mychannels' config files, as paths below ~/myworkspace — a new file = one line here + its mirrored values + its template
 mychannels_files:
-  - projectspace/mychannels/.env
-  - projectspace/mychannels/channel-agent/agent.conf
+  - projectspace/platform/mychannels/.env
+  - projectspace/platform/mychannels/channel-agent/agent.conf
