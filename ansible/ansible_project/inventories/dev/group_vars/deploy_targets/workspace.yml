@@ -1,5 +1,5 @@
 # workspace.yml — what playbooks/deploy.yml does with the workspace on the DEV PC (one topic per file).
-# This PC IS your live working copy: its branch is yours (git untouched) and Docker comes from startup.sh's bootstrap.
+# This PC IS your live working copy: its branch is yours (git untouched) and Docker comes from ccc/startup.sh's bootstrap.
 ws_manage_git: false
 ws_manage_docker: false
 ws_dir: "{{ workspace_root }}"

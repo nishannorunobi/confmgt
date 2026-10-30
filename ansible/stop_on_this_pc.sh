@@ -2,10 +2,10 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # stop_on_this_pc.sh — Ansible takes the workspace's projects DOWN on THIS PC: playbook stop, inventory dev (CONFMGT [6.14])
 #
-# What for    The first step of shutdown.sh (stop-plan target deploy-dev): the projects Ansible started go down in
+# What for    The first step of ccc/shutdown.sh (stop-plan target deploy-dev): the projects Ansible started go down in
 #             reverse start order. Whatever is still running after it, stop_all stops itself with its own script.
 #
-# Who         shutdown.sh (svcmgt/stop_all.sh, target deploy-dev) · or you.
+# Who         ccc/shutdown.sh (ccc/scripts/svcmgt/stop_all.sh, target deploy-dev) · or you.
 #
 # How         bash stop_on_this_pc.sh            (safe to run again — all down → changed=0)
 #
@@ -21,8 +21,8 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 _WS_ROOT="$(d="$HERE"; while [ ! -d "$d/mountspace" ] && [ "$d" != "/" ]; do d="$(dirname "$d")"; done; echo "$d")"
 STATE_FILE="${DEPLOY_STATE_FILE:-$_WS_ROOT/mountspace/data/myworkspace/ccc/infra/ansible/deploy_on_this_pc.state}"
 # ── Mirror logging ─────────────────────────────────────────────────────────────
-if [ -f "$_WS_ROOT/init/create_logging_path.sh" ]; then
-    source "$_WS_ROOT/init/create_logging_path.sh"
+if [ -f "$_WS_ROOT/ccc/scripts/lib/create_logging_path.sh" ]; then
+    source "$_WS_ROOT/ccc/scripts/lib/create_logging_path.sh"
     setup_logging --no-stamp                                      # the scripts it runs stamp their own lines
 fi
 # ──────────────────────────────────────────────────────────────────────────────

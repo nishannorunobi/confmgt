@@ -12,20 +12,20 @@
 # Checks      A1 every project: dry run → changed=0 · A2 every project: apply → changed=0, no restart (nothing changed)
 #             A3 the real files only read · A4 no secret in the mirror or shared/ (passwords / keys = kms addresses)
 #             A5 playbooks/deploy.yml with the REAL dev deploy_projects (CONFMGT [6]) on the copies: changed=0, each
-#                project's targets handed to svcmgt/start_targets.sh (a stub) in projects.yml's order, the copies unchanged
+#                project's targets handed to ccc/scripts/svcmgt/start_targets.sh (a stub) in projects.yml's order, the copies unchanged
 #             A6 the TEST values (inventories/test/) render every project's real files too · A7 no secret in the test mirror
 # ─────────────────────────────────────────────────────────────────────────────
 case "${1:-}" in -h|--help) awk 'NR==1{next} /^# ─/{n++; if(n==2) exit; next} n==1{ sub(/^# ?/,""); if(!t){printf "\033[1m%s\033[0m\n",$0; t=1; next} l=substr($0,1,12); if(l ~ /^[A-Z][A-Za-z ]+$/){c=(l ~ /^Errors/)?"\033[33m":"\033[36m"; printf "%s%s\033[0m%s\n",c,l,substr($0,13)} else print }' "$0"; exit 0 ;; esac
 set -uo pipefail
 # ── Mirror logging ─────────────────────────────────────────────────────────────
 _WS_ROOT="$(d="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ ! -d "$d/mountspace" ] && [ "$d" != "/" ]; do d="$(dirname "$d")"; done; echo "$d")"
-if [ -f "$_WS_ROOT/init/create_logging_path.sh" ]; then
-    source "$_WS_ROOT/init/create_logging_path.sh"
+if [ -f "$_WS_ROOT/ccc/scripts/lib/create_logging_path.sh" ]; then
+    source "$_WS_ROOT/ccc/scripts/lib/create_logging_path.sh"
     setup_logging
 fi
 # ──────────────────────────────────────────────────────────────────────────────
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"             # confmgt/ansible
-d="$_WS_ROOT"; while [ "$d" != / ] && [ ! -f "$d/svcmgt/svc_policy.conf" ]; do d="$(dirname "$d")"; done
+d="$_WS_ROOT"; while [ "$d" != / ] && [ ! -f "$d/ccc/scripts/svcmgt/svc_policy.conf" ]; do d="$(dirname "$d")"; done
 REAL="${REAL_WORKSPACE:-$d}"                                           # the REAL workspace — only READ, copied
 IMG=confmgt-ansible:test-all-roles; FAIL=0; TMP="$(mktemp -d)"
 ok()  { echo -e "\033[32m[  OK  ]\033[0m $*"; }
@@ -66,8 +66,8 @@ done
 [ -z "$b6" ] && ok "A6 every project ($n) renders its real files from the TEST values too → changed=0 (test = dev today; a VM-only value shows here)" || bad "A6:$b6"
 
 # ── A5: deploy.yml with the real dev deploy_projects, on the copies ──────────
-mkdir -p "$TMP/ws/svcmgt"; [ -f "$TMP/ws/svcmgt/svc_policy.conf" ] || cp "$REAL/svcmgt/svc_policy.conf" "$TMP/ws/svcmgt/"
-printf '#!/bin/bash\necho "$*" >> /ws/started\nfor t in "$@"; do echo "$t RUNNING"; done\n' > "$TMP/ws/svcmgt/start_targets.sh"
+mkdir -p "$TMP/ws/ccc/scripts/svcmgt"; [ -f "$TMP/ws/ccc/scripts/svcmgt/svc_policy.conf" ] || cp "$REAL/ccc/scripts/svcmgt/svc_policy.conf" "$TMP/ws/ccc/scripts/svcmgt/"
+printf '#!/bin/bash\necho "$*" >> /ws/started\nfor t in "$@"; do echo "$t RUNNING"; done\n' > "$TMP/ws/ccc/scripts/svcmgt/start_targets.sh"
 sed -i '/^  children:$/a\    deploy_targets:\n      hosts:\n        m1:' "$P/inventories/t/hosts.yml"
 o5="$(run deploy)"
 want="$(docker run --rm -v "$P:/p" -w /p "$IMG" ansible-inventory -i inventories/t --host m1 2>/dev/null \

@@ -1,6 +1,6 @@
 {# rendered by Ansible (confmgt) from inventories/<env>/myworkspace/ (the mirror) + shared/ — the comments are the project's own #}
 # mcp.conf — the settings behind Claude Code's .mcp.json. Tracked in git: it holds NO secret.
-# A secret's value is its kms ADDRESS; agents/workspace-agent/connect_external/kms/mcp_json_from_kms.sh (run by startup.sh)
+# A secret's value is its kms ADDRESS; agents/workspace-agent/connect_external/kms/mcp_json_from_kms.sh (run by ccc/startup.sh)
 # fetches the values and fills .mcp.json.template → .mcp.json (600, git-ignored). The address is kms
 # as seen from THIS PC.
 #   KEY=${KMS_URL}/v1/kv/data/<entry>            key inside the entry = KEY

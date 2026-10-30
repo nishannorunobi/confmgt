@@ -30,7 +30,7 @@ SVC_TARGETS=(
 
 declare -A SVC_DIR=(
     [docker]=dockerspace                       [portainer]=dockerspace
-    [kms]=projectspace/kms                     [kms-keys]=svcmgt
+    [kms]=projectspace/kms                     [kms-keys]=ccc/scripts/svcmgt
     [mypostgresql_db]=projectspace/mypostgresql_db   [db-agent]=projectspace/mypostgresql_db/db-agent
     [agent-orchestrator]=agents/agent-orchestrator   [docker-manager-agent]=agents/docker-manager-agent
     [workspace-agent]=agents/workspace-agent
@@ -114,32 +114,32 @@ declare -A SVC_URL=(
     [updown]=-
 )
 
-# ── What start_all.sh starts (its plan defaults; startup.sh runs it) ──────────
+# ── What start_all.sh starts (its plan defaults; ccc/startup.sh runs it) ──────────
 # The in-container helper agents default to NO (owner, 2026-09-29) — they stay in the plan
 # and can be switched on there. cache-agent (KMS-86), channel-agent (KMS-96) and db-agent
 # (KMS-29) are their containers' ENTRY POINTS (2026-10-03/04): they start and stop WITH
 # mycache / mychannels / mypostgresql_db; their targets only check / report.
 # kms + kms-keys are NOT in this list: SECRET_MGT below decides them (TESTSERVER-83). kms's own start asks for the
 # shares / offers its one-time setup; kms-keys (TESTSERVER-46) right after it creates every component's missing kms
-# keys in one go (svcmgt/register_all_kms_keys.sh).
+# keys in one go (ccc/scripts/svcmgt/register_all_kms_keys.sh).
 # confmgt-ansible + ansible-agent + deploy-dev default to YES (CONFMGT [6.2], 2026-10-21): the LAST step, deploy-dev, is
 # Ansible deploying this PC (confmgt's deploy_on_this_pc.sh: playbook deploy, inventory dev) — the projects move into
 # it one per story ([6.3]…) and leave this list then. Its STOP (CONFMGT [6.14]) is confmgt's stop_on_this_pc.sh: as the
 # LAST target it is stopped FIRST — the projects go down through Ansible; stop_all stops what still runs itself.
 SVC_START_TARGETS=(docker portainer confmgt-ansible ansible-agent deploy-dev)
-# Targets ANSIBLE starts (CONFMGT [6]): deploy-dev's playbook deploy brings each up with svcmgt/start_targets.sh — they
+# Targets ANSIBLE starts (CONFMGT [6]): deploy-dev's playbook deploy brings each up with ccc/scripts/svcmgt/start_targets.sh — they
 # leave SVC_START_TARGETS and the start plan shows them as "via deploy-dev". confmgt's inventories/dev
 # group_vars/deploy_targets/projects.yml lists the same targets (its test_deploy_playbook.sh checks both lists).
 SVC_VIA_DEPLOY=(mypostgresql_db db-agent agent-orchestrator mycache mychannels mydocs)
-# ── Who depends on whom (restart.sh warns before restarting these) ─────────────
-# Plain text, shown to a human; restart.sh only reads it to print the warning.
+# ── Who depends on whom (ccc/restart.sh warns before restarting these) ─────────────
+# Plain text, shown to a human; ccc/restart.sh only reads it to print the warning.
 declare -A SVC_USED_BY=(
     [kms]="mycache, mychannels, mypostgresql_db (their agents fetch the secrets at start), mydocs + the host agents (their start scripts fetch), mylog_analytics + myodoo19 (their containers fetch at start), confmgt-ansible (its agent fetches the SSH key's secret at start) · comes back SEALED"
     [mypostgresql_db]="Plane (mydocs), ums, odoo, grafana · db-agent runs inside it"
     [mycache]="Plane (mydocs) · cache-agent runs inside it"
     [mychannels]="Plane (mydocs) · channel-agent runs inside it"
 )
-# Targets that fetch their secrets from kms when they start: restart.sh refuses to
+# Targets that fetch their secrets from kms when they start: ccc/restart.sh refuses to
 # restart them while kms is sealed (they could not come back) — unless their component's own SECRET_MGT is not kms.
 SVC_NEEDS_KMS=(kms-keys mypostgresql_db db-agent mycache cache-agent mychannels channel-agent mydocs mydocs-other agent-orchestrator docker-manager-agent workspace-agent mylog_analytics log-agent myodoo19 odoo-agent confmgt-ansible ansible-agent deploy-dev)   # container agents = entry points; mydocs + host agents = fetch at start
 
@@ -156,7 +156,7 @@ SVC_CRITICAL=(docker kms)
 #   A provider's targets (SECRET_MGT_PROVIDER) default to yes — and are critical — only when it is needed:
 #   this value names it, OR a component's own config says it (a component's own SECRET_MGT always wins).
 #   A mismatch (kms here but no component on kms · local here but a component on kms) → a WARN with the fix.
-#   svcmgt/config_all_secret_mgt_local.sh / config_all_secret_mgt_kms.sh set it (local / kms) — no need to edit it by hand.
+#   ccc/scripts/svcmgt/config_all_secret_mgt_local.sh / config_all_secret_mgt_kms.sh set it (local / kms) — no need to edit it by hand.
 #   kms today: every component uses kms.
 SECRET_MGT={{ mirror.SECRET_MGT }}
 # which start targets belong to which secret manager — a new provider = its targets here + its value above
@@ -180,8 +180,8 @@ SECRET_MGT_COMPONENTS=(
     "confmgt (ansible-agent)|ccc/infra/ansible/ansible-agent|ansible"
 )
 
-# ── What stop_all.sh stops (its plan defaults; shutdown.sh runs it) ───────────
-# docker is not listed: shutdown.sh stops the daemon itself, last (with power off).
+# ── What stop_all.sh stops (its plan defaults; ccc/shutdown.sh runs it) ───────────
+# docker is not listed: ccc/shutdown.sh stops the daemon itself, last (with power off).
 # db-agent, cache-agent, channel-agent are NOT listed: each is its container's entry point and stops
 # with mypostgresql_db / mycache / mychannels (listing them made the report say "stop said OK but it is
 # running" one step before their container went down — CLAUDEWORK-152).

@@ -2,11 +2,11 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # deploy_on_this_pc.sh — Ansible deploys the workspace on THIS PC: playbook deploy, inventory dev (CONFMGT [6])
 #
-# What for    The last step of startup.sh (start-plan target deploy-dev): Ansible brings this PC to what
+# What for    The last step of ccc/startup.sh (start-plan target deploy-dev): Ansible brings this PC to what
 #             inventories/dev says. Each project joins in its own story ([6.3]…); until then it only checks the
 #             workspace is there — git and Docker are left alone here (dev: ws_manage_git / ws_manage_docker false).
 #
-# Who         startup.sh (svcmgt/start_all.sh, target deploy-dev) · or you.
+# Who         ccc/startup.sh (ccc/scripts/svcmgt/start_all.sh, target deploy-dev) · or you.
 #
 # How         bash deploy_on_this_pc.sh            (safe to run again — nothing new → changed=0)
 #             bash deploy_on_this_pc.sh --state    one word for start_all: running (last deploy OK) · partial · stopped
@@ -27,8 +27,8 @@ if [ "${1:-}" = --state ]; then                                   # start_all: t
     case "$(cat "$STATE_FILE" 2>/dev/null)" in ok*) echo running ;; failed*) echo partial ;; *) echo stopped ;; esac; exit 0
 fi
 # ── Mirror logging ─────────────────────────────────────────────────────────────
-if [ -f "$_WS_ROOT/init/create_logging_path.sh" ]; then
-    source "$_WS_ROOT/init/create_logging_path.sh"
+if [ -f "$_WS_ROOT/ccc/scripts/lib/create_logging_path.sh" ]; then
+    source "$_WS_ROOT/ccc/scripts/lib/create_logging_path.sh"
     setup_logging --no-stamp                                      # the scripts it runs stamp their own lines
 fi
 # ──────────────────────────────────────────────────────────────────────────────

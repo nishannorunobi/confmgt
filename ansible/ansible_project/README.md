@@ -20,11 +20,11 @@ roles/<project>/templates/myworkspace/<path>.j2   the real file's shape (its own
 ## Deploy — the workspace onto a machine (CONFMGT [6])
 
 ```
-inventories/dev/hosts.yml    deploy_targets: dev-pc           this PC: git + Docker OFF (your live checkout · Docker from startup.sh)
+inventories/dev/hosts.yml    deploy_targets: dev-pc           this PC: git + Docker OFF (your live checkout · Docker from ccc/startup.sh)
 inventories/test/hosts.yml   deploy_targets: test-vm          the test VM: git (clone / pull ws_branch) + Docker ON
 playbooks/deploy.yml          [git] → [Docker] → the workspace is there → (each project, [6.3]…)   (run again → changed=0)
 ```
-This PC: `bash ../deploy_on_this_pc.sh` — startup.sh runs it last (start-plan target deploy-dev) · `bash ../stop_on_this_pc.sh`
+This PC: `bash ../deploy_on_this_pc.sh` — ccc/startup.sh runs it last (start-plan target deploy-dev) · `bash ../stop_on_this_pc.sh`
 (playbooks/stop.yml, reverse order) — shutdown runs it first.
 The test VM: `bash ~/myworkspace/test_server/05_deploy_test_vm.sh` — starts the VM + the SSH relay, gives Ansible its key in
 the VM, then asks the agent to apply `deploy` on `test` with the branch it runs from.
@@ -54,7 +54,7 @@ Each environment has its own mirror with the same paths and its own values.
 | mylog_analytics | `log-agent/agent.conf` (all three values → shared/) | `mylog_analytics.yml` (check · apply + restart via stop/start) | 3.7 |
 | myodoo | `odoo-agent/agent.conf` · `odoo-19/odoo.conf` (INI; database → shared/postgres.yml) | `myodoo.yml` (check · apply + restart Odoo 19 via stop/start --19) | 3.8 |
 | agents · workspace-agent | `agents/shared.conf` (ums db → shared/postgres.yml) · `agents/workspace-agent/mcp.conf` | `agents.yml` (restart-agents.sh) · `workspace_agent.yml` (mcp_json_from_kms.sh) | 3.9 |
-| workspace | `svcmgt/svc_policy.conf` (central SECRET_MGT → shared/kms.yml) | `workspace.yml` (check · apply; nothing to restart) | 3.10 |
+| workspace | `ccc/scripts/svcmgt/svc_policy.conf` (central SECRET_MGT → shared/kms.yml) | `workspace.yml` (check · apply; nothing to restart) | 3.10 |
 | kms · confmgt | `projectspace/kms/dockerspace/.env` · `ccc/infra/ansible/dockerspace/.env` · `ansible-agent/agent.conf` | `kms.yml` · `confmgt.yml` (check · apply; NO automatic restart — a message) | 3.11 |
 
 A project joins (one story each): its files in the mirror + their templates + a role listing them + a playbook — no core change.

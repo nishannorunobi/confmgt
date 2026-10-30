@@ -17,13 +17,13 @@
 #             P4 no svc_policy.conf in ws_dir → FAILED (the workspace is not there)
 #             P5 deploy_on_this_pc.sh: --state stopped before · the key into a temp authorized_keys once · apply deploy dev
 #                → OK · --state running · the agent failing → exit 1 · --state partial
-#             P6 deploy_projects on the SSH machine (a fake project role + a fake svcmgt/start_targets.sh): in order, config
+#             P6 deploy_projects on the SSH machine (a fake project role + a fake ccc/scripts/svcmgt/start_targets.sh): in order, config
 #                rendered + restart once, targets STARTED · again → changed=0, no restart · a value changed → restart only ·
 #                a target that fails → the play stops, the projects after it are not tried
 #             P7 the real lists agree: inventories/dev deploy_projects targets == ~/myworkspace svc_policy.conf SVC_VIA_DEPLOY · test == dev
 #             P8 a config-only project's REAL restart handler (default "no" in the start plan) on stub scripts: stopped →
 #                nothing started, a message · running → its own stop + start
-#             P9 playbooks/stop.yml on the SSH machine (a fake svcmgt/stop_targets.sh): projects in REVERSE order, each one's
+#             P9 playbooks/stop.yml on the SSH machine (a fake ccc/scripts/svcmgt/stop_targets.sh): projects in REVERSE order, each one's
 #                targets reversed · one failing → the others are STILL stopped, the play ends FAILED · all down → ok
 #             P10 stop_on_this_pc.sh: the agent answers → apply stop dev → deploy_on_this_pc.sh --state stopped · the agent
 #                is down → nothing started, exit 1, --state partial
@@ -32,8 +32,8 @@ case "${1:-}" in -h|--help) awk 'NR==1{next} /^# ─/{n++; if(n==2) exit; next} 
 set -uo pipefail
 # ── Mirror logging ─────────────────────────────────────────────────────────────
 _WS_ROOT="$(d="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; while [ ! -d "$d/mountspace" ] && [ "$d" != "/" ]; do d="$(dirname "$d")"; done; echo "$d")"
-if [ -f "$_WS_ROOT/init/create_logging_path.sh" ]; then
-    source "$_WS_ROOT/init/create_logging_path.sh"
+if [ -f "$_WS_ROOT/ccc/scripts/lib/create_logging_path.sh" ]; then
+    source "$_WS_ROOT/ccc/scripts/lib/create_logging_path.sh"
     setup_logging
 fi
 # ──────────────────────────────────────────────────────────────────────────────
@@ -68,7 +68,7 @@ mkdir -p "$WORK/a"; cp -a "$PROJ" "$WORK/a/project"; ssh-keygen -q -t ed25519 -N
 docker run -d --name "$M" --network "$NET" "$MIMG" >/dev/null
 docker cp "$WORK/a/key.pub" "$M:/home/ansible/.ssh/authorized_keys" >/dev/null
 docker exec "$M" sh -c 'chown ansible /home/ansible/.ssh/authorized_keys && chmod 600 /home/ansible/.ssh/authorized_keys
-    mkdir -p /home/ansible/ws/svcmgt /home/ansible/empty && touch /home/ansible/ws/svcmgt/svc_policy.conf && chown -R ansible /home/ansible'
+    mkdir -p /home/ansible/ws/ccc/scripts/svcmgt /home/ansible/empty && touch /home/ansible/ws/ccc/scripts/svcmgt/svc_policy.conf && chown -R ansible /home/ansible'
 mkinv() {   # NAME "group_vars lines"
     local i="$WORK/a/project/inventories/$1"; mkdir -p "$i/group_vars/deploy_targets"
     printf 'all:\n  children:\n    deploy_targets:\n      hosts:\n        m1:\n          ansible_host: %s\n          ansible_user: ansible\n' "$M" > "$i/hosts.yml"
@@ -139,8 +139,8 @@ printf -- '- name: fake config\n  ansible.builtin.template:\n    src: fake.j2\n 
 printf -- '- name: restart fakeproj\n  ansible.builtin.shell: echo "restart {{ fake_file }}" >> {{ ws_dir }}/events\n' > "$R/handlers/main.yml"
 printf 'value={{ fake_value }}\n' > "$R/templates/fake.j2"
 docker exec "$M" sh -c '[ -e /bin/bash ] || { printf "#!/bin/sh\nexec sh \"\$@\"\n" > /bin/bash; chmod 755 /bin/bash; }'   # alpine: the playbook calls bash
-docker exec -u ansible "$M" sh -c 'cat > /home/ansible/ws/svcmgt/start_targets.sh <<"X"
-cd "$(dirname "$0")/.."; for t in "$@"; do
+docker exec -u ansible "$M" sh -c 'cat > /home/ansible/ws/ccc/scripts/svcmgt/start_targets.sh <<"X"
+cd "$(dirname "$0")/../../.."; for t in "$@"; do
   [ "$t" = bad ] && { echo "$t FAILED"; exit 1; }
   if [ -f "up_$t" ]; then echo "$t RUNNING"; else touch "up_$t"; echo "start $t" >> events; echo "$t STARTED"; fi
 done
@@ -162,7 +162,7 @@ o6d="$(p6 1 '  - {name: broken, role: fakeproj, targets: [bad]}\n')"; e4="$(ev)"
 
 # ── P7: the two lists agree ──────────────────────────────────────────────────
 inv_t="$(inv dev dev-pc | python3 -c 'import json,sys; print(" ".join(sorted(t for p in json.load(sys.stdin).get("deploy_projects",[]) for t in p.get("targets",[]))))')"
-pol_t="$(bash -c 'source "$1"; printf "%s\n" "${SVC_VIA_DEPLOY[@]:-}" | sort | xargs' _ "$_WS_ROOT/svcmgt/svc_policy.conf")"
+pol_t="$(bash -c 'source "$1"; printf "%s\n" "${SVC_VIA_DEPLOY[@]:-}" | sort | xargs' _ "$_WS_ROOT/ccc/scripts/svcmgt/svc_policy.conf")"
 lst() { inv "$1" "$2" | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin).get("deploy_projects",[]), sort_keys=True))'; }
 [ "$inv_t" = "$pol_t" ] && [ "$(lst dev dev-pc)" = "$(lst test test-vm)" ] \
   && ok "P7 inventories/dev deploy_projects targets == svc_policy.conf SVC_VIA_DEPLOY [${inv_t:-none}] · the test list == the dev list" \
@@ -193,8 +193,8 @@ rm -f "$WORK/a/project/playbooks/h8.yml"
   || bad "P8:$h8"
 
 # ── P9: stop.yml ─────────────────────────────────────────────────────────────
-docker exec -u ansible "$M" sh -c 'rm -f /home/ansible/ws/events; cat > /home/ansible/ws/svcmgt/stop_targets.sh <<"X"
-cd "$(dirname "$0")/.."; rc=0; for t in "$@"; do
+docker exec -u ansible "$M" sh -c 'rm -f /home/ansible/ws/events; cat > /home/ansible/ws/ccc/scripts/svcmgt/stop_targets.sh <<"X"
+cd "$(dirname "$0")/../../.."; rc=0; for t in "$@"; do
   if [ "$t" = bad ]; then echo "$t FAILED"; rc=1; else echo "stop $t" >> events; echo "$t DOWN"; fi
 done; exit $rc
 X'

@@ -5,7 +5,7 @@
 #                                         · the workspace is there · each project of
 #                                         deploy_projects: config → restart if changed → up. Run again → changed=0.
 # How, per environment (a switch not set → off): inventories/<env>/group_vars/deploy_targets/ — dev: git + Docker OFF (your live checkout; Docker
-# from startup.sh) · test: both ON (ws_branch: a run may send its own — the story branch under test).
+# from ccc/startup.sh) · test: both ON (ws_branch: a run may send its own — the story branch under test).
 # deploy_projects (dev): inventories/dev/group_vars/deploy_targets/projects.yml — one project per story ([6.4]…).
 - name: Deploy the workspace
   hosts: deploy_targets
@@ -87,9 +87,9 @@
       register: kms
       changed_when: "'INITIALISED' in kms.stdout or 'FOUNDATION' in kms.stdout"
 
-    - name: kms — every component's keys (random initial values; the workspace's svcmgt/register_all_kms_keys.sh)
+    - name: kms — every component's keys (random initial values; the workspace's ccc/scripts/svcmgt/register_all_kms_keys.sh)
       when: ws_kms_setup | default(false) | bool
-      ansible.builtin.command: bash svcmgt/register_all_kms_keys.sh
+      ansible.builtin.command: bash ccc/scripts/svcmgt/register_all_kms_keys.sh
       args:
         chdir: "{{ ws_dir }}"
       environment:
@@ -97,9 +97,9 @@
       register: keys
       changed_when: keys.stdout is search('kms keys:.* [1-9][0-9]* created')
 
-    - name: kms — every project signed up (the workspace's svcmgt/signup_all_with_kms.sh)
+    - name: kms — every project signed up (the workspace's ccc/scripts/svcmgt/signup_all_with_kms.sh)
       when: ws_kms_setup | default(false) | bool
-      ansible.builtin.command: bash svcmgt/signup_all_with_kms.sh
+      ansible.builtin.command: bash ccc/scripts/svcmgt/signup_all_with_kms.sh
       args:
         chdir: "{{ ws_dir }}"
       environment:
@@ -107,9 +107,9 @@
       register: signups
       changed_when: "'new login' in signups.stdout or 'copied into kms' in signups.stdout"
 
-    - name: the workspace is there (svcmgt/svc_policy.conf)
+    - name: the workspace is there (ccc/scripts/svcmgt/svc_policy.conf)
       ansible.builtin.stat:
-        path: "{{ ws_dir }}/svcmgt/svc_policy.conf"
+        path: "{{ ws_dir }}/ccc/scripts/svcmgt/svc_policy.conf"
       register: ws
       failed_when: not ws.stat.exists
 

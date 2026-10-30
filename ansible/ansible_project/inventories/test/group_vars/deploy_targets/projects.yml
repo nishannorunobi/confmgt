@@ -1,7 +1,7 @@
 # projects.yml — the projects playbooks/deploy.yml brings up on the TEST VM, IN START ORDER — the same list as inventories/dev (P7 checks) (CONFMGT [6]; one per story).
 #   name     the project (its config role has the same name unless role: says otherwise)
-#   targets  its svc_policy.conf targets Ansible starts (svcmgt/start_targets.sh) — [] = config only
-# Every target here is in ~/myworkspace/svcmgt/svc_policy.conf SVC_VIA_DEPLOY too, and only those:
+#   targets  its svc_policy.conf targets Ansible starts (ccc/scripts/svcmgt/start_targets.sh) — [] = config only
+# Every target here is in ~/myworkspace/ccc/scripts/svcmgt/svc_policy.conf SVC_VIA_DEPLOY too, and only those:
 # dockerspace/host_scripts/test_deploy_playbook.sh checks the two lists are the same.
 deploy_projects:
   - {name: kms, targets: []}                                                # config only — the bootstrap starts kms (confmgt needs it); a kms restart re-seals it, so never automatic
