@@ -57,9 +57,9 @@
         loop_var: project_repo
         label: "{{ project_repo.path }}"
 
-    - name: Docker — the workspace's own dockerspace/01_check_and_install_docker.sh (installs only when missing)
+    - name: Docker — the workspace's own iam_cloud_machine/docker/install_docker.sh (installs only when missing)
       when: ws_manage_docker | default(false) | bool
-      ansible.builtin.command: bash {{ ws_dir }}/dockerspace/01_check_and_install_docker.sh
+      ansible.builtin.command: bash {{ ws_dir }}/iam_cloud_machine/docker/install_docker.sh
       register: docker
       changed_when: "'Installing' in docker.stdout"
 
@@ -70,9 +70,9 @@
         state: directory
         mode: "0755"
 
-    - name: the shared Docker network — the workspace's own dockerspace/docker_network.sh
+    - name: the shared Docker network — the workspace's own iam_cloud_machine/network/docker_network.sh
       when: ws_manage_docker | default(false) | bool
-      ansible.builtin.command: bash dockerspace/docker_network.sh
+      ansible.builtin.command: bash iam_cloud_machine/network/docker_network.sh
       args:
         chdir: "{{ ws_dir }}"
       register: net

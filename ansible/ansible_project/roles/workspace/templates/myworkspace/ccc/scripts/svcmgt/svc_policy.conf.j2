@@ -29,7 +29,7 @@ SVC_TARGETS=(
 )
 
 declare -A SVC_DIR=(
-    [docker]=dockerspace                       [portainer]=dockerspace
+    [docker]=iam_cloud_machine         [portainer]=iam_cloud_machine/docker/ui
     [kms]=projectspace/kms                     [kms-keys]=ccc/scripts/svcmgt
     [mypostgresql_db]=projectspace/mypostgresql_db   [db-agent]=projectspace/mypostgresql_db/db-agent
     [agent-orchestrator]=agents/agent-orchestrator   [docker-manager-agent]=agents/docker-manager-agent
@@ -45,7 +45,7 @@ declare -A SVC_DIR=(
     [updown]=projectspace/updown
 )
 declare -A SVC_START=(
-    [docker]=02_docker_up.sh                      [portainer]=04_start_docker_ui.sh
+    [docker]=prepare_this_pc.sh                   [portainer]=start_docker_ui.sh
     [kms]=start.sh                             [kms-keys]=register_all_kms_keys.sh
     [mypostgresql_db]=start.sh                 [db-agent]=host_start.sh
     [agent-orchestrator]=start_background.sh       [docker-manager-agent]=start_background.sh
@@ -61,7 +61,7 @@ declare -A SVC_START=(
     [updown]=start.sh
 )
 declare -A SVC_STOP=(
-    [docker]=ensure_docker_stopped.sh             [portainer]=stop_docker_ui.sh
+    [docker]=docker/stop_docker.sh      [portainer]=stop_docker_ui.sh
     [kms]=stop.sh
     [mypostgresql_db]=stop.sh                  [db-agent]=host_stop.sh
     [agent-orchestrator]=ensure_stopped.sh     [docker-manager-agent]=ensure_stopped.sh
@@ -77,7 +77,7 @@ declare -A SVC_STOP=(
     [updown]=stop.sh
 )
 declare -A SVC_STATE=(
-    [docker]="03_status_docker.sh --state"        [portainer]="status_docker_ui.sh --state"
+    [docker]="docker/status_docker.sh --state" [portainer]="status_docker_ui.sh --state"
     [kms]="status.sh --state"                  [kms-keys]="register_all_kms_keys.sh --state"
     [mypostgresql_db]="status.sh --state"      [db-agent]="host_status.sh --state"
     [agent-orchestrator]="status.sh --state"   [docker-manager-agent]="status.sh --state"
