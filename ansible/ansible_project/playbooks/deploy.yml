@@ -38,11 +38,6 @@
         force: false
         accept_hostkey: true
 
-    - name: the branch of each project repo — ws_repo_branches "path=branch,…" (05_deploy_test_vm.sh sends the PC's)
-      when: ws_manage_git | default(false) | bool
-      ansible.builtin.set_fact:
-        repo_branch: "{{ dict((ws_repo_branches | default('')).split(',') | select | map('split', '=')) }}"
-
     - name: THE repo list — ccc/scripts/gitmgt/repos.conf from this machine's own myworkspace clone (CLAUDEWORK-258)
       when: ws_manage_git | default(false) | bool
       ansible.builtin.slurp:
@@ -67,7 +62,7 @@
       ansible.builtin.git:
         repo: "{{ project_repo.repo }}"
         dest: "{{ ws_dir }}/{{ project_repo.path }}"
-        version: "{{ repo_branch[project_repo.path] | default(project_repo.branch | default('main')) }}"
+        version: main                                  # every project repo: main — the test VM tests what was tagged (CLAUDEWORK-285)
         update: true
         force: false
         accept_hostkey: true

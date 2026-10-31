@@ -5,8 +5,7 @@ ws_base_packages: [git, curl, python3-venv]   # a fresh Ubuntu lacks python3-ven
 ws_manage_docker: true     # install Docker with the workspace's own script when missing
 ws_kms_setup: true         # the VM's OWN kms, unattended — random secrets made in the VM (CONFMGT [6.17])
 ws_repo: git@github.com:nishannorunobi/myworkspace.git
-ws_branch: main            # the default — test_server/05_deploy_test_vm.sh sends the story branch it runs from (extra_vars)
+ws_branch: main            # always main — test_server/05_deploy_test_vm.sh sends main (the VM tests what was tagged, CLAUDEWORK-285)
 ws_dir: "/home/{{ ansible_user }}/myworkspace"
 # the project repos the VM needs: NOT listed here — playbooks/deploy.yml reads the deploy=yes lines of the workspace's
-# ccc/scripts/gitmgt/repos.conf (THE list, CLAUDEWORK-258) and clones / pulls them (local changes → refused). branch → main
-# unless 05_deploy_test_vm.sh sends the PC's (ws_repo_branches).
+# ccc/scripts/gitmgt/repos.conf (THE list, CLAUDEWORK-258) and clones / pulls them (local changes → refused). branch: always main (CLAUDEWORK-285)
