@@ -1,0 +1,4 @@
+# ccc: NOT restarted automatically — only a message when a file changed
+- name: restart ccc
+  ansible.builtin.debug:
+    msg: "the CCC's config changed. NOT restarted automatically: the CCC runs this very playbook and cannot restart itself in the middle of its own run — restart it yourself: bash ccc/container/stop.sh · bash ccc/container/start.sh (an agent.conf change rebuilds the image's last layer)"

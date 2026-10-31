@@ -2,7 +2,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # apply_playbook.sh — RUN a playbook for real: the machines are changed
 #
-# What for    Apply the configuration (ansible-playbook, run by the ansible-agent). Check first: check_playbook.sh.
+# What for    Apply the configuration (ansible-playbook, run by the CCC agent). Check first: check_playbook.sh.
 #
 # Who         You.
 #
@@ -23,5 +23,5 @@ if [ -f "$_WS_ROOT/ccc/scripts/lib/create_logging_path.sh" ]; then
     setup_logging
 fi
 # ──────────────────────────────────────────────────────────────────────────────
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/dockerspace/host_scripts/lib_run_playbook.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib_run_playbook.sh"
 run_playbook apply "$@"

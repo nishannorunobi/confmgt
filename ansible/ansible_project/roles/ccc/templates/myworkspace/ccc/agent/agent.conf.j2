@@ -1,0 +1,33 @@
+{# rendered by Ansible (confmgt) from inventories/<env>/myworkspace/ (the mirror) + shared/ — the comments are the project's own #}
+# CCC agent — Configuration (no secret — this file is in git)
+# A secret's value is its kms address — the agent fetches the real value itself when it starts
+# (connect_external/kms/kms.py, its own kms login). kms elsewhere: KMS_URL=https://<kms-host>:<port>, every
+# ${KMS_URL}/v1/kv/data/… line follows.
+KMS_URL={{ mirror.KMS_URL }}
+# SECRET_MGT — where the secrets below come from. Possible values:
+#     kms     (the workspace today)  their kms addresses, fetched at start
+#     local                          the real values written right here (no kms at all)
+# Missing / empty → local · unknown → local, with a warning.
+SECRET_MGT={{ mirror.SECRET_MGT }}
+# every secret keeps its kms address in the "# kms:" comment right above it — the rotation (connect_external/kms/):
+# transfer (values): ccc_transfer_kms2tempfile.sh / _local2tempfile_random_value.sh / _tempfile2local.sh /
+#   _local2kms.sh / _comment2local_kmsurl.sh · config (SECRET_MGT only): ccc_config_secret_mgt_local.sh / _kms.sh
+PORT={{ mirror.PORT }}
+# RUN_TIMEOUT — seconds one playbook run may take before it is stopped. Missing / not a number → 1800, with a warning.
+RUN_TIMEOUT={{ mirror.RUN_TIMEOUT }}
+# ANSIBLE_SSH_KEY_SECRET — 32 random characters; the agent turns them into Ansible's SSH key (ed25519) in RAM.
+# A new value = a new key (then put the new public key on the machines: bash ccc/infra/ansible/show_public_key.sh).
+# kms: ${KMS_URL}/v1/kv/data/confmgt/ansible
+ANSIBLE_SSH_KEY_SECRET={{ mirror.ANSIBLE_SSH_KEY_SECRET }}
+
+# ── Known callers (core/guard.py) ──────────────────────────────────────────────
+# CCC_CALLER_<NAME>_SECRET — one line per caller that may call the agent; <name> (lower case) is what it sends in
+# X-CCC-Caller, the value its token (X-CCC-Token). Not in this list → refused (403); every call is logged.
+# A new caller = one more line (its token is created in kms at the next start: kms-keys / the sign-up).
+# The callers on the PC read their token with ccc/agent/connect_external/kms/caller_token.sh <name>.
+# kms: ${KMS_URL}/v1/kv/data/ccc/agent/owner
+CCC_CALLER_OWNER_SECRET={{ mirror.CCC_CALLER_OWNER_SECRET }}
+# kms: ${KMS_URL}/v1/kv/data/ccc/agent/svcmgt
+CCC_CALLER_SVCMGT_SECRET={{ mirror.CCC_CALLER_SVCMGT_SECRET }}
+# kms: ${KMS_URL}/v1/kv/data/ccc/agent/test_server
+CCC_CALLER_TEST_SERVER_SECRET={{ mirror.CCC_CALLER_TEST_SERVER_SECRET }}

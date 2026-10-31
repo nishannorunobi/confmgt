@@ -23,7 +23,7 @@ SVC_TARGETS=(
     mycache cache-agent mychannels channel-agent
     mydocs mydocs-other
     mylog_analytics log-agent myodoo17 odoo-agent myodoo19
-    confmgt-ansible ansible-agent
+    ccc
     updown
     deploy-dev
 )
@@ -40,7 +40,7 @@ declare -A SVC_DIR=(
     [mylog_analytics]=projectspace/observability/mylog_analytics   [log-agent]=projectspace/observability/mylog_analytics/log-agent
     [myodoo17]=projectspace/apps/myodoo             [odoo-agent]=projectspace/apps/myodoo/odoo-agent
     [myodoo19]=projectspace/apps/myodoo
-    [confmgt-ansible]=ccc/infra/ansible   [ansible-agent]=ccc/infra/ansible/ansible-agent
+    [ccc]=ccc/container
     [deploy-dev]=ccc/infra/ansible
     [updown]=projectspace/apps/updown
 )
@@ -56,7 +56,7 @@ declare -A SVC_START=(
     [mylog_analytics]=start.sh                 [log-agent]=host_start.sh
     [myodoo17]="start.sh --17"                 [odoo-agent]=host_start.sh
     [myodoo19]="start.sh --19"
-    [confmgt-ansible]=start.sh                 [ansible-agent]=host_start.sh
+    [ccc]=start.sh
     [deploy-dev]=deploy_on_this_pc.sh
     [updown]=start.sh
 )
@@ -72,7 +72,7 @@ declare -A SVC_STOP=(
     [mylog_analytics]=stop.sh                  [log-agent]=host_stop.sh
     [myodoo17]="stop.sh --17"                  [odoo-agent]=host_stop.sh
     [myodoo19]="stop.sh --19"
-    [confmgt-ansible]=stop.sh                  [ansible-agent]=host_stop.sh
+    [ccc]=stop.sh
     [deploy-dev]=stop_on_this_pc.sh
     [updown]=stop.sh
 )
@@ -88,7 +88,7 @@ declare -A SVC_STATE=(
     [mylog_analytics]="status.sh --state"      [log-agent]="host_status.sh --state"
     [myodoo17]="status.sh --state --17"        [odoo-agent]="host_status.sh --state"
     [myodoo19]="status.sh --state --19"
-    [confmgt-ansible]="status.sh --state"      [ansible-agent]="host_status.sh --state"
+    [ccc]="status.sh --state"
     [deploy-dev]="deploy_on_this_pc.sh --state"
     [updown]="status.sh --state"
 )
@@ -109,7 +109,7 @@ declare -A SVC_URL=(
     [mylog_analytics]=http://localhost:3000    [log-agent]=http://localhost:8893
     [myodoo17]=http://localhost:8069           [odoo-agent]=http://localhost:8896
     [myodoo19]=http://localhost:8089
-    [confmgt-ansible]=-                        [ansible-agent]=http://localhost:8897/docs
+    [ccc]=http://localhost:8897/docs
     [deploy-dev]=-
     [updown]=-
 )
@@ -122,11 +122,11 @@ declare -A SVC_URL=(
 # kms + kms-keys are NOT in this list: SECRET_MGT below decides them (TESTSERVER-83). kms's own start asks for the
 # shares / offers its one-time setup; kms-keys (TESTSERVER-46) right after it creates every component's missing kms
 # keys in one go (ccc/scripts/svcmgt/register_all_kms_keys.sh).
-# confmgt-ansible + ansible-agent + deploy-dev default to YES (CONFMGT [6.2], 2026-10-21): the LAST step, deploy-dev, is
+# ccc (THE CCC container + its agent, CLAUDEWORK-270 — was confmgt-ansible + ansible-agent) + deploy-dev default to YES (CONFMGT [6.2], 2026-10-21): the LAST step, deploy-dev, is
 # Ansible deploying this PC (confmgt's deploy_on_this_pc.sh: playbook deploy, inventory dev) — the projects move into
 # it one per story ([6.3]…) and leave this list then. Its STOP (CONFMGT [6.14]) is confmgt's stop_on_this_pc.sh: as the
 # LAST target it is stopped FIRST — the projects go down through Ansible; stop_all stops what still runs itself.
-SVC_START_TARGETS=(docker portainer confmgt-ansible ansible-agent deploy-dev)
+SVC_START_TARGETS=(docker portainer ccc deploy-dev)
 # Targets ANSIBLE starts (CONFMGT [6]): deploy-dev's playbook deploy brings each up with ccc/scripts/svcmgt/start_targets.sh — they
 # leave SVC_START_TARGETS and the start plan shows them as "via deploy-dev". confmgt's inventories/dev
 # group_vars/deploy_targets/projects.yml lists the same targets (its test_deploy_playbook.sh checks both lists).
@@ -134,14 +134,14 @@ SVC_VIA_DEPLOY=(mypostgresql_db db-agent agent-orchestrator mycache mychannels m
 # ── Who depends on whom (ccc/restart.sh warns before restarting these) ─────────────
 # Plain text, shown to a human; ccc/restart.sh only reads it to print the warning.
 declare -A SVC_USED_BY=(
-    [kms]="mycache, mychannels, mypostgresql_db (their agents fetch the secrets at start), mydocs + the host agents (their start scripts fetch), mylog_analytics + myodoo19 (their containers fetch at start), confmgt-ansible (its agent fetches the SSH key's secret at start) · comes back SEALED"
+    [kms]="mycache, mychannels, mypostgresql_db (their agents fetch the secrets at start), mydocs + the host agents (their start scripts fetch), mylog_analytics + myodoo19 (their containers fetch at start), ccc (its agent fetches the SSH key's secret + the callers' tokens at start) · comes back SEALED"
     [mypostgresql_db]="Plane (mydocs), ums, odoo, grafana · db-agent runs inside it"
     [mycache]="Plane (mydocs) · cache-agent runs inside it"
     [mychannels]="Plane (mydocs) · channel-agent runs inside it"
 )
 # Targets that fetch their secrets from kms when they start: ccc/restart.sh refuses to
 # restart them while kms is sealed (they could not come back) — unless their component's own SECRET_MGT is not kms.
-SVC_NEEDS_KMS=(kms-keys mypostgresql_db db-agent mycache cache-agent mychannels channel-agent mydocs mydocs-other agent-orchestrator docker-manager-agent workspace-agent mylog_analytics log-agent myodoo19 odoo-agent confmgt-ansible ansible-agent deploy-dev)   # container agents = entry points; mydocs + host agents = fetch at start
+SVC_NEEDS_KMS=(kms-keys mypostgresql_db db-agent mycache cache-agent mychannels channel-agent mydocs mydocs-other agent-orchestrator docker-manager-agent workspace-agent mylog_analytics log-agent myodoo19 odoo-agent ccc deploy-dev)   # container agents = entry points; mydocs + host agents = fetch at start
 
 # mydocs = minimal Plane (start_minimal_plane.sh, default yes); mydocs-other = admin / beat / minio (start_other_plane.sh) — NOT in
 # SVC_START_TARGETS, so the start plan shows it as "no" unless you switch it (owner, 2026-10-02).
@@ -177,7 +177,7 @@ SECRET_MGT_COMPONENTS=(
     "mydocs (Plane)|projectspace/apps/mydocs|docs"
     "agents (host)|agents|agents"
     "agents/workspace-agent (.mcp.json)|agents/workspace-agent|workspace"
-    "confmgt (ansible-agent)|ccc/infra/ansible/ansible-agent|ansible"
+    "ccc (agent)|ccc/agent|ccc"
 )
 
 # ── What stop_all.sh stops (its plan defaults; ccc/shutdown.sh runs it) ───────────
@@ -188,7 +188,7 @@ SECRET_MGT_COMPONENTS=(
 SVC_STOP_TARGETS=(deploy-dev kms portainer mypostgresql_db agent-orchestrator
                   docker-manager-agent workspace-agent mycache mychannels
                   mydocs mydocs-other mylog_analytics log-agent myodoo17 odoo-agent myodoo19
-                  confmgt-ansible updown)
+                  ccc updown)
 
 # Folders with nothing to run (status_all.sh lists them as "no services").
 SVC_NO_SERVICES=(personalspace/myportfolio personalspace/nishannorunobi.github.io

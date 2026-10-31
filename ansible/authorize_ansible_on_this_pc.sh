@@ -9,13 +9,13 @@
 #
 # How         bash authorize_ansible_on_this_pc.sh
 #
-# Steps       1. asks the running ansible-agent for the public key (the private key never leaves its RAM)
+# Steps       1. asks the running CCC agent for the public key (the private key never leaves its RAM)
 #             2. ~/.ssh (700) and authorized_keys (600) — created if missing
 #             3. the key is added only when it is not there yet (safe to run again)
 #
 # Output      [  OK  ] Ansible's key added to /home/nishan/.ssh/authorized_keys   (or: already there)
 #
-# Errors      the agent does not answer → bash start.sh
+# Errors      the agent does not answer → bash ccc/container/start.sh
 #
 # Next        bash check_playbook.sh  → mycache · dev  (dry run: changed=0)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -29,11 +29,12 @@ if [ -f "$_WS_ROOT/ccc/scripts/lib/create_logging_path.sh" ]; then
 fi
 # ──────────────────────────────────────────────────────────────────────────────
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PORT="$(grep -E '^AGENT_PORT=' "$HERE/dockerspace/.env" 2>/dev/null | cut -d= -f2)"; URL="${ANSIBLE_AGENT_URL:-http://127.0.0.1:${PORT:-8897}}"
+CCC="$(cd "$HERE/../.." && pwd)"                                   # ccc/ — the CCC's container + agent (CLAUDEWORK-270)
+PORT="$(grep -E '^AGENT_PORT=' "$CCC/container/.env" 2>/dev/null | cut -d= -f2)"; URL="${ANSIBLE_AGENT_URL:-http://127.0.0.1:${PORT:-8897}}"
 AK="${AUTHORIZED_KEYS_FILE:-$HOME/.ssh/authorized_keys}"                    # tests point elsewhere
-KEY="$(curl -fsS --max-time 5 "$URL/public-key" 2>/dev/null | head -1)"
+KEY="$(CCC_URL="$URL" bash "$CCC/agent/call_ccc.sh" "${CCC_CALLER:-owner}" GET /public-key 2>/dev/null | head -1)"
 [[ "$KEY" =~ ^ssh-ed25519\ [A-Za-z0-9+/=]+\ confmgt-ansible$ ]] \
-    || { echo -e "\033[31m[ERROR]\033[0m  the ansible-agent does not answer on $URL — start it: bash $HERE/start.sh"; exit 1; }
+    || { echo -e "\033[31m[ERROR]\033[0m  the CCC agent does not answer on $URL — start it: bash $CCC/container/start.sh"; exit 1; }
 mkdir -p "$(dirname "$AK")" && chmod 700 "$(dirname "$AK")"
 touch "$AK" && chmod 600 "$AK"
 if grep -qxF -- "$KEY" "$AK"; then

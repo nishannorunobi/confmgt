@@ -1,0 +1,10 @@
+# ccc.yml — THE CCC's configuration (its container's .env + its agent's agent.conf) from the single source of truth
+# (CONFMGT epic [3]; was confmgt.yml — CLAUDEWORK-270).
+#   check_playbook.sh → ccc   dry run: shows every line that differs — writes nothing, restarts nothing
+#   apply_playbook.sh → ccc   writes the changed files — NO automatic restart (the CCC runs this playbook): a message
+- name: ccc configuration
+  hosts: ccc
+  gather_facts: false
+  roles:
+    - shared                    # inventories/<env>/shared/ first: values used by 2+ projects
+    - ccc

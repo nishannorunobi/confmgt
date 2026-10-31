@@ -2,7 +2,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # check_playbook.sh — DRY RUN a playbook: what WOULD change on the machines (nothing is changed)
 #
-# What for    See the differences before applying (ansible-playbook --check --diff, run by the ansible-agent).
+# What for    See the differences before applying (ansible-playbook --check --diff, run by the CCC agent).
 #
 # Who         You.
 #
@@ -11,7 +11,7 @@
 #
 # Output      ok: [dev-pc] … changed=0 · [  OK  ] check mycache on dev: exit 0 after 2.1 s · full log: …/runs/…log
 #
-# Errors      the agent does not answer → bash start.sh · UNREACHABLE → the machine lacks the public key
+# Errors      the agent does not answer → bash ccc/container/start.sh · UNREACHABLE → the machine lacks the public key
 #             (bash show_public_key.sh) or is off
 #
 # Next        bash apply_playbook.sh
@@ -25,5 +25,5 @@ if [ -f "$_WS_ROOT/ccc/scripts/lib/create_logging_path.sh" ]; then
     setup_logging
 fi
 # ──────────────────────────────────────────────────────────────────────────────
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/dockerspace/host_scripts/lib_run_playbook.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib_run_playbook.sh"
 run_playbook check "$@"

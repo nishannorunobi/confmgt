@@ -1,5 +1,8 @@
 # Logs
 *.log
 
-# .env holds NO secret (the SSH key is in kms) — it is tracked in git
-# the kms login files are the ansible-agent's: see ansible-agent/.gitignore
+# the container + agent moved to myworkspace ccc/container + ccc/agent (CLAUDEWORK-270). What is left here on a PC
+# that ran the old agent is its kms login (ansible-agent/connect_external/kms/credentials/) — never in git, kept until
+# you remove it (the CCC has its own login: ccc-agent)
+ansible-agent/
+__pycache__/

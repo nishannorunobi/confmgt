@@ -26,17 +26,19 @@ if [ -f "$_WS_ROOT/ccc/scripts/lib/create_logging_path.sh" ]; then
     setup_logging --no-stamp                                      # the scripts it runs stamp their own lines
 fi
 # ──────────────────────────────────────────────────────────────────────────────
-PORT="$(grep -E '^AGENT_PORT=' "$HERE/dockerspace/.env" 2>/dev/null | cut -d= -f2)"; URL="${ANSIBLE_AGENT_URL:-http://127.0.0.1:${PORT:-8897}}"
+CCC="$(cd "$HERE/../.." && pwd)"                                   # ccc/ — the CCC's container + agent (CLAUDEWORK-270)
+export CCC_CALLER="${CCC_CALLER:-svcmgt}"                          # svcmgt's deploy-dev / shutdown = the known caller svcmgt
+PORT="$(grep -E '^AGENT_PORT=' "$CCC/container/.env" 2>/dev/null | cut -d= -f2)"; URL="${ANSIBLE_AGENT_URL:-http://127.0.0.1:${PORT:-8897}}"
 mkdir -p "$(dirname "$STATE_FILE")"
 result() { echo "$1 $(date '+%Y-%m-%d %H:%M:%S')" > "$STATE_FILE"; }
 
 # 1. the agent — never started here
 if ! curl -fsS --max-time 5 "$URL/health" >/dev/null 2>&1; then
     result failed-stop
-    echo -e "\033[33m[ WARN ]\033[0m the ansible-agent does not answer on $URL — nothing stopped by Ansible; stop_all stops the projects itself"
+    echo -e "\033[33m[ WARN ]\033[0m the CCC agent does not answer on $URL — nothing stopped by Ansible; stop_all stops the projects itself"
     exit 1
 fi
 
 # 2. stop on dev
-source "$HERE/dockerspace/host_scripts/lib_run_playbook.sh"
+source "$HERE/lib_run_playbook.sh"
 if run_playbook apply stop dev; then result stopped; else result failed-stop; exit 1; fi

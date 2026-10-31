@@ -32,19 +32,21 @@ if [ -f "$_WS_ROOT/ccc/scripts/lib/create_logging_path.sh" ]; then
     setup_logging --no-stamp                                      # the scripts it runs stamp their own lines
 fi
 # ──────────────────────────────────────────────────────────────────────────────
-PORT="$(grep -E '^AGENT_PORT=' "$HERE/dockerspace/.env" 2>/dev/null | cut -d= -f2)"; URL="${ANSIBLE_AGENT_URL:-http://127.0.0.1:${PORT:-8897}}"
+CCC="$(cd "$HERE/../.." && pwd)"                                   # ccc/ — the CCC's container + agent (CLAUDEWORK-270)
+export CCC_CALLER="${CCC_CALLER:-svcmgt}"                          # svcmgt's deploy-dev / shutdown = the known caller svcmgt
+PORT="$(grep -E '^AGENT_PORT=' "$CCC/container/.env" 2>/dev/null | cut -d= -f2)"; URL="${ANSIBLE_AGENT_URL:-http://127.0.0.1:${PORT:-8897}}"
 mkdir -p "$(dirname "$STATE_FILE")"
 result() { echo "$1 $(date '+%Y-%m-%d %H:%M:%S')" > "$STATE_FILE"; }
 
 # 1. the agent
 if ! curl -fsS --max-time 5 "$URL/health" >/dev/null 2>&1; then
-    echo -e "\033[36m[ INFO ]\033[0m the ansible-agent does not answer on $URL — starting confmgt"
-    bash "$HERE/start.sh" || { result failed; echo -e "\033[31m[ERROR]\033[0m  confmgt did not start — see above"; exit 1; }
+    echo -e "\033[36m[ INFO ]\033[0m the CCC agent does not answer on $URL — starting the CCC"
+    bash "$CCC/container/start.sh" || { result failed; echo -e "\033[31m[ERROR]\033[0m  the CCC did not start — see above"; exit 1; }
 fi
 
 # 2. Ansible may log in to this PC
 bash "$HERE/authorize_ansible_on_this_pc.sh" | grep -v "next:" || { result failed; exit 1; }
 
 # 3. deploy on dev
-source "$HERE/dockerspace/host_scripts/lib_run_playbook.sh"
+source "$HERE/lib_run_playbook.sh"
 if run_playbook apply deploy dev; then result ok; else result failed; exit 1; fi

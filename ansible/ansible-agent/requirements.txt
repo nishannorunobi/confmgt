@@ -1,5 +1,0 @@
-fastapi==0.156.3
-uvicorn==0.54.0
-python-dotenv==1.2.4
-hvac==2.4.0           # kms client (connect_external/kms/kms.py)
-cryptography==50.0.2  # the SSH key from ANSIBLE_SSH_KEY_SECRET (ed25519, in RAM)

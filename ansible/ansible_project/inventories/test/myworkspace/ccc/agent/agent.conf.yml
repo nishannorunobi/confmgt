@@ -1,0 +1,13 @@
+# ccc/agent/agent.conf — its OWN values on the TEST environment (mirror of ~/myworkspace/ccc/agent/agent.conf).
+# Values used by 2+ projects are NOT copied here: they point to shared/<topic>.yml · secrets: only kms ADDRESSES.
+# Change a value → check_playbook.sh (dry run) shows the line that would change.
+
+mirror:
+  KMS_URL: "{{ shared_kms.url_in_containers }}"                 # → shared/kms.yml
+  SECRET_MGT: "{{ shared_kms.secret_mgt }}"                     # → shared/kms.yml
+  PORT: "8897"
+  RUN_TIMEOUT: "1800"
+  ANSIBLE_SSH_KEY_SECRET: "${KMS_URL}/v1/kv/data/confmgt/ansible"
+  CCC_CALLER_OWNER_SECRET: "${KMS_URL}/v1/kv/data/ccc/agent/owner"
+  CCC_CALLER_SVCMGT_SECRET: "${KMS_URL}/v1/kv/data/ccc/agent/svcmgt"
+  CCC_CALLER_TEST_SERVER_SECRET: "${KMS_URL}/v1/kv/data/ccc/agent/test_server"

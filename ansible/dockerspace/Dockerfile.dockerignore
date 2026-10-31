@@ -1,3 +1,0 @@
-# only the requirements file is needed to build the image — never send secrets or data
-*
-!ansible-agent/requirements.txt
