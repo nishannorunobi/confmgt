@@ -1,0 +1,4 @@
+# shared/logging.yml — THE log server of the DEV environment (LOGAN-11): where every Alloy pushes its lines.
+# mylog_analytics (Loki) moves → change log_url here, redeploy — no container or script changes.
+shared_logging:
+  log_url: "http://localhost:3100"   # Loki inside the mylog_analytics container itself (this PC)

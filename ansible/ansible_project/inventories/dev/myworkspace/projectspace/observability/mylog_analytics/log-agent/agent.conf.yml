@@ -6,3 +6,4 @@ mirror:
   KMS_URL: "{{ shared_kms.url_in_containers }}"                 # → shared/kms.yml
   SECRET_MGT: "{{ shared_kms.secret_mgt }}"                     # → shared/kms.yml
   ANTHROPIC_API_KEY: "{{ shared_anthropic.api_key }}"           # → shared/anthropic.yml
+  LOG_URL: "{{ shared_logging.log_url }}"                      # → shared/logging.yml

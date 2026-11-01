@@ -13,6 +13,9 @@ KMS_URL={{ mirror.KMS_URL }}
 # SECRET_MGT — where the passwords below come from (TESTSERVER-67): kms = their kms addresses, fetched at start ·
 # local = the real values written right here (no kms at all) · not set / empty → local
 SECRET_MGT={{ mirror.SECRET_MGT }}
+# LOG_URL — THE log server (Loki) every Alloy pushes to (LOGAN-11). Today Loki runs in this same container → localhost.
+#   mylog_analytics elsewhere → http(s)://<its host>:3100 — set in confmgt shared/logging.yml (log_url), never by hand
+LOG_URL={{ mirror.LOG_URL }}
 # every password keeps its kms address in the "# kms:" comment right above it — the rotation (connect_external/kms/):
 # transfer (values): log_transfer_kms2tempfile.sh / _local2tempfile_random_value.sh / _tempfile2local.sh /
 #   _local2kms.sh / _comment2local_kmsurl.sh · config (SECRET_MGT only): log_config_secret_mgt_local.sh / _kms.sh
