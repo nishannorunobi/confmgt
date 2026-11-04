@@ -13,6 +13,8 @@ KMS_URL={{ mirror.KMS_URL }}
 # SECRET_MGT — where the passwords below come from (TESTSERVER-67): kms = their kms addresses, fetched at start ·
 # local = the real values written right here (no kms at all) · not set / empty → local
 SECRET_MGT={{ mirror.SECRET_MGT }}
+# LOG_URL — the log server the container's Fluent Bit pushes to (shared/logging.yml) · empty → no shipping (LOGAN-29)
+LOG_URL={{ mirror.LOG_URL }}
 # every password keeps its kms address in the "# kms:" comment right above it — the rotation (connect_external/kms/):
 # transfer (values): odoo_transfer_kms2tempfile.sh / _local2tempfile_random_value.sh / _tempfile2local.sh /
 #   _local2kms.sh / _comment2local_kmsurl.sh · config (SECRET_MGT only): odoo_config_secret_mgt_local.sh / _kms.sh

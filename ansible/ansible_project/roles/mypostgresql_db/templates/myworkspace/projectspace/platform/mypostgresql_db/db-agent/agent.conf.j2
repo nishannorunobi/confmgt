@@ -13,6 +13,8 @@ SECRET_MGT={{ mirror.SECRET_MGT }}
 PORT={{ mirror.PORT }}
 PG_PORT={{ mirror.PG_PORT }}
 PGDATA={{ mirror.PGDATA }}
+# LOG_URL — the log server this container's Fluent Bit pushes to (shared/logging.yml) · empty → no shipping (LOGAN-29)
+LOG_URL={{ mirror.LOG_URL }}
 
 # ── The logins the agent keeps in PostgreSQL: <NAME>_USER + <NAME>_DB + <NAME>_PASSWORD ──
 # The folder <NAME>_DB/init/*.sql creates the role, the database and the grants (02 + non-grant
