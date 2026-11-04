@@ -80,11 +80,10 @@ confmgt does not need the workspace. Clone it anywhere (e.g. `/opt/confmgt`) and
 
 | File | Setting | On the PC (default) | On its own server (example) |
 |---|---|---|---|
-| `dockerspace/.env` | `LOG_DIR` | `../../../../mountspace/logs` | `/var/log/confmgt` |
 | `dockerspace/.env` | `KMS_MASTER_PASSWORD_DIR` | `../../../../mountspace/usb/…/master_password` | `/opt/confmgt-data/kms/master_password` |
 | `ansible-agent/agent.conf` | `KMS_URL` | `http://kms-openbao:8200` | `https://<kms-host>:<port>` |
 
-`start.sh` creates both folders when missing. Then `bash start.sh`.
+`start.sh` creates the folder when missing (its logs stay inside, volume `ccc-logs`). Then `bash start.sh`.
 
 ## Agent API (`http://127.0.0.1:8897`)
 
