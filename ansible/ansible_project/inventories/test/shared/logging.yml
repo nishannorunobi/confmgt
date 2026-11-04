@@ -1,4 +1,5 @@
-# shared/logging.yml — THE log server of the TEST environment (LOGAN-11): where every Alloy pushes its lines.
+# shared/logging.yml — THE log server of the TEST environment (LOGAN-11): where every project's Fluent Bit pushes its lines.
 # mylog_analytics (Loki) moves → change log_url here, redeploy — no container or script changes.
 shared_logging:
-  log_url: "http://localhost:3100"   # Loki inside the mylog_analytics container itself (the test VM)
+  # the address the CONTAINERS push to (LOGAN-29): mylog_analytics by its name on my_docker_network
+  log_url: "http://mylog_analytics-container:3100"   # (the test VM)
