@@ -2,3 +2,4 @@
 # its config files, as paths below ~/myworkspace — a new file = one line here + its mirrored values + its template
 mylog_analytics_files:
   - projectspace/observability/mylog_analytics/log-agent/agent.conf
+  - projectspace/observability/mylog_analytics/log-agent/expiry/expiry.conf      # the early warning's settings (CONFMGT [8.1])

@@ -1,0 +1,7 @@
+# shared/expiry.yml — the early warning for expiring credentials, the same for every project on the DEV environment
+# (CONFMGT [8]). Projects refer to it by name ({{ shared_expiry.… }}) in their expiry/expiry.conf mirror — never a copy.
+# The RULE lives here (configuration); each credential's DATE lives in its source (kms, Plane, …) and is read, never stored.
+shared_expiry:
+  # a credential expiring within this many days is shown at the project's start / stop (⚠ + what to do now);
+  # until then nothing is printed · a project with a different window writes its own number in its mirror instead
+  warn_before_days: 7
