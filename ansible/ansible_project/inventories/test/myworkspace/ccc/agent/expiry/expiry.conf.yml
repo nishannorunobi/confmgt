@@ -1,0 +1,6 @@
+# ccc/agent/expiry/expiry.conf — its OWN values on the TEST environment
+# (mirror of ~/myworkspace/ccc/agent/expiry/expiry.conf).
+# Values used by 2+ projects are NOT copied here: they point to shared/<topic>.yml.
+
+mirror:
+  WARN_BEFORE_DAYS: "{{ shared_expiry.warn_before_days }}"   # → shared/expiry.yml (a different window for the CCC: a number here)
