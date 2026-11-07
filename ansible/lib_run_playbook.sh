@@ -14,7 +14,7 @@
 run_playbook() {
     local mode="$1"; shift
     local here ccc port url list pb inv lim tty= who="${CCC_CALLER:-owner}"      # the known caller (CLAUDEWORK-270)
-    here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; ccc="$(cd "$here/../.." && pwd)"   # ccc/infra/ansible → ccc/
+    here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; ccc="$(cd "$here/../.." && pwd)"   # ccc/confmgt/ansible → ccc/
     port="$(grep -E '^AGENT_PORT=' "$ccc/container/.env" 2>/dev/null | cut -d= -f2)"; url="${ANSIBLE_AGENT_URL:-http://127.0.0.1:${port:-8897}}"
     { : </dev/tty; } 2>/dev/null && tty=1
     list="$(CCC_URL="$url" CCC_TIMEOUT=10 bash "$ccc/agent/call_ccc.sh" "$who" GET /playbooks)" \

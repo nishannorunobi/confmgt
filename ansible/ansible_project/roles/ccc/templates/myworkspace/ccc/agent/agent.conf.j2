@@ -16,7 +16,7 @@ PORT={{ mirror.PORT }}
 # RUN_TIMEOUT — seconds one playbook run may take before it is stopped. Missing / not a number → 1800, with a warning.
 RUN_TIMEOUT={{ mirror.RUN_TIMEOUT }}
 # ANSIBLE_SSH_KEY_SECRET — 32 random characters; the agent turns them into Ansible's SSH key (ed25519) in RAM.
-# A new value = a new key (then put the new public key on the machines: bash ccc/infra/ansible/show_public_key.sh).
+# A new value = a new key (then put the new public key on the machines: bash ccc/confmgt/ansible/show_public_key.sh).
 # kms: ${KMS_URL}/v1/kv/data/confmgt/ansible
 ANSIBLE_SSH_KEY_SECRET={{ mirror.ANSIBLE_SSH_KEY_SECRET }}
 
