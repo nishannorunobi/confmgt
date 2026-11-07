@@ -3,3 +3,4 @@
 myodoo_files:
   - projectspace/apps/myodoo/odoo-agent/agent.conf
   - projectspace/apps/myodoo/odoo-19/odoo.conf
+  - projectspace/apps/myodoo/odoo-agent/expiry/expiry.conf

@@ -1,0 +1,7 @@
+# expiry.conf — the Odoo agent's expiry settings (CONFMGT [8.4], the [8.1] pattern). Tracked in git: it holds NO secret.
+# Written by confmgt at every deploy: inventories/<env>/myworkspace/projectspace/apps/myodoo/odoo-agent/expiry/expiry.conf.yml
+# ← shared/expiry.yml (the rule, once for every project). Change it there — a hand edit is overwritten.
+#
+# WARN_BEFORE_DAYS — a credential that expires within this many days is shown at startup / shutdown
+# (⚠ + what to do now · ✗ expired + the fix); until then nothing is printed. Missing / not a number → 7 + a WARN.
+WARN_BEFORE_DAYS={{ mirror.WARN_BEFORE_DAYS }}

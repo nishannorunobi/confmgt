@@ -2,3 +2,4 @@
 # its config files, as paths below ~/myworkspace — a new file = one line here + its mirrored values + its template
 workspace_agent_files:
   - agents/workspace-agent/mcp.conf
+  - agents/workspace-agent/expiry/expiry.conf

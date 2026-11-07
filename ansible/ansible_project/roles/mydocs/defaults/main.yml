@@ -2,3 +2,4 @@
 # its config files, as paths below ~/myworkspace — a new file = one line here + its mirrored values + its template
 mydocs_files:
   - projectspace/apps/mydocs/.env
+  - projectspace/apps/mydocs/expiry/expiry.conf
