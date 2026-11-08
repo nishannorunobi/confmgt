@@ -4,3 +4,4 @@
 mycache_files:
   - projectspace/platform/mycache/.env
   - projectspace/platform/mycache/cache-agent/agent.conf
+  - projectspace/platform/mycache/cache-agent/issued_credentials/credentials.conf

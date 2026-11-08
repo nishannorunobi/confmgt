@@ -5,3 +5,6 @@ shared_expiry:
   # a credential expiring within this many days is shown at the project's start / stop (⚠ + what to do now);
   # until then nothing is printed · a project with a different window writes its own number in its mirror instead
   warn_before_days: 7
+  # the rotation rule (KMS-79): a password a project ISSUES (its issued_credentials/) gets a new value this many days
+  # after its last change — a reminder only, nothing stops · the date is kms's own (the entry's last write), never stored
+  rotate_after_days: 90
