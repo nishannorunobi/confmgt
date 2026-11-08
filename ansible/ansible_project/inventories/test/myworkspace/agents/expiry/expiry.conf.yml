@@ -1,6 +1,0 @@
-# agents/expiry/expiry.conf — its OWN values on the TEST environment
-# (mirror of ~/myworkspace/agents/expiry/expiry.conf).
-# Values used by 2+ projects are NOT copied here: they point to shared/<topic>.yml.
-
-mirror:
-  WARN_BEFORE_DAYS: "{{ shared_expiry.warn_before_days }}"   # → shared/expiry.yml (a different window for this project: a number here)
