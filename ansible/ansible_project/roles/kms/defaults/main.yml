@@ -3,3 +3,4 @@
 kms_files:
   - projectspace/platform/kms/dockerspace/.env
   - projectspace/platform/kms/expiry/expiry.conf
+  - projectspace/platform/kms/expiry/key_list.conf

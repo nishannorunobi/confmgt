@@ -1,0 +1,9 @@
+# key_list.conf — every key and its DECISION: expires · rotate · never (CONFMGT [8.7]). Tracked in git: NO secret, names only.
+# Written by confmgt at every deploy from shared/expiry.yml (key_list:) — change it there, a hand edit is overwritten.
+# Read by secret_age.sh at every startup (no kms restart needed):
+#   a kms entry (kv/…) NOT on this list → ⚠ "not on the list — decide" · kind never → counted ⚪, never "too old"
+#   kind rotate → the age rule (rotate_after_days) · kind expires → its own expiry check, skipped here
+# Format: kind|where|reason   (where: kv/<entry> · login/<role> · file:<path> · owner:<what>)
+{% for k in mirror.KEYS %}
+{{ k.kind }}|{{ k.where }}|{{ k.reason }}
+{% endfor %}
