@@ -1,0 +1,7 @@
+# rotation_list.conf — what rotate_all_due.sh does for each 🔑 key (CONFMGT [8.14]). Tracked in git: NO secret, paths only.
+# Written by confmgt at every deploy from shared/expiry.yml (key_list:, kind rotate) — change it there, a hand edit is overwritten.
+# Format: kms entry|rotate command|then restart (; between)|by hand (printed, never run)
+#   the commands are paths below ~/myworkspace, run in THIS order (issuers first); the same command runs once
+{% for k in mirror.KEYS if k.kind == 'rotate' %}
+{{ k.where | regex_replace('^kv/', '') }}|{{ k.rotate_with | default('') }}|{{ (k.then_restart | default([])) | join(';') }}|{{ k.by_hand | default('') }}
+{% endfor %}

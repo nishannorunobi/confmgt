@@ -15,23 +15,25 @@ shared_expiry:
   #   never   — stays until the owner decides, ON PURPOSE (the reason says why)
   # where: kv/<entry> = a kms entry (secret_age.sh at startup warns about any kms entry NOT on this list) ·
   #        login/<role> = a kms login · file:<path> / owner: = outside kms (listed + counted, nothing read)
+  # rotate_with = the issuing project's own refresh script (run by ccc/scripts/svcmgt/rotate_all_due.sh, issuers in this order)
+  # then_restart = what re-reads the new value after it · by_hand = what the owner does himself (printed, never run)
   # a new key = one line in key_list, then its check / rotate script if it needs one
   key_list:
     # 🔑 rotate — the projects' own passwords (the issuing project rotates: [8.6] pattern, [8.14] the rotation day)
-    - { where: kv/mypostgresql_db/postgres,  kind: rotate,  reason: "database admin" }
-    - { where: kv/mypostgresql_db/mydocsdb,  kind: rotate,  reason: "Plane's database user" }
-    - { where: kv/mypostgresql_db/myodoo,    kind: rotate,  reason: "Odoo's database user" }
-    - { where: kv/mypostgresql_db/umsdb,     kind: rotate,  reason: "the agents' database user" }
-    - { where: kv/mypostgresql_db/grafana,   kind: rotate,  reason: "Grafana's database user" }
-    - { where: kv/mycache/redis,             kind: rotate,  reason: "Redis password (reminder: [8.6])" }
-    - { where: kv/mychannels/rabbitmq,       kind: rotate,  reason: "RabbitMQ password" }
-    - { where: kv/mydocs/plane,              kind: rotate,  reason: "Plane's own secret" }
-    - { where: kv/myodoo/odoo,               kind: rotate,  reason: "Odoo admin password" }
-    - { where: kv/agents/shared,             kind: rotate,  reason: "Gmail SMTP app password (reminder: [8.12])" }
-    - { where: kv/ccc/agent/owner,           kind: rotate,  reason: "CCC caller secret (owner)" }
-    - { where: kv/ccc/agent/svcmgt,          kind: rotate,  reason: "CCC caller secret (svcmgt)" }
-    - { where: kv/ccc/agent/test_server,     kind: rotate,  reason: "CCC caller secret (test server)" }
-    - { where: kv/confmgt/ansible,           kind: rotate,  reason: "Ansible SSH key" }
+    - { where: kv/mypostgresql_db/postgres,  kind: rotate,  reason: "database admin", rotate_with: "projectspace/platform/mypostgresql_db/db-agent/connect_external/kms/refresh_random_secrets_to_kms.sh POSTGRES_PASSWORD" }
+    - { where: kv/mypostgresql_db/mydocsdb,  kind: rotate,  reason: "Plane's database user", rotate_with: "projectspace/platform/mypostgresql_db/db-agent/connect_external/kms/refresh_random_secrets_to_kms.sh", then_restart: ["agents/restart-agents.sh"] }
+    - { where: kv/mypostgresql_db/myodoo,    kind: rotate,  reason: "Odoo's database user", rotate_with: "projectspace/platform/mypostgresql_db/db-agent/connect_external/kms/refresh_random_secrets_to_kms.sh", by_hand: "restart Odoo after (bash projectspace/apps/myodoo/stop.sh · bash projectspace/apps/myodoo/start.sh)" }
+    - { where: kv/mypostgresql_db/umsdb,     kind: rotate,  reason: "the agents' database user", rotate_with: "projectspace/platform/mypostgresql_db/db-agent/connect_external/kms/refresh_random_secrets_to_kms.sh", then_restart: ["agents/restart-agents.sh"] }
+    - { where: kv/mypostgresql_db/grafana,   kind: rotate,  reason: "Grafana's database user", rotate_with: "projectspace/platform/mypostgresql_db/db-agent/connect_external/kms/refresh_random_secrets_to_kms.sh", by_hand: "restart mylog_analytics after (bash projectspace/observability/mylog_analytics/stop.sh · start.sh)" }
+    - { where: kv/mycache/redis,             kind: rotate,  reason: "Redis password (reminder: [8.6])", rotate_with: "projectspace/platform/mycache/cache-agent/connect_external/kms/refresh_random_secrets_to_kms.sh" }
+    - { where: kv/mychannels/rabbitmq,       kind: rotate,  reason: "RabbitMQ password", rotate_with: "projectspace/platform/mychannels/channel-agent/connect_external/kms/refresh_random_secrets_to_kms.sh" }
+    - { where: kv/mydocs/plane,              kind: rotate,  reason: "Plane's own secret", rotate_with: "projectspace/apps/mydocs/connect_external/kms/refresh_random_secrets_to_kms.sh MINIO_ROOT_PASSWORD SECRET_KEY" }
+    - { where: kv/myodoo/odoo,               kind: rotate,  reason: "Odoo admin password", rotate_with: "projectspace/apps/myodoo/odoo-agent/connect_external/kms/refresh_random_secrets_to_kms.sh" }
+    - { where: kv/agents/shared,             kind: rotate,  reason: "Gmail SMTP app password (reminder: [8.12])", by_hand: "a new Gmail app password (Google account → App passwords) → bash agents/used_credentials/smtp_password_rotate.sh" }
+    - { where: kv/ccc/agent/owner,           kind: rotate,  reason: "CCC caller secret (owner)", by_hand: "no rotate script yet" }
+    - { where: kv/ccc/agent/svcmgt,          kind: rotate,  reason: "CCC caller secret (svcmgt)", by_hand: "no rotate script yet" }
+    - { where: kv/ccc/agent/test_server,     kind: rotate,  reason: "CCC caller secret (test server)", by_hand: "no rotate script yet" }
+    - { where: kv/confmgt/ansible,           kind: rotate,  reason: "Ansible SSH key", by_hand: "no rotate script yet" }
     # 🎫 expires — each has (or gets) its own expiry check
     - { where: kv/workspace/mcp,             kind: expires, reason: "Plane API token (check: agents/workspace-agent/expiry)" }
     - { where: login/ccc-agent,              kind: expires, reason: "kms login, 32 days (check: ccc/agent/expiry)" }

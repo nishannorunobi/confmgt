@@ -4,3 +4,4 @@
 
 mirror:
   WARN_BEFORE_DAYS: "{{ shared_expiry.warn_before_days }}"   # → shared/expiry.yml (a different window for this project: a number here)
+  ROTATE_AFTER_DAYS: "{{ shared_expiry.rotate_after_days }}"   # → shared/expiry.yml (the rotation rule, KMS-79)

@@ -1,0 +1,6 @@
+# ccc/scripts/svcmgt/rotation_list.conf — its OWN values on the DEV environment
+# (mirror of ~/myworkspace/ccc/scripts/svcmgt/rotation_list.conf).
+# Values used by 2+ projects are NOT copied here: they point to shared/<topic>.yml.
+
+mirror:
+  KEYS: "{{ shared_expiry.key_list }}"   # → shared/expiry.yml (every key + its decision; the 🔑 ones with their rotate command)

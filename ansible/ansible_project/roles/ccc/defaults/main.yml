@@ -5,3 +5,4 @@ ccc_files:
   - ccc/container/.env
   - ccc/agent/agent.conf
   - ccc/agent/expiry/expiry.conf
+  - ccc/scripts/svcmgt/rotation_list.conf

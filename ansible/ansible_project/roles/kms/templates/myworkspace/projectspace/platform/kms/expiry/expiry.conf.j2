@@ -5,3 +5,7 @@
 # WARN_BEFORE_DAYS — a credential that expires within this many days is shown at startup / shutdown
 # (⚠ + what to do now · ✗ expired + the fix); until then nothing is printed. Missing / not a number → 7 + a WARN.
 WARN_BEFORE_DAYS={{ mirror.WARN_BEFORE_DAYS }}
+#
+# ROTATE_AFTER_DAYS — a 🔑 key (key_list.conf kind rotate) gets a new value this many days after its last change;
+# secret_age.sh warns WARN_BEFORE_DAYS before that day (the rotation day). Missing / not a number → 90 + a WARN.
+ROTATE_AFTER_DAYS={{ mirror.ROTATE_AFTER_DAYS }}
