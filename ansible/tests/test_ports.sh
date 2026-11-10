@@ -11,7 +11,8 @@
 # Checks      P1 every inventory has shared/ports.yml with shared_ports: (key → port)
 #             P2 no two ports equal in one inventory (today one inventory = one machine)
 #             P3 no port of ports.yml typed again in that inventory's shared/ or mirror (only {{ shared_ports.<key> }}):
-#                a *port*: key or a URL on this machine (localhost · 127.0.0.1 · 0.0.0.0); container-name URLs are inside ports
+#                a *port*: key or a URL on this machine (localhost · 127.0.0.1 · 0.0.0.0); container-name URLs and
+#                shared/hosts.yml are INSIDE-container ports (facts of the image), not checked
 #             P4 dev and test list the same keys
 #             P5 self-test: a throwaway copy with a duplicate port → P2 FAILS
 #
@@ -51,7 +52,7 @@ for env in sorted(p.name for p in inv.iterdir() if (p / "hosts.yml").exists()):
         else ok(f"P2 {env}: no two ports equal")
     typed = []
     for p in sorted((inv / env).rglob("*.y*ml")):
-        if p == f or "group_vars" in p.parts or "host_vars" in p.parts or p.name == "hosts.yml": continue
+        if p == f or p.name == "hosts.yml" and p.parent.name == "shared" or "group_vars" in p.parts or "host_vars" in p.parts or p.name == "hosts.yml": continue
         for n, line in enumerate(p.read_text().splitlines(), 1):
             code = line.split("#", 1)[0]
             for v in map(str, ports.values()):

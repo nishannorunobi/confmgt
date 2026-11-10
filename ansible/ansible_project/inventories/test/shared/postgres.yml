@@ -2,8 +2,8 @@
 # Owned by mypostgresql_db (servers first: the server defines every client's database + login; clients only refer to it).
 # Passwords: only kms ADDRESSES (${KMS_URL} = each reader's own kms address).
 shared_postgres:
-  host: "mypostgresql_db-container"                 # its name on my_docker_network
-  port: "5432"
+  host: "{{ shared_hosts.postgres.name }}"                 # its name on my_docker_network
+  port: "{{ shared_hosts.postgres.port }}"
   databases:
     docs:
       user: "docs_user"
