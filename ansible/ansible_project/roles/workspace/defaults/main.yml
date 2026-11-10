@@ -2,3 +2,5 @@
 # its config files, as paths below ~/myworkspace — a new file = one line here + its mirrored values + its template
 workspace_files:
   - ccc/scripts/svcmgt/svc_policy.conf
+  # base_urls.md: where to open / call every component, from shared/base_urls.yml (CONFMGT [9.5])
+  - base_urls.md

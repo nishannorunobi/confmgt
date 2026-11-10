@@ -6,5 +6,5 @@ mirror:
   KMS_URL: "{{ shared_kms.url_on_host }}"                       # → shared/kms.yml
   SECRET_MGT: "{{ shared_kms.secret_mgt }}"                     # → shared/kms.yml
   PLANE_API_KEY: "${KMS_URL}/v1/kv/data/workspace/mcp"
-  PLANE_API_HOST_URL: "http://localhost:{{ shared_ports.plane }}"
+  PLANE_API_HOST_URL: "{{ shared_base_urls.plane.ui }}"
   KMS_MASTER_PASSWORD_DIR: "../../mountspace/usb/myworkspace/projectspace/kms/master_password"

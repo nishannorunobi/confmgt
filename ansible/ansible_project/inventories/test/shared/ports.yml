@@ -22,3 +22,12 @@ shared_ports:
   redis_commander: "8081"  # mycache — Redis web UI (docker-compose.yml)
   postgres_host: "5572"    # mypostgresql_db — Postgres on the host (start.sh)
   postgres_ui: "8085"      # mypostgresql_db — its web UI (start.sh)
+  # ── the agents + apps status_all.sh shows (overview; their own files do not read this yet)
+  agent_orchestrator: "8888"     # agents — agent-orchestrator
+  docker_manager_agent: "8889"   # agents — docker-manager-agent
+  workspace_agent: "8895"        # agents — workspace-agent
+  log_agent: "8893"              # mylog_analytics — log-agent
+  grafana: "3000"                # mylog_analytics — Grafana
+  odoo17: "8069"                 # myodoo — Odoo 17
+  odoo19: "8089"                 # myodoo — Odoo 19
+  odoo_agent: "8896"             # myodoo — odoo-agent

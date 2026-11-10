@@ -95,21 +95,22 @@ declare -A SVC_STATE=(
 
 # ── Where to open each target (status_all.sh → startup / restart summaries) ───
 # EVERY target in SVC_TARGETS has an entry here: a URL, or "-" when it has no page.
+# The URLs come from inventories/<env>/shared/base_urls.yml (built from ports.yml) — never typed here.
 # A target without an entry is flagged "⚠ no SVC_URL entry" by status_all.sh — so a
 # new component cannot be forgotten in the summary (owner, 2026-10-02).
 declare -A SVC_URL=(
-    [docker]=-                                 [portainer]=http://localhost:9001
-    [kms]=http://127.0.0.1:8110/ui             [kms-keys]=-
-    [mypostgresql_db]=-                        [db-agent]=http://localhost:8890
-    [agent-orchestrator]=http://localhost:8888 [docker-manager-agent]=http://localhost:8889/docs
-    [workspace-agent]=http://localhost:8895
-    [mycache]=-                                [cache-agent]=http://localhost:8892
-    [mychannels]=http://localhost:15672        [channel-agent]=http://localhost:8894
-    [mydocs]=http://localhost:8080             [mydocs-other]=-
-    [mylog_analytics]=http://localhost:3000    [log-agent]=http://localhost:8893
-    [myodoo17]=http://localhost:8069           [odoo-agent]=http://localhost:8896
-    [myodoo19]=http://localhost:8089
-    [ccc]=http://localhost:8897/docs
+    [docker]=-                                 [portainer]={{ shared_base_urls.portainer.ui }}
+    [kms]={{ shared_base_urls.kms.ui }}             [kms-keys]=-
+    [mypostgresql_db]=-                        [db-agent]={{ shared_base_urls.db_agent.ui }}
+    [agent-orchestrator]={{ shared_base_urls.agent_orchestrator.ui }} [docker-manager-agent]={{ shared_base_urls.docker_manager_agent.ui }}
+    [workspace-agent]={{ shared_base_urls.workspace_agent.ui }}
+    [mycache]=-                                [cache-agent]={{ shared_base_urls.cache_agent.ui }}
+    [mychannels]={{ shared_base_urls.rabbitmq.ui }}        [channel-agent]={{ shared_base_urls.channel_agent.ui }}
+    [mydocs]={{ shared_base_urls.plane.ui }}             [mydocs-other]=-
+    [mylog_analytics]={{ shared_base_urls.grafana.ui }}    [log-agent]={{ shared_base_urls.log_agent.ui }}
+    [myodoo17]={{ shared_base_urls.odoo17.ui }}           [odoo-agent]={{ shared_base_urls.odoo_agent.ui }}
+    [myodoo19]={{ shared_base_urls.odoo19.ui }}
+    [ccc]={{ shared_base_urls.ccc_agent.ui }}
     [deploy-dev]=-
     [updown]=-
 )
