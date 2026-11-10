@@ -1,0 +1,28 @@
+# base_urls.yml — where to OPEN (ui) or CALL (api) every component on this environment's machine (CONFMGT [9.5]).
+# BUILT from ports.yml — never type a number here. Rendered for people as myworkspace/base_urls.md (every deploy)
+# and into svc_policy.conf SVC_URL (status_all.sh). in_docker = how another CONTAINER reaches it (shared/hosts.yml). Mirror files refer to it: {{ shared_base_urls.plane.ui }}.
+# A new component = one line here (+ its port in ports.yml).
+shared_host: "http://localhost"          # this machine, as most components are reached
+shared_loopback: "http://127.0.0.1"      # kms + ccc are reached by IP
+shared_base_urls:
+  portainer:            { ui: "{{ shared_host }}:{{ shared_ports.portainer }}" }
+  kms:                  { ui: "{{ shared_loopback }}:{{ shared_ports.kms }}/ui", api: "{{ shared_loopback }}:{{ shared_ports.kms }}", in_docker: "http://{{ shared_hosts.kms.name }}:{{ shared_hosts.kms.port }}" }
+  plane:                { ui: "{{ shared_host }}:{{ shared_ports.plane }}", api: "{{ shared_host }}:{{ shared_ports.plane }}/api" }
+  minio:                { ui: "{{ shared_host }}:{{ shared_ports.minio_console }}", api: "{{ shared_host }}:{{ shared_ports.minio_api }}", in_docker: "http://{{ shared_hosts.minio.name }}:{{ shared_hosts.minio.port }}" }
+  postgres:             { ui: "{{ shared_host }}:{{ shared_ports.postgres_ui }}", api: "postgresql://localhost:{{ shared_ports.postgres_host }}", in_docker: "postgresql://{{ shared_hosts.postgres.name }}:{{ shared_hosts.postgres.port }}" }
+  redis:                { ui: "{{ shared_host }}:{{ shared_ports.redis_commander }}", api: "redis://localhost:{{ shared_ports.redis }}", in_docker: "redis://{{ shared_hosts.redis.name }}:{{ shared_hosts.redis.port }}" }
+  rabbitmq:             { ui: "{{ shared_host }}:{{ shared_ports.rabbitmq_mgmt }}", api: "amqp://localhost:{{ shared_ports.rabbitmq_amqp }}", in_docker: "amqp://{{ shared_hosts.rabbitmq.name }}:{{ shared_hosts.rabbitmq.port }}" }
+  grafana:              { ui: "{{ shared_host }}:{{ shared_ports.grafana }}" }
+  loki:                 { api: "{{ shared_host }}:{{ shared_ports.loki }}", in_docker: "http://{{ shared_hosts.loki.name }}:{{ shared_hosts.loki.port }}" }
+  odoo17:               { ui: "{{ shared_host }}:{{ shared_ports.odoo17 }}" }
+  odoo19:               { ui: "{{ shared_host }}:{{ shared_ports.odoo19 }}" }
+  ccc_agent:            { ui: "{{ shared_host }}:{{ shared_ports.ccc_agent }}/docs", api: "{{ shared_loopback }}:{{ shared_ports.ccc_agent }}" }
+  db_agent:             { ui: "{{ shared_host }}:{{ shared_ports.db_agent }}", api: "{{ shared_host }}:{{ shared_ports.db_agent }}" }
+  cache_agent:          { ui: "{{ shared_host }}:{{ shared_ports.cache_agent }}", api: "{{ shared_host }}:{{ shared_ports.cache_agent }}" }
+  channel_agent:        { ui: "{{ shared_host }}:{{ shared_ports.channel_agent }}", api: "{{ shared_host }}:{{ shared_ports.channel_agent }}" }
+  log_agent:            { ui: "{{ shared_host }}:{{ shared_ports.log_agent }}", api: "{{ shared_host }}:{{ shared_ports.log_agent }}" }
+  odoo_agent:           { ui: "{{ shared_host }}:{{ shared_ports.odoo_agent }}", api: "{{ shared_host }}:{{ shared_ports.odoo_agent }}" }
+  agent_orchestrator:   { ui: "{{ shared_host }}:{{ shared_ports.agent_orchestrator }}", api: "{{ shared_host }}:{{ shared_ports.agent_orchestrator }}" }
+  docker_manager_agent: { ui: "{{ shared_host }}:{{ shared_ports.docker_manager_agent }}/docs", api: "{{ shared_host }}:{{ shared_ports.docker_manager_agent }}" }
+  workspace_agent:      { ui: "{{ shared_host }}:{{ shared_ports.workspace_agent }}", api: "{{ shared_host }}:{{ shared_ports.workspace_agent }}" }
+  ums:                  { api: "{{ shared_host }}:{{ shared_ports.ums }}" }

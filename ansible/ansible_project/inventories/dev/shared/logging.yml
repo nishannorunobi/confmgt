@@ -2,4 +2,4 @@
 # mylog_analytics (Loki) moves → change log_url here, redeploy — no container or script changes.
 shared_logging:
   # the address the CONTAINERS push to (LOGAN-29): mylog_analytics by its name on my_docker_network
-  log_url: "http://mylog_analytics-container:3100"   # (this PC)
+  log_url: "{{ shared_base_urls.loki.in_docker }}"   # (this PC)

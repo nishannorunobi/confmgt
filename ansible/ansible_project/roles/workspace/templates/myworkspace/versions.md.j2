@@ -1,0 +1,11 @@
+# Versions — every image this workspace runs, and in which version
+
+Written by Ansible on every deploy — do not edit here.
+Upgrade: change `tag` + `digest` in `ccc/confmgt/ansible/ansible_project/inventories/<env>/shared/versions.yml`, then deploy.
+The digest pins the exact image: the same bytes every time, and it works offline.
+
+| Image | Tag | Digest | Used by |
+|---|---|---|---|
+{% for name, v in shared_versions | dictsort %}
+| `{{ v.image }}` | `{{ v.tag }}` | {{ ('`' ~ v.digest[:19] ~ '…`') if v.digest is defined else '—' }} | {{ v.used_by }} |
+{% endfor %}

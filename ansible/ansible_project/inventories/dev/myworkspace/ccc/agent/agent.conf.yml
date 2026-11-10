@@ -5,7 +5,7 @@
 mirror:
   KMS_URL: "{{ shared_kms.url_in_containers }}"                 # → shared/kms.yml
   SECRET_MGT: "{{ shared_kms.secret_mgt }}"                     # → shared/kms.yml
-  PORT: "8897"
+  PORT: "{{ shared_ports.ccc_agent }}"
   RUN_TIMEOUT: "1800"
   ANSIBLE_SSH_KEY_SECRET: "${KMS_URL}/v1/kv/data/confmgt/ansible"
   CCC_CALLER_OWNER_SECRET: "${KMS_URL}/v1/kv/data/ccc/agent/owner"

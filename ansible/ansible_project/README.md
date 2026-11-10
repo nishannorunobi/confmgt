@@ -42,6 +42,10 @@ inventories/dev/myworkspace/projectspace/platform/mycache/.env.yml      TZ: "{{ 
 ```
 Every playbook loads `shared/` first (role `shared`); a new topic = a new file there.
 
+**Ports (CONFMGT [9]):** every published port lives ONCE in `shared/ports.yml` (`shared_ports.<component>`) — the one
+topic grouped by kind, so one look shows every port and clashes. Everything refers to it, e.g. `PORT: "{{ shared_ports.cache_agent }}"`.
+`bash tests/test_ports.sh`: no two equal · no number typed again · dev and test the same keys.
+
 Find a setting by the path you already know (like the mirror logs in mountspace/logs/myworkspace/…).
 Each environment has its own mirror with the same paths and its own values.
 

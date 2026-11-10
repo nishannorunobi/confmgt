@@ -1,9 +1,9 @@
 # shared/rabbitmq.yml — RabbitMQ (mychannels) as every project reaches it on the DEV environment.
 # Owned by mychannels (servers first: the server defines its connection; clients like Plane only refer to it).
 shared_rabbitmq:
-  host: "mychannels-rabbitmq"                # its name on my_docker_network
-  amqp_port: "5672"
-  mgmt_port: "15672"
+  host: "{{ shared_hosts.rabbitmq.name }}"                # its name on my_docker_network
+  amqp_port: "{{ shared_ports.rabbitmq_amqp }}"
+  mgmt_port: "{{ shared_ports.rabbitmq_mgmt }}"
   user: "admin"
   vhost: "/"
   password: "${KMS_URL}/v1/kv/data/mychannels/rabbitmq"        # a kms ADDRESS, never the password

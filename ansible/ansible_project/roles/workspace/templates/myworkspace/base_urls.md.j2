@@ -1,0 +1,14 @@
+{%- macro link(u) -%}
+{%- if u and u.startswith('http') -%}[{{ u }}]({{ u }}){%- elif u -%}`{{ u }}`{%- endif -%}
+{%- endmacro -%}
+# Base URLs — where to open or call every component
+
+Written by Ansible on every deploy — do not edit here.
+Change a port: `ccc/confmgt/ansible/ansible_project/inventories/<env>/shared/ports.yml` ·
+a URL: `…/shared/base_urls.yml` · a container name: `…/shared/hosts.yml`. Running or not: `bash ccc/scripts/svcmgt/status_all.sh`.
+
+| Component | UI (browse) | API (call) | Inside Docker (from another container) |
+|---|---|---|---|
+{% for name, u in shared_base_urls | dictsort %}
+| {{ name }} | {{ link(u.ui | default('')) }} | {{ link(u.api | default('')) }} | {{ ('`' ~ u.in_docker ~ '`') if u.in_docker is defined else '' }} |
+{% endfor %}
