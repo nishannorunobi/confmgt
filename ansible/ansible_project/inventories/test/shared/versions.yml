@@ -1,0 +1,12 @@
+# versions.yml — every image version + digest this environment runs, in ONE place (CONFMGT [9.7]).
+# The mirror files refer to it ({{ shared_versions.redis.tag }}); Ansible renders myworkspace/versions.md for people.
+# Upgrade = change tag + digest here → deploy. A digest pins the exact image (offline + no surprise update).
+shared_versions:
+  python:       { image: "python",                  tag: "3-alpine",            digest: "sha256:2e740b2c28a426e74f11396c05e38afb3191acced75045b8d62df573c1dc8ce8", used_by: "ccc (the CCC container's base)" }
+  ansible_core: { image: "ansible-core (pip)",      tag: "2.21.5",                                                                                                  used_by: "ccc (Ansible itself)" }
+  openbao:      { image: "openbao/openbao",         tag: "2",                   digest: "sha256:6d2b93856e3fcf7b18ad855a0b51eaba474dc8b79cf554379ea32034797d2acf", used_by: "kms" }
+  redis:        { image: "redis",                   tag: "7-alpine",            digest: "sha256:520775a41a63e77e06c73e35d2fd9cc15921a609516818796b4ecbb813078bc7", used_by: "mycache" }
+  rabbitmq:     { image: "rabbitmq",                tag: "3-management-alpine", digest: "sha256:606d8c0d6b3c18d1da9afc53bc7cdb2a8d5486df91b5a9830e9e07626c9ae281", used_by: "mychannels" }
+  plane_backend:  { image: "makeplane/plane-backend",  tag: "v1.4.2", digest: "sha256:90032ce088708889b60c00d491897916f4deb882facda27db59fd10fb68729ef", used_by: "mydocs (api · worker · beat · migrator)" }
+  plane_frontend: { image: "makeplane/plane-frontend", tag: "v1.4.2", digest: "sha256:22fd2434fb8d6658439f669ab72f999ce0773abe587663da21a77d70bd63ff61", used_by: "mydocs (web)" }
+  plane_admin:    { image: "makeplane/plane-admin",    tag: "v1.4.2", digest: "sha256:6e1bb1d800d3c7ce84a09f810d5588db8613b35d4464e722a1bec12556ca0ebb", used_by: "mydocs (admin)" }
