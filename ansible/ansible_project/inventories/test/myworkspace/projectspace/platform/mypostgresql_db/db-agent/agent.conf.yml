@@ -5,7 +5,7 @@
 mirror:
   KMS_URL: "{{ shared_kms.url_in_containers }}"                 # → shared/kms.yml
   SECRET_MGT: "{{ shared_kms.secret_mgt }}"                     # → shared/kms.yml
-  PORT: "8890"
+  PORT: "{{ shared_ports.db_agent }}"
   PG_PORT: "{{ shared_postgres.port }}"                         # → shared/postgres.yml
   PGDATA: "/var/lib/postgresql/data"
   LOG_URL: "{{ shared_logging.log_url }}"                      # → shared/logging.yml (LOGAN-29)

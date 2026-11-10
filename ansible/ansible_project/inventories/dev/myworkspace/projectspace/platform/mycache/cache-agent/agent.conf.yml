@@ -5,6 +5,6 @@
 mirror:
   KMS_URL: "{{ shared_kms.url_in_containers }}"           # → shared/kms.yml
   SECRET_MGT: "{{ shared_kms.secret_mgt }}"               # → shared/kms.yml
-  PORT: "8892"
+  PORT: "{{ shared_ports.cache_agent }}"
   ANTHROPIC_API_KEY: "{{ shared_anthropic.api_key }}"     # → shared/anthropic.yml
   REDIS_PASSWORD: "{{ shared_redis.password }}"           # → shared/redis.yml

@@ -1,0 +1,16 @@
+# ports.yml — every PUBLISHED port of this environment's machines, ONCE (CONFMGT [9]).
+# One key per component; every shared/*.yml and mirror file refers to it as {{ shared_ports.<key> }}.
+# Only ports others connect to (inside-container ports such as kms 8200 are facts of the image, not here).
+# Change a port → this ONE line. tests/test_ports.sh: no two equal · no number typed again elsewhere.
+shared_ports:
+  plane: "8080"            # mydocs — Plane web + API
+  kms: "8110"              # kms (OpenBao) on the host
+  redis: "6379"            # mycache — Redis
+  rabbitmq_amqp: "5672"    # mychannels — RabbitMQ AMQP
+  rabbitmq_mgmt: "15672"   # mychannels — RabbitMQ management UI
+  db_agent: "8890"         # mypostgresql_db — db-agent API
+  cache_agent: "8892"      # mycache — cache-agent API
+  channel_agent: "8894"    # mychannels — channel-agent API
+  ccc_agent: "8897"        # ccc — the CCC agent API
+  ums: "8090"              # agents — user management service
+  loki: "3100"             # mylog_analytics — Loki on the host

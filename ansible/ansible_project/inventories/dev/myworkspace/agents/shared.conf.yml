@@ -12,7 +12,7 @@ mirror:
   AGENT_DB_PORT: "{{ shared_postgres.port }}"                   # → shared/postgres.yml
   PG_CONTAINER: "{{ shared_postgres.host }}"                    # → shared/postgres.yml
   UMS_CONTAINER: "ums-app"
-  UMS_PORT: "8090"
+  UMS_PORT: "{{ shared_ports.ums }}"
   SMTP_HOST: "smtp.gmail.com"
   SMTP_PORT: "587"
   SMTP_USER: "norunnabinishan@gmail.com"
