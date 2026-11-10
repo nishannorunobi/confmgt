@@ -4,7 +4,7 @@
 # Change a port → this ONE line. tests/test_ports.sh: no two equal · no number typed again elsewhere.
 shared_ports:
   plane: "8080"            # mydocs — Plane web + API
-  kms: "8110"              # kms (OpenBao) on the host
+  kms: "8110"              # kms (OpenBao) on the host — kms's own scripts still type 8110 ([9.4])
   redis: "6379"            # mycache — Redis
   rabbitmq_amqp: "5672"    # mychannels — RabbitMQ AMQP
   rabbitmq_mgmt: "15672"   # mychannels — RabbitMQ management UI
@@ -14,3 +14,11 @@ shared_ports:
   ccc_agent: "8897"        # ccc — the CCC agent API
   ums: "8090"              # agents — user management service
   loki: "3100"             # mylog_analytics — Loki on the host
+  # ── listed for the overview + clash test ONLY — their own files do not read this yet (wiring parked: [9.3] compose · [9.4] bootstrap)
+  portainer: "9001"        # Docker UI — iam_cloud_machine/docker/ui/start_docker_ui.sh
+  minio_api: "9000"        # mydocs — MinIO S3 API (docker-compose.yml)
+  minio_console: "9090"    # mydocs — MinIO console (docker-compose.yml)
+  plane_proxy: "80"        # mydocs — Plane proxy (docker-compose.yml)
+  redis_commander: "8081"  # mycache — Redis web UI (docker-compose.yml)
+  postgres_host: "5572"    # mypostgresql_db — Postgres on the host (start.sh)
+  postgres_ui: "8085"      # mypostgresql_db — its web UI (start.sh)
