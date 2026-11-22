@@ -54,8 +54,8 @@ declare -A SVC_START=(
     [mychannels]=lifecycle/ensure_running.sh             [channel-agent]=host_lifecycle/host_start.sh
     [mydocs]=lifecycle/ensure_running.sh     [mydocs-other]=lifecycle/start_other_plane.sh
     [mylog_analytics]=lifecycle/start.sh                 [log-agent]=host_lifecycle/host_start.sh
-    [myodoo17]="start.sh --17"                 [odoo-agent]=host_start.sh
-    [myodoo19]="start.sh --19"
+    [myodoo17]="lifecycle/start.sh --17"       [odoo-agent]=host_lifecycle/host_start.sh
+    [myodoo19]="lifecycle/start.sh --19"
     [ccc]=start.sh
     [deploy-dev]=deploy_on_this_pc.sh
     [updown]=start.sh
@@ -70,8 +70,8 @@ declare -A SVC_STOP=(
     [mychannels]=lifecycle/ensure_stopped.sh             [channel-agent]=host_lifecycle/host_stop.sh
     [mydocs]=lifecycle/ensure_stopped.sh     [mydocs-other]=lifecycle/stop_other_plane.sh
     [mylog_analytics]=lifecycle/stop.sh                  [log-agent]=host_lifecycle/host_stop.sh
-    [myodoo17]="stop.sh --17"                  [odoo-agent]=host_stop.sh
-    [myodoo19]="stop.sh --19"
+    [myodoo17]="lifecycle/stop.sh --17"        [odoo-agent]=host_lifecycle/host_stop.sh
+    [myodoo19]="lifecycle/stop.sh --19"
     [ccc]=stop.sh
     [deploy-dev]=stop_on_this_pc.sh
     [updown]=stop.sh
@@ -86,8 +86,8 @@ declare -A SVC_STATE=(
     [mychannels]=lifecycle/state.sh           [channel-agent]="host_lifecycle/host_status.sh --state"
     [mydocs]=lifecycle/state.sh              [mydocs-other]=lifecycle/state_other_plane.sh
     [mylog_analytics]="lifecycle/status.sh --state" [log-agent]="host_lifecycle/host_status.sh --state"
-    [myodoo17]="status.sh --state --17"        [odoo-agent]="host_status.sh --state"
-    [myodoo19]="status.sh --state --19"
+    [myodoo17]="lifecycle/status.sh --state --17" [odoo-agent]="host_lifecycle/host_status.sh --state"
+    [myodoo19]="lifecycle/status.sh --state --19"
     [ccc]="status.sh --state"
     [deploy-dev]="deploy_on_this_pc.sh --state"
     [updown]="status.sh --state"
