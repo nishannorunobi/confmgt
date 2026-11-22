@@ -36,11 +36,11 @@ docker build -q -t "$IMG" -f "$CCC/container/Dockerfile" \
     $(sed -nE 's/^(PYTHON_IMAGE|PYTHON_DIGEST|ANSIBLE_CORE_VERSION)=(.*)/--build-arg \1=\2/p' "$CCC/container/.env") "$CCC" >/dev/null \
     || { bad "the test image did not build"; exit 1; }
 # a throwaway workspace with a COPY of its db-agent/agent.conf · the Ansible project + an inventory t (this container, local)
-W="$TMP/ws/projectspace/platform/mypostgresql_db"; mkdir -p "$W/db-agent"
+W="$TMP/ws/projectspace/platform/mypostgresql_db"; mkdir -p "$W/db-agent" "$W/lifecycle"
 cp "$MYPOSTGRESQL_DB/db-agent/agent.conf" "$W/db-agent/agent.conf"
 # its own stop.sh / start.sh as STUBS: they only write down that they were called (never the live database)
-printf '#!/bin/bash\necho stop >> /ws/calls\n' > "$W/stop.sh"
-printf '#!/bin/bash\necho "start $* SVC_RUN=${SVC_RUN:-}" >> /ws/calls\n' > "$W/start.sh"
+printf '#!/bin/bash\necho stop >> /ws/calls\n' > "$W/lifecycle/stop.sh"
+printf '#!/bin/bash\necho "start $* SVC_RUN=${SVC_RUN:-}" >> /ws/calls\n' > "$W/lifecycle/start.sh"
 calls() { cat "$TMP/ws/calls" 2>/dev/null | tr '\n' '|'; }
 P="$TMP/p"; cp -a "$HERE/ansible_project" "$P"; mkdir -p "$P/inventories/t/group_vars"
 printf 'all:\n  children:\n    mypostgresql_db:\n      hosts:\n        m1:\n          ansible_connection: local\n          workspace_root: /ws\n' > "$P/inventories/t/hosts.yml"

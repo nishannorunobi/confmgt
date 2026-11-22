@@ -47,7 +47,7 @@ declare -A SVC_DIR=(
 declare -A SVC_START=(
     [docker]=prepare_this_pc.sh                   [portainer]=start_docker_ui.sh
     [kms]=start.sh                             [kms-keys]=register_all_kms_keys.sh
-    [mypostgresql_db]=start.sh                 [db-agent]=host_start.sh
+    [mypostgresql_db]=lifecycle/start.sh                 [db-agent]=host_lifecycle/host_start.sh
     [agent-orchestrator]=start_background.sh       [docker-manager-agent]=start_background.sh
     [workspace-agent]=ensure_running.sh
     [mycache]="lifecycle/ensure_running.sh --no-ui"     [cache-agent]=host_lifecycle/host_start.sh
@@ -63,7 +63,7 @@ declare -A SVC_START=(
 declare -A SVC_STOP=(
     [docker]=docker/stop_docker.sh      [portainer]=stop_docker_ui.sh
     [kms]=stop.sh
-    [mypostgresql_db]=stop.sh                  [db-agent]=host_stop.sh
+    [mypostgresql_db]=lifecycle/stop.sh                  [db-agent]=host_lifecycle/host_stop.sh
     [agent-orchestrator]=ensure_stopped.sh     [docker-manager-agent]=ensure_stopped.sh
     [workspace-agent]=ensure_stopped.sh
     [mycache]=lifecycle/ensure_stopped.sh                [cache-agent]=host_lifecycle/host_stop.sh
@@ -79,7 +79,7 @@ declare -A SVC_STOP=(
 declare -A SVC_STATE=(
     [docker]="docker/status_docker.sh --state" [portainer]="status_docker_ui.sh --state"
     [kms]="status.sh --state"                  [kms-keys]="register_all_kms_keys.sh --state"
-    [mypostgresql_db]="status.sh --state"      [db-agent]="host_status.sh --state"
+    [mypostgresql_db]="lifecycle/status.sh --state" [db-agent]="host_lifecycle/host_status.sh --state"
     [agent-orchestrator]="status.sh --state"   [docker-manager-agent]="status.sh --state"
     [workspace-agent]="status.sh --state"
     [mycache]=lifecycle/state.sh              [cache-agent]="host_lifecycle/host_status.sh --state"
