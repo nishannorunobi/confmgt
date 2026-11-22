@@ -52,7 +52,7 @@ declare -A SVC_START=(
     [workspace-agent]=ensure_running.sh
     [mycache]="ensure_running.sh --no-ui"               [cache-agent]=host_start.sh
     [mychannels]=ensure_running.sh             [channel-agent]=host_start.sh
-    [mydocs]=ensure_running.sh               [mydocs-other]=start_other_plane.sh
+    [mydocs]=lifecycle/ensure_running.sh     [mydocs-other]=lifecycle/start_other_plane.sh
     [mylog_analytics]=start.sh                 [log-agent]=host_start.sh
     [myodoo17]="start.sh --17"                 [odoo-agent]=host_start.sh
     [myodoo19]="start.sh --19"
@@ -68,7 +68,7 @@ declare -A SVC_STOP=(
     [workspace-agent]=ensure_stopped.sh
     [mycache]=ensure_stopped.sh                [cache-agent]=host_stop.sh
     [mychannels]=ensure_stopped.sh             [channel-agent]=host_stop.sh
-    [mydocs]=ensure_stopped.sh               [mydocs-other]=stop_other_plane.sh
+    [mydocs]=lifecycle/ensure_stopped.sh     [mydocs-other]=lifecycle/stop_other_plane.sh
     [mylog_analytics]=stop.sh                  [log-agent]=host_stop.sh
     [myodoo17]="stop.sh --17"                  [odoo-agent]=host_stop.sh
     [myodoo19]="stop.sh --19"
@@ -84,7 +84,7 @@ declare -A SVC_STATE=(
     [workspace-agent]="status.sh --state"
     [mycache]=state.sh              [cache-agent]="host_status.sh --state"
     [mychannels]=state.sh           [channel-agent]="host_status.sh --state"
-    [mydocs]=state.sh                        [mydocs-other]=state_other_plane.sh
+    [mydocs]=lifecycle/state.sh              [mydocs-other]=lifecycle/state_other_plane.sh
     [mylog_analytics]="status.sh --state"      [log-agent]="host_status.sh --state"
     [myodoo17]="status.sh --state --17"        [odoo-agent]="host_status.sh --state"
     [myodoo19]="status.sh --state --19"
@@ -132,19 +132,19 @@ SVC_START_TARGETS=(docker portainer ccc deploy-dev)
 # leave SVC_START_TARGETS and the start plan shows them as "via deploy-dev". confmgt's inventories/dev
 # group_vars/deploy_targets/projects.yml lists the same targets (its test_deploy_playbook.sh checks both lists).
 SVC_VIA_DEPLOY=(mypostgresql_db db-agent agent-orchestrator mycache mychannels mydocs)
-# ── Who depends on whom (ccc/restart.sh warns before restarting these) ─────────────
-# Plain text, shown to a human; ccc/restart.sh only reads it to print the warning.
+# ── Who depends on whom (ccc/restart/restart.sh warns before restarting these) ─────────────
+# Plain text, shown to a human; ccc/restart/restart.sh only reads it to print the warning.
 declare -A SVC_USED_BY=(
     [kms]="mycache, mychannels, mypostgresql_db (their agents fetch the secrets at start), mydocs + the host agents (their start scripts fetch), mylog_analytics + myodoo19 (their containers fetch at start), ccc (its agent fetches the SSH key's secret + the callers' tokens at start) · comes back SEALED"
     [mypostgresql_db]="Plane (mydocs), ums, odoo, grafana · db-agent runs inside it"
     [mycache]="Plane (mydocs) · cache-agent runs inside it"
     [mychannels]="Plane (mydocs) · channel-agent runs inside it"
 )
-# Targets that fetch their secrets from kms when they start: ccc/restart.sh refuses to
+# Targets that fetch their secrets from kms when they start: ccc/restart/restart.sh refuses to
 # restart them while kms is sealed (they could not come back) — unless their component's own SECRET_MGT is not kms.
 SVC_NEEDS_KMS=(kms-keys mypostgresql_db db-agent mycache cache-agent mychannels channel-agent mydocs mydocs-other agent-orchestrator docker-manager-agent workspace-agent mylog_analytics log-agent myodoo19 odoo-agent ccc deploy-dev)   # container agents = entry points; mydocs + host agents = fetch at start
 
-# mydocs = minimal Plane (start_minimal_plane.sh, default yes); mydocs-other = admin / beat / minio (start_other_plane.sh) — NOT in
+# mydocs = minimal Plane (lifecycle/start_minimal_plane.sh, default yes); mydocs-other = admin / beat / minio (lifecycle/start_other_plane.sh) — NOT in
 # SVC_START_TARGETS, so the start plan shows it as "no" unless you switch it (owner, 2026-10-02).
 # A failure here stops start_all — nothing after them can work without them. kms counts as started only when READY
 # (status.sh --state = running: unsealed + foundation set up) — else nothing that needs kms is tried (startup kms-first).
@@ -181,8 +181,8 @@ SECRET_MGT_COMPONENTS=(
     "ccc (agent)|ccc/agent|ccc"
 )
 
-# ── What stop_all.sh stops (its plan defaults; ccc/shutdown.sh runs it) ───────────
-# docker is not listed: ccc/shutdown.sh stops the daemon itself, last (with power off).
+# ── What stop_all.sh stops (its plan defaults; ccc/shutdown/shutdown.sh runs it) ───────────
+# docker is not listed: ccc/shutdown/shutdown.sh stops the daemon itself, last (with power off).
 # db-agent, cache-agent, channel-agent are NOT listed: each is its container's entry point and stops
 # with mypostgresql_db / mycache / mychannels (listing them made the report say "stop said OK but it is
 # running" one step before their container went down — CLAUDEWORK-152).
