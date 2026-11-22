@@ -39,11 +39,11 @@ docker build -q -t "$IMG" -f "$CCC/container/Dockerfile" \
     $(sed -nE 's/^(PYTHON_IMAGE|PYTHON_DIGEST|ANSIBLE_CORE_VERSION)=(.*)/--build-arg \1=\2/p' "$CCC/container/.env") "$CCC" >/dev/null \
     || { bad "the test image did not build"; exit 1; }
 # a throwaway workspace with a COPY of mycache's two files · the Ansible project + an inventory t (this container, local)
-W="$TMP/ws/projectspace/platform/mycache"; mkdir -p "$W/cache-agent"
+W="$TMP/ws/projectspace/platform/mycache"; mkdir -p "$W/cache-agent" "$W/lifecycle"
 cp "$MYCACHE/.env" "$W/.env"; cp "$MYCACHE/cache-agent/agent.conf" "$W/cache-agent/agent.conf"
 # mycache's own start/stop as STUBS: they only write down that they were called (never the live mycache)
-printf '#!/bin/bash\necho stop >> /ws/calls\n' > "$W/stop.sh"
-printf '#!/bin/bash\necho "ensure_running $* SVC_RUN=${SVC_RUN:-}" >> /ws/calls\n' > "$W/ensure_running.sh"
+printf '#!/bin/bash\necho stop >> /ws/calls\n' > "$W/lifecycle/stop.sh"
+printf '#!/bin/bash\necho "ensure_running $* SVC_RUN=${SVC_RUN:-}" >> /ws/calls\n' > "$W/lifecycle/ensure_running.sh"
 calls() { cat "$TMP/ws/calls" 2>/dev/null | tr '\n' '|'; }
 P="$TMP/p"; cp -a "$HERE/ansible_project" "$P"; mkdir -p "$P/inventories/t/group_vars"
 printf 'all:\n  children:\n    mycache:\n      hosts:\n        m1:\n          ansible_connection: local\n          workspace_root: /ws\n' > "$P/inventories/t/hosts.yml"

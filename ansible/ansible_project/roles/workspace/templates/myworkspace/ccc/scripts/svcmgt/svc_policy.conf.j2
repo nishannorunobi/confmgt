@@ -50,7 +50,7 @@ declare -A SVC_START=(
     [mypostgresql_db]=start.sh                 [db-agent]=host_start.sh
     [agent-orchestrator]=start_background.sh       [docker-manager-agent]=start_background.sh
     [workspace-agent]=ensure_running.sh
-    [mycache]="ensure_running.sh --no-ui"               [cache-agent]=host_start.sh
+    [mycache]="lifecycle/ensure_running.sh --no-ui"     [cache-agent]=host_lifecycle/host_start.sh
     [mychannels]=lifecycle/ensure_running.sh             [channel-agent]=host_lifecycle/host_start.sh
     [mydocs]=lifecycle/ensure_running.sh     [mydocs-other]=lifecycle/start_other_plane.sh
     [mylog_analytics]=start.sh                 [log-agent]=host_start.sh
@@ -66,7 +66,7 @@ declare -A SVC_STOP=(
     [mypostgresql_db]=stop.sh                  [db-agent]=host_stop.sh
     [agent-orchestrator]=ensure_stopped.sh     [docker-manager-agent]=ensure_stopped.sh
     [workspace-agent]=ensure_stopped.sh
-    [mycache]=ensure_stopped.sh                [cache-agent]=host_stop.sh
+    [mycache]=lifecycle/ensure_stopped.sh                [cache-agent]=host_lifecycle/host_stop.sh
     [mychannels]=lifecycle/ensure_stopped.sh             [channel-agent]=host_lifecycle/host_stop.sh
     [mydocs]=lifecycle/ensure_stopped.sh     [mydocs-other]=lifecycle/stop_other_plane.sh
     [mylog_analytics]=stop.sh                  [log-agent]=host_stop.sh
@@ -82,7 +82,7 @@ declare -A SVC_STATE=(
     [mypostgresql_db]="status.sh --state"      [db-agent]="host_status.sh --state"
     [agent-orchestrator]="status.sh --state"   [docker-manager-agent]="status.sh --state"
     [workspace-agent]="status.sh --state"
-    [mycache]=state.sh              [cache-agent]="host_status.sh --state"
+    [mycache]=lifecycle/state.sh              [cache-agent]="host_lifecycle/host_status.sh --state"
     [mychannels]=lifecycle/state.sh           [channel-agent]="host_lifecycle/host_status.sh --state"
     [mydocs]=lifecycle/state.sh              [mydocs-other]=lifecycle/state_other_plane.sh
     [mylog_analytics]="status.sh --state"      [log-agent]="host_status.sh --state"
