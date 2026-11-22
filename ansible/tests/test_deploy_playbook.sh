@@ -176,8 +176,9 @@ lst() { inv "$1" "$2" | python3 -c 'import json,sys; print(json.dumps(json.load(
 h8=""
 for spec in "myodoo:projectspace/apps/myodoo:--19" "mylog_analytics:projectspace/observability/mylog_analytics:"; do
     IFS=: read -r role dir arg <<< "$spec"
-    docker exec -u ansible "$M" sh -c "mkdir -p /home/ansible/ws/$dir && cd /home/ansible/ws/$dir && rm -f calls
-        printf '#!/bin/sh\ncat state\n' > status.sh; printf '#!/bin/sh\necho \"stop \$*\" >> calls\n' > stop.sh; printf '#!/bin/sh\necho \"start \$*\" >> calls\n' > start.sh"
+    # the stub doors at the root AND in lifecycle/ (CLAUDEWORK-581 moves each door beside its .py, project by project)
+    docker exec -u ansible "$M" sh -c "mkdir -p /home/ansible/ws/$dir/lifecycle && cd /home/ansible/ws/$dir && rm -f calls
+        for d in . lifecycle; do printf '#!/bin/sh\ncat state\n' > \$d/status.sh; printf '#!/bin/sh\necho \"stop \$*\" >> calls\n' > \$d/stop.sh; printf '#!/bin/sh\necho \"start \$*\" >> calls\n' > \$d/start.sh; done"
     printf -- '- hosts: deploy_targets\n  gather_facts: false\n  vars: {workspace_root: /home/ansible/ws}\n  tasks:\n    - ansible.builtin.include_tasks: ../roles/%s/handlers/main.yml\n' "$role" > "$WORK/a/project/playbooks/h8.yml"
     for s in stopped running; do
         docker exec -u ansible "$M" sh -c "cd /home/ansible/ws/$dir && echo 'x $s' > state && rm -f calls"
