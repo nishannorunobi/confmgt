@@ -58,7 +58,7 @@ declare -A SVC_START=(
     [myodoo19]="lifecycle/start.sh --19"
     [ccc]=start.sh
     [deploy-dev]=deploy_on_this_pc.sh
-    [updown]=start.sh
+    [updown]=dockerspace/host_scripts/start.sh
 )
 declare -A SVC_STOP=(
     [docker]=docker/stop_docker.sh      [portainer]=stop_docker_ui.sh
@@ -74,7 +74,7 @@ declare -A SVC_STOP=(
     [myodoo19]="lifecycle/stop.sh --19"
     [ccc]=stop.sh
     [deploy-dev]=stop_on_this_pc.sh
-    [updown]=stop.sh
+    [updown]=dockerspace/host_scripts/stop.sh
 )
 declare -A SVC_STATE=(
     [docker]="docker/status_docker.sh --state" [portainer]="status_docker_ui.sh --state"
@@ -90,7 +90,7 @@ declare -A SVC_STATE=(
     [myodoo19]="lifecycle/status.sh --state --19"
     [ccc]="status.sh --state"
     [deploy-dev]="deploy_on_this_pc.sh --state"
-    [updown]="status.sh --state"
+    [updown]="dockerspace/host_scripts/status.sh --state"
 )
 
 # ── Where to open each target (status_all.sh → startup / restart summaries) ───
