@@ -51,7 +51,7 @@ declare -A SVC_START=(
     [agent-orchestrator]=start_background.sh       [docker-manager-agent]=start_background.sh
     [workspace-agent]=ensure_running.sh
     [mycache]="ensure_running.sh --no-ui"               [cache-agent]=host_start.sh
-    [mychannels]=ensure_running.sh             [channel-agent]=host_start.sh
+    [mychannels]=lifecycle/ensure_running.sh             [channel-agent]=host_lifecycle/host_start.sh
     [mydocs]=lifecycle/ensure_running.sh     [mydocs-other]=lifecycle/start_other_plane.sh
     [mylog_analytics]=start.sh                 [log-agent]=host_start.sh
     [myodoo17]="start.sh --17"                 [odoo-agent]=host_start.sh
@@ -67,7 +67,7 @@ declare -A SVC_STOP=(
     [agent-orchestrator]=ensure_stopped.sh     [docker-manager-agent]=ensure_stopped.sh
     [workspace-agent]=ensure_stopped.sh
     [mycache]=ensure_stopped.sh                [cache-agent]=host_stop.sh
-    [mychannels]=ensure_stopped.sh             [channel-agent]=host_stop.sh
+    [mychannels]=lifecycle/ensure_stopped.sh             [channel-agent]=host_lifecycle/host_stop.sh
     [mydocs]=lifecycle/ensure_stopped.sh     [mydocs-other]=lifecycle/stop_other_plane.sh
     [mylog_analytics]=stop.sh                  [log-agent]=host_stop.sh
     [myodoo17]="stop.sh --17"                  [odoo-agent]=host_stop.sh
@@ -83,7 +83,7 @@ declare -A SVC_STATE=(
     [agent-orchestrator]="status.sh --state"   [docker-manager-agent]="status.sh --state"
     [workspace-agent]="status.sh --state"
     [mycache]=state.sh              [cache-agent]="host_status.sh --state"
-    [mychannels]=state.sh           [channel-agent]="host_status.sh --state"
+    [mychannels]=lifecycle/state.sh           [channel-agent]="host_lifecycle/host_status.sh --state"
     [mydocs]=lifecycle/state.sh              [mydocs-other]=lifecycle/state_other_plane.sh
     [mylog_analytics]="status.sh --state"      [log-agent]="host_status.sh --state"
     [myodoo17]="status.sh --state --17"        [odoo-agent]="host_status.sh --state"
