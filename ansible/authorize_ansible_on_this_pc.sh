@@ -15,7 +15,7 @@
 #
 # Output      [  OK  ] Ansible's key added to /home/nishan/.ssh/authorized_keys   (or: already there)
 #
-# Errors      the agent does not answer → bash ccc/container/start.sh
+# Errors      the agent does not answer → bash ccc/container/lifecycle/start.sh
 #
 # Next        bash check_playbook.sh  → mycache · dev  (dry run: changed=0)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -34,7 +34,7 @@ PORT="$(grep -E '^AGENT_PORT=' "$CCC/container/.env" 2>/dev/null | cut -d= -f2)"
 AK="${AUTHORIZED_KEYS_FILE:-$HOME/.ssh/authorized_keys}"                    # tests point elsewhere
 KEY="$(CCC_URL="$URL" bash "$CCC/agent/call_ccc.sh" "${CCC_CALLER:-owner}" GET /public-key 2>/dev/null | head -1)"
 [[ "$KEY" =~ ^ssh-ed25519\ [A-Za-z0-9+/=]+\ confmgt-ansible$ ]] \
-    || { echo -e "\033[31m[ERROR]\033[0m  the CCC agent does not answer on $URL — start it: bash $CCC/container/start.sh"; exit 1; }
+    || { echo -e "\033[31m[ERROR]\033[0m  the CCC agent does not answer on $URL — start it: bash $CCC/container/lifecycle/start.sh"; exit 1; }
 mkdir -p "$(dirname "$AK")" && chmod 700 "$(dirname "$AK")"
 touch "$AK" && chmod 600 "$AK"
 if grep -qxF -- "$KEY" "$AK"; then

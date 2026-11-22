@@ -2,11 +2,11 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # deploy_on_this_pc.sh — Ansible deploys the workspace on THIS PC: playbook deploy, inventory dev (CONFMGT [6])
 #
-# What for    The last step of ccc/startup.sh (start-plan target deploy-dev): Ansible brings this PC to what
+# What for    The last step of ccc/startup/startup.sh (start-plan target deploy-dev): Ansible brings this PC to what
 #             inventories/dev says. Each project joins in its own story ([6.3]…); until then it only checks the
 #             workspace is there — git and Docker are left alone here (dev: ws_manage_git / ws_manage_docker false).
 #
-# Who         ccc/startup.sh (ccc/scripts/svcmgt/start_all.sh, target deploy-dev) · or you.
+# Who         ccc/startup/startup.sh (ccc/scripts/svcmgt/start_all.sh, target deploy-dev) · or you.
 #
 # How         bash deploy_on_this_pc.sh            (safe to run again — nothing new → changed=0)
 #             bash deploy_on_this_pc.sh --state    one word for start_all: running (last deploy OK) · partial · stopped
@@ -41,7 +41,7 @@ result() { echo "$1 $(date '+%Y-%m-%d %H:%M:%S')" > "$STATE_FILE"; }
 # 1. the agent
 if ! curl -fsS --max-time 5 "$URL/health" >/dev/null 2>&1; then
     echo -e "\033[36m[ INFO ]\033[0m the CCC agent does not answer on $URL — starting the CCC"
-    bash "$CCC/container/start.sh" || { result failed; echo -e "\033[31m[ERROR]\033[0m  the CCC did not start — see above"; exit 1; }
+    bash "$CCC/container/lifecycle/start.sh" || { result failed; echo -e "\033[31m[ERROR]\033[0m  the CCC did not start — see above"; exit 1; }
 fi
 
 # 2. Ansible may log in to this PC

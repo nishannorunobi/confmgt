@@ -5,7 +5,7 @@
 #                                         · the workspace is there · each project of
 #                                         deploy_projects: config → restart if changed → up. Run again → changed=0.
 # How, per environment (a switch not set → off): inventories/<env>/group_vars/deploy_targets/ — dev: git + Docker OFF (your live checkout; Docker
-# from ccc/startup.sh) · test: both ON (ws_branch: a run may send its own — the story branch under test).
+# from ccc/startup/startup.sh) · test: both ON (ws_branch: a run may send its own — the story branch under test).
 # deploy_projects (dev): inventories/dev/group_vars/deploy_targets/projects.yml — one project per story ([6.4]…).
 - name: Deploy the workspace
   hosts: deploy_targets

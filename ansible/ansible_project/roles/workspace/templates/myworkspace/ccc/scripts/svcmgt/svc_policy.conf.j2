@@ -56,7 +56,7 @@ declare -A SVC_START=(
     [mylog_analytics]=lifecycle/start.sh                 [log-agent]=host_lifecycle/host_start.sh
     [myodoo17]="lifecycle/start.sh --17"       [odoo-agent]=host_lifecycle/host_start.sh
     [myodoo19]="lifecycle/start.sh --19"
-    [ccc]=start.sh
+    [ccc]=lifecycle/start.sh
     [deploy-dev]=deploy_on_this_pc.sh
     [updown]=dockerspace/host_scripts/start.sh
 )
@@ -72,7 +72,7 @@ declare -A SVC_STOP=(
     [mylog_analytics]=lifecycle/stop.sh                  [log-agent]=host_lifecycle/host_stop.sh
     [myodoo17]="lifecycle/stop.sh --17"        [odoo-agent]=host_lifecycle/host_stop.sh
     [myodoo19]="lifecycle/stop.sh --19"
-    [ccc]=stop.sh
+    [ccc]=lifecycle/stop.sh
     [deploy-dev]=stop_on_this_pc.sh
     [updown]=dockerspace/host_scripts/stop.sh
 )
@@ -88,7 +88,7 @@ declare -A SVC_STATE=(
     [mylog_analytics]="lifecycle/status.sh --state" [log-agent]="host_lifecycle/host_status.sh --state"
     [myodoo17]="lifecycle/status.sh --state --17" [odoo-agent]="host_lifecycle/host_status.sh --state"
     [myodoo19]="lifecycle/status.sh --state --19"
-    [ccc]="status.sh --state"
+    [ccc]="lifecycle/status.sh --state"
     [deploy-dev]="deploy_on_this_pc.sh --state"
     [updown]="dockerspace/host_scripts/status.sh --state"
 )
@@ -115,7 +115,7 @@ declare -A SVC_URL=(
     [updown]=-
 )
 
-# ── What start_all.sh starts (its plan defaults; ccc/startup.sh runs it) ──────────
+# ── What start_all.sh starts (its plan defaults; ccc/startup/startup.sh runs it) ──────────
 # The in-container helper agents default to NO (owner, 2026-09-29) — they stay in the plan
 # and can be switched on there. cache-agent (KMS-86), channel-agent (KMS-96) and db-agent
 # (KMS-29) are their containers' ENTRY POINTS (2026-10-03/04): they start and stop WITH

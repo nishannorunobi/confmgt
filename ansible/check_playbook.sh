@@ -11,7 +11,7 @@
 #
 # Output      ok: [dev-pc] … changed=0 · [  OK  ] check mycache on dev: exit 0 after 2.1 s · full log: …/runs/…log
 #
-# Errors      the agent does not answer → bash ccc/container/start.sh · UNREACHABLE → the machine lacks the public key
+# Errors      the agent does not answer → bash ccc/container/lifecycle/start.sh · UNREACHABLE → the machine lacks the public key
 #             (bash show_public_key.sh) or is off
 #
 # Next        bash apply_playbook.sh

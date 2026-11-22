@@ -18,7 +18,7 @@ run_playbook() {
     port="$(grep -E '^AGENT_PORT=' "$ccc/container/.env" 2>/dev/null | cut -d= -f2)"; url="${ANSIBLE_AGENT_URL:-http://127.0.0.1:${port:-8897}}"
     { : </dev/tty; } 2>/dev/null && tty=1
     list="$(CCC_URL="$url" CCC_TIMEOUT=10 bash "$ccc/agent/call_ccc.sh" "$who" GET /playbooks)" \
-        || { echo -e "\033[31m[ERROR]\033[0m  the CCC agent does not answer on $url as '$who'${list:+ — $list} — start it: bash $ccc/container/start.sh"; return 1; }
+        || { echo -e "\033[31m[ERROR]\033[0m  the CCC agent does not answer on $url as '$who'${list:+ — $list} — start it: bash $ccc/container/lifecycle/start.sh"; return 1; }
     local books invs
     books="$(python3 -c 'import json,sys; print(" ".join(json.load(sys.stdin)["playbooks"]))' <<< "$list")"
     invs="$(python3 -c 'import json,sys; print(" ".join(json.load(sys.stdin)["inventories"]))' <<< "$list")"

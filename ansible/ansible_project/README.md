@@ -20,11 +20,11 @@ roles/<project>/templates/myworkspace/<path>.j2   the real file's shape (its own
 ## Deploy — the workspace onto a machine (CONFMGT [6])
 
 ```
-inventories/dev/hosts.yml    deploy_targets: dev-pc           this PC: git + Docker OFF (your live checkout · Docker from ccc/startup.sh)
+inventories/dev/hosts.yml    deploy_targets: dev-pc           this PC: git + Docker OFF (your live checkout · Docker from ccc/startup/startup.sh)
 inventories/test/hosts.yml   deploy_targets: test-vm          the test VM: git (clone / pull ws_branch) + Docker ON
 playbooks/deploy.yml          [git] → [Docker] → the workspace is there → (each project, [6.3]…)   (run again → changed=0)
 ```
-This PC: `bash ../deploy_on_this_pc.sh` — ccc/startup.sh runs it last (start-plan target deploy-dev) · `bash ../stop_on_this_pc.sh`
+This PC: `bash ../deploy_on_this_pc.sh` — ccc/startup/startup.sh runs it last (start-plan target deploy-dev) · `bash ../stop_on_this_pc.sh`
 (playbooks/stop.yml, reverse order) — shutdown runs it first.
 The test VM: `bash ~/myworkspace/test_server/05_deploy_test_vm.sh` — starts the VM + the SSH relay, gives Ansible its key in
 the VM, then asks the agent to apply `deploy` on `test` with the branch it runs from.
