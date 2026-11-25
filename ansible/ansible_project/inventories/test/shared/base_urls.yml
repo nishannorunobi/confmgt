@@ -9,7 +9,7 @@ shared_base_urls:
   kms:                  { ui: "{{ shared_loopback }}:{{ shared_ports.kms }}/ui", api: "{{ shared_loopback }}:{{ shared_ports.kms }}", in_docker: "http://{{ shared_hosts.kms.name }}:{{ shared_hosts.kms.port }}" }
   plane:                { ui: "{{ shared_host }}:{{ shared_ports.plane }}", api: "{{ shared_host }}:{{ shared_ports.plane }}/api" }
   minio:                { ui: "{{ shared_host }}:{{ shared_ports.minio_console }}", api: "{{ shared_host }}:{{ shared_ports.minio_api }}", in_docker: "http://{{ shared_hosts.minio.name }}:{{ shared_hosts.minio.port }}" }
-  postgres:             { ui: "{{ shared_host }}:{{ shared_ports.postgres_ui }}", api: "postgresql://localhost:{{ shared_ports.postgres_host }}", in_docker: "postgresql://{{ shared_hosts.postgres.name }}:{{ shared_hosts.postgres.port }}" }
+  postgres:             { ui: "{{ shared_host }}:{{ shared_ports.postgres_ui }}", in_docker: "postgresql://{{ shared_hosts.postgres.name }}:{{ shared_hosts.postgres.port }}" }
   redis:                { ui: "{{ shared_host }}:{{ shared_ports.redis_commander }}", api: "redis://localhost:{{ shared_ports.redis }}", in_docker: "redis://{{ shared_hosts.redis.name }}:{{ shared_hosts.redis.port }}" }
   rabbitmq:             { ui: "{{ shared_host }}:{{ shared_ports.rabbitmq_mgmt }}", api: "amqp://localhost:{{ shared_ports.rabbitmq_amqp }}", in_docker: "amqp://{{ shared_hosts.rabbitmq.name }}:{{ shared_hosts.rabbitmq.port }}" }
   grafana:              { ui: "{{ shared_host }}:{{ shared_ports.grafana }}" }
