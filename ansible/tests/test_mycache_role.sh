@@ -2,7 +2,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # test_mycache_role.sh — automatic tests for stories 3.1 + 3.2: Ansible renders mycache's 2 files (check) and writes + restarts (apply)
 #
-# What for    Proves that the mirror + shared/ + roles/mycache render mycache's REAL .env and agent.conf
+# What for    Proves that the mirror + shared/ + roles/mycache render mycache's REAL .env, agent.conf and issued_credentials/credentials.conf
 #             byte for byte — on a THROWAWAY copy of those files, inside this checkout's image. Nothing real is touched.
 #
 # Who         Claude (Test 3a in the branch · 3c on main), or you.
@@ -38,9 +38,10 @@ CCC="$(cd "$HERE/../.." && pwd)"                                      # ccc/ —
 docker build -q -t "$IMG" -f "$CCC/container/Dockerfile" \
     $(sed -nE 's/^(PYTHON_IMAGE|PYTHON_DIGEST|ANSIBLE_CORE_VERSION)=(.*)/--build-arg \1=\2/p' "$CCC/container/.env") "$CCC" >/dev/null \
     || { bad "the test image did not build"; exit 1; }
-# a throwaway workspace with a COPY of mycache's two files · the Ansible project + an inventory t (this container, local)
-W="$TMP/ws/projectspace/platform/mycache"; mkdir -p "$W/cache-agent" "$W/lifecycle"
+# a throwaway workspace with a COPY of mycache's three files (the role renders all three — CLAUDEWORK-656) · the Ansible project + an inventory t (this container, local)
+W="$TMP/ws/projectspace/platform/mycache"; mkdir -p "$W/cache-agent/issued_credentials" "$W/lifecycle"
 cp "$MYCACHE/.env" "$W/.env"; cp "$MYCACHE/cache-agent/agent.conf" "$W/cache-agent/agent.conf"
+cp "$MYCACHE/cache-agent/issued_credentials/credentials.conf" "$W/cache-agent/issued_credentials/credentials.conf"
 # mycache's own start/stop as STUBS: they only write down that they were called (never the live mycache)
 printf '#!/bin/bash\necho stop >> /ws/calls\n' > "$W/lifecycle/stop.sh"
 printf '#!/bin/bash\necho "ensure_running $* SVC_RUN=${SVC_RUN:-}" >> /ws/calls\n' > "$W/lifecycle/ensure_running.sh"
@@ -50,12 +51,12 @@ printf 'all:\n  children:\n    mycache:\n      hosts:\n        m1:\n          an
 cp -a "$P/inventories/dev/group_vars/." "$P/inventories/t/group_vars/"; cp -a "$P/inventories/dev/myworkspace" "$P/inventories/dev/shared" "$P/inventories/t/"   # the DEV environment's REAL values (the mirror)
 run() { docker run --rm -v "$TMP/ws:/ws" -v "$P:/p" -w /p -e ANSIBLE_CONFIG=/p/ansible.cfg -e ANSIBLE_NOCOLOR=1 "$IMG" \
           ansible-playbook -i inventories/t playbooks/mycache.yml "$@" 2>&1; }
-sum() { md5sum "$W/.env" "$W/cache-agent/agent.conf" | cut -c1-32 | tr '\n' ' '; }
+sum() { md5sum "$W/.env" "$W/cache-agent/agent.conf" "$W/cache-agent/issued_credentials/credentials.conf" | cut -c1-32 | tr '\n' ' '; }
 S0="$(sum)"
 
 o="$(run --check --diff)"; r=$?
 [ $r = 0 ] && grep -qE 'm1 +: ok=[0-9]+ +changed=0 ' <<< "$o" && [ "$(sum)" = "$S0" ] \
-  && ok "M1 the dev values render mycache's real .env + agent.conf byte for byte → changed=0" \
+  && ok "M1 the dev values render mycache's real .env + agent.conf + credentials.conf byte for byte → changed=0" \
   || bad "M1 rc=$r $(grep -E 'changed=|^[-+][A-Z]|FAILED|ERROR' <<< "$o" | head -6 | tr '\n' '¦')"
 
 o="$(run)"; r=$?
