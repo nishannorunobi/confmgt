@@ -40,7 +40,7 @@ cp -a "$P/inventories/dev/group_vars" "$P/inventories/dev/myworkspace" "$P/inven
 roles="$(cd "$P/roles" && for r in *; do grep -qE "^${r}_files:" "$r/defaults/main.yml" 2>/dev/null && echo "$r"; done)"
 { printf 'all:\n  children:\n'; for r in $roles; do printf '    %s:\n      hosts:\n        m1:\n' "$r"; done
   printf '  hosts:\n    m1:\n      ansible_connection: local\n      workspace_root: /ws\n'; } > "$P/inventories/t/hosts.yml"
-files="$(for r in $roles; do sed -nE 's/^  - (.+)$/\1/p' "$P/roles/$r/defaults/main.yml"; done)"
+files="$(for r in $roles; do sed -nE 's/^  - ([^ #]+).*$/\1/p' "$P/roles/$r/defaults/main.yml"; done)"
 for f in $files; do mkdir -p "$TMP/ws/$(dirname "$f")"; cp "$REAL/$f" "$TMP/ws/$f"; done
 S0="$(cd "$TMP/ws" && md5sum $files)"
 run() { docker run --rm -v "$TMP/ws:/ws" -v "$P:/p" -w /p -e ANSIBLE_CONFIG=/p/ansible.cfg -e ANSIBLE_NOCOLOR=1 "$IMG" \
