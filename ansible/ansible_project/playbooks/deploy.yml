@@ -7,6 +7,8 @@
 # How, per environment (a switch not set → off): inventories/<env>/group_vars/deploy_targets/ — dev: git + Docker OFF (your live checkout; Docker
 # from ccc/startup/startup.sh) · test: both ON (ws_branch: a run may send its own — the story branch under test).
 # deploy_projects (dev): inventories/dev/group_vars/deploy_targets/projects.yml — one project per story ([6.4]…).
+# Startup profile (CONFMGT [7.1]): inventories/<env>/startup_profiles/<startup_profile, default basic>.yml lists the projects
+# STARTED; every project still gets its config. No profile file in that inventory (test) → every project starts, as before.
 - name: Deploy the workspace
   hosts: deploy_targets
   gather_facts: false
@@ -131,6 +133,19 @@
       ansible.builtin.include_role:
         name: shared
       when: deploy_projects | default([]) | length > 0
+
+    - name: the startup profile (inventories/<env>/startup_profiles/<name>.yml) — which projects are STARTED
+      ansible.builtin.include_vars:
+        file: "{{ profile_file }}"
+      vars:
+        profile_file: "{{ inventory_dir }}/startup_profiles/{{ startup_profile | default('basic') }}.yml"
+      when: profile_file is file
+
+    - name: the profile names real projects (a typo would silently start nothing)
+      ansible.builtin.assert:
+        that: (profile_projects | difference(deploy_projects | map(attribute='name'))) | length == 0
+        fail_msg: "startup profile names no project of projects.yml: {{ profile_projects | difference(deploy_projects | map(attribute='name')) }}"
+      when: profile_projects is defined
 
     - name: the projects, in start order (inventories/<env>/group_vars/deploy_targets/projects.yml)
       ansible.builtin.include_tasks: tasks/deploy_project.yml

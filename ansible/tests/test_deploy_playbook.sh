@@ -27,6 +27,9 @@
 #                targets reversed · one failing → the others are STILL stopped, the play ends FAILED · all down → ok
 #             P10 stop_on_this_pc.sh: the agent answers → apply stop dev → deploy_on_this_pc.sh --state stopped · the agent
 #                is down → nothing started, exit 1, --state partial
+#             P11 startup profile (CONFMGT [7.1]): basic.yml lists only "two" → "one" gets its config (+ restart) but is NOT
+#                started, "two" is · a profile naming no real project → FAILED, nothing started
+#             P12 the REAL dev profile: inventories/dev/startup_profiles/basic.yml names only projects of projects.yml
 # ─────────────────────────────────────────────────────────────────────────────
 case "${1:-}" in -h|--help) awk 'NR==1{next} /^# ─/{n++; if(n==2) exit; next} n==1{ sub(/^# ?/,""); if(!t){printf "\033[1m%s\033[0m\n",$0; t=1; next} l=substr($0,1,12); if(l ~ /^[A-Z][A-Za-z ]+$/){c=(l ~ /^Errors/)?"\033[33m":"\033[36m"; printf "%s%s\033[0m%s\n",c,l,substr($0,13)} else print }' "$0"; exit 0 ;; esac
 set -uo pipefail
@@ -226,5 +229,29 @@ o10b="$(run10 "http://127.0.0.1:1")"; r10b=$?; s10b="$(DEPLOY_STATE_FILE="$SF" b
   && [ $r10b = 1 ] && grep -q 'nothing stopped by Ansible' <<< "$o10b" && [ "$s10b" = partial ] \
   && ok "P10 stop_on_this_pc.sh: apply stop dev → --state stopped · agent down → nothing started, exit 1, --state partial" \
   || bad "P10 r10=$r10 s10=$s10 r10b=$r10b s10b=$s10b asked=$asked"
+
+# ── P11: the startup profile — only its projects are STARTED, every project still gets its config ──────
+PF="$WORK/a/project/inventories/p6/startup_profiles"; mkdir -p "$PF"
+docker exec "$M" sh -c 'rm -f /home/ansible/ws/up_* /home/ansible/ws/events /home/ansible/ws/fake.conf'
+printf 'profile_projects: [two]\n' > "$PF/basic.yml"
+o11="$(p6 1)"; e11="$(ev)"
+docker exec "$M" sh -c 'rm -f /home/ansible/ws/up_* /home/ansible/ws/events /home/ansible/ws/fake.conf'
+printf 'profile_projects: [two, tow]\n' > "$PF/basic.yml"
+o11b="$(p6 1)"; e11b="$(ev)"; rm -rf "$PF"
+[ "$e11" = "restart fake.conf,start b1," ] && grep -qE 'm1 +: .*failed=0' <<< "$o11" \
+  && grep -qE 'm1 +: .*failed=1' <<< "$o11b" && grep -q "tow" <<< "$o11b" && ! grep -q "start" <<< "$e11b" \
+  && ok "P11 startup profile [two]: one's config written (+ restart), one NOT started, two started · a typo (tow) → FAILED, nothing started" \
+  || bad "P11 e11=[$e11] e11b=[$e11b] $(grep -E 'm1 +:|fatal|msg' <<< "$o11$o11b" | head -3 | tr '\n' '¦')"
+
+# ── P12: the real dev profile names real projects ────────────────────────────
+bad12="$(python3 - "$PROJ/inventories/dev" <<'X'
+import sys, yaml
+d = sys.argv[1]
+names = {p["name"] for p in yaml.safe_load(open(f"{d}/group_vars/deploy_targets/projects.yml"))["deploy_projects"]}
+prof = yaml.safe_load(open(f"{d}/startup_profiles/basic.yml"))["profile_projects"]
+print(" ".join(sorted(set(prof) - names)) if prof else "EMPTY")
+X
+)"
+[ -z "$bad12" ] && ok "P12 inventories/dev/startup_profiles/basic.yml names only projects of projects.yml" || bad "P12 not in projects.yml: $bad12"
 
 [ $FAIL = 0 ] && ok "deploy playbook tests passed (throwaway machine + stand-in agent removed)" || { echo -e "\033[31m[FAILED]\033[0m deploy playbook tests"; exit 1; }
