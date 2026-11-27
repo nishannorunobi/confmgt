@@ -8,7 +8,6 @@
 #             2. what can run: the agent's /playbooks (found in ansible_project/ at run time)
 #             3. no names given → asks, Enter = the default (playbook ping · inventory dev · all machines)
 #             4. POST /check or /apply → the output, the result, where the full log is
-#                STARTUP_PROFILE set (ccc/startup/startup_start_all.sh) → sent as extra_vars startup_profile (CONFMGT [7.4])
 # Caller      every call goes through ccc/agent/call_ccc.sh as the known caller CCC_CALLER (default owner;
 #             deploy_on_this_pc.sh / stop_on_this_pc.sh: svcmgt) — the CCC answers known callers only
 # ─────────────────────────────────────────────────────────────────────────────
@@ -40,9 +39,7 @@ run_playbook() {
     fi
     inv="${inv:-dev}"
     local body out rc
-    body="$(python3 -c 'import json,sys; a=sys.argv; b={"playbook":a[1],"inventory":a[2],"limit":a[3] or None}
-if a[4]: b["extra_vars"]={"startup_profile":a[4]}
-print(json.dumps(b))' "$pb" "$inv" "$lim" "${STARTUP_PROFILE:-}")"
+    body="$(python3 -c 'import json,sys; a=sys.argv; print(json.dumps({"playbook":a[1],"inventory":a[2],"limit":a[3] or None}))' "$pb" "$inv" "$lim")"
     echo -e "\033[1m==> $mode: $pb on $inv${lim:+ (machines: $lim)}\033[0m"
     out="$(printf '%s' "$body" | CCC_URL="$url" bash "$ccc/agent/call_ccc.sh" "$who" POST "/$mode" - 2>&1)"; local crc=$?
     [ $crc = 1 ] && { echo -e "\033[31m[ERROR]\033[0m  $out"; return 1; }       # 22 = the agent said no: its detail below

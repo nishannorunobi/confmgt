@@ -1,6 +1,0 @@
-# basic.yml — the startup profile "basic": the projects ccc/startup/startup.sh brings up on THIS PC (CONFMGT [7.1]).
-# The engine always starts first, whatever the profile: docker · portainer · kms (+ its keys) · ccc — Ansible needs them.
-# Add a project: one more name below (a name of deploy_targets/projects.yml) — the next startup starts it, no code change.
-# A project NOT listed still gets its config written by every deploy; it just is not started.
-profile_projects:
-  - mypostgresql_db

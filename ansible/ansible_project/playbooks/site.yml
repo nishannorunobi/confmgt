@@ -1,0 +1,24 @@
+# site.yml — EVERYTHING on the deploy_targets machines of an inventory (CONFMGT [7.5]; was deploy.yml): dev = this PC, test = the VM.
+#   1. machine.yml — the machine ready (git · Docker · kms set up — each by its switch in group_vars/deploy_targets/)
+#   2. every project in projects.yml's order — each role pulls what it needs first (roles/<project>/meta/main.yml), runs ONCE:
+#      config (restart only if changed) → its targets up (targets: [] → config only: kms · workspace_agent · mylog_analytics ·
+#      myodoo · ccc · workspace — so myodoo gets its config but is not started)
+#   Run by ccc/startup/startup_start_all.sh (DEPLOY_PLAYBOOK=site) · or: apply_playbook.sh → site → <env>. Again → changed=0.
+#   The role list = the names of group_vars/deploy_targets/projects.yml (tests/test_deploy_playbook.sh P12 checks both).
+- import_playbook: machine.yml
+
+- name: Every project, dependencies first
+  hosts: deploy_targets
+  gather_facts: false
+  roles:
+    - kms
+    - mypostgresql_db
+    - agents
+    - workspace_agent
+    - mycache
+    - mychannels
+    - mydocs
+    - mylog_analytics
+    - myodoo
+    - ccc
+    - workspace

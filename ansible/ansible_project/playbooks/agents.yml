@@ -1,10 +1,10 @@
-# agents.yml — agents's configuration from the single source of truth (CONFMGT epic [3]).
-#   check_playbook.sh → agents   dry run: shows every line that differs — writes nothing, restarts nothing
-#   apply_playbook.sh → agents   writes the changed files, then restarts agents with its OWN scripts — only when
-#                                 something really changed (nothing changed → changed=0, no restart)
-- name: agents configuration
+# agents.yml — deploy agents as ONE block (CONFMGT epic [3] config · [7.5] start + dependencies):
+#   what it needs first (roles/agents/meta/main.yml) → its config from the single source of truth (restart only if changed)
+#   → its targets up (projects.yml; none → config only). Each role ONCE, already running → left alone. Again → changed=0.
+#   check_playbook.sh → agents   dry run: every line that differs — writes nothing, restarts nothing, starts nothing
+#   apply_playbook.sh → agents   the same, for real
+- name: agents — deploy (what it needs first)
   hosts: agents
   gather_facts: false
   roles:
-    - shared                    # inventories/<env>/shared/ first: values used by 2+ projects
-    - agents
+    - agents                       # + what it needs first: roles/agents/meta/main.yml (CONFMGT [7.5])

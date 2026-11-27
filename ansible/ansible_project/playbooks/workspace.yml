@@ -1,10 +1,10 @@
-# workspace.yml — workspace's configuration from the single source of truth (CONFMGT epic [3]).
-#   check_playbook.sh → workspace   dry run: shows every line that differs — writes nothing, restarts nothing
-#   apply_playbook.sh → workspace   writes the changed files, then restarts workspace with its OWN scripts — only when
-#                                 something really changed (nothing changed → changed=0, no restart)
-- name: workspace configuration
+# workspace.yml — deploy workspace as ONE block (CONFMGT epic [3] config · [7.5] start + dependencies):
+#   what it needs first (roles/workspace/meta/main.yml) → its config from the single source of truth (restart only if changed)
+#   → its targets up (projects.yml; none → config only). Each role ONCE, already running → left alone. Again → changed=0.
+#   check_playbook.sh → workspace   dry run: every line that differs — writes nothing, restarts nothing, starts nothing
+#   apply_playbook.sh → workspace   the same, for real
+- name: workspace — deploy (what it needs first)
   hosts: workspace
   gather_facts: false
   roles:
-    - shared                    # inventories/<env>/shared/ first: values used by 2+ projects
-    - workspace
+    - workspace                       # + what it needs first: roles/workspace/meta/main.yml (CONFMGT [7.5])

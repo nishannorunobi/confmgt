@@ -4,3 +4,9 @@
   loop: "{{ mylog_analytics_files }}"
   loop_control:
     label: "{{ item }}"
+
+- name: "mylog_analytics — up (its targets in projects.yml; none → config only)"
+  ansible.builtin.include_role:
+    name: start_project
+  vars:
+    start_project_name: mylog_analytics

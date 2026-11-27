@@ -1,10 +1,10 @@
-# ccc.yml — THE CCC's configuration (its container's .env + its agent's agent.conf) from the single source of truth
-# (CONFMGT epic [3]; was confmgt.yml — CLAUDEWORK-270).
-#   check_playbook.sh → ccc   dry run: shows every line that differs — writes nothing, restarts nothing
-#   apply_playbook.sh → ccc   writes the changed files — NO automatic restart (the CCC runs this playbook): a message
-- name: ccc configuration
+# ccc.yml — deploy ccc as ONE block (CONFMGT epic [3] config · [7.5] start + dependencies):
+#   what it needs first (roles/ccc/meta/main.yml) → its config from the single source of truth (restart only if changed)
+#   → its targets up (projects.yml; none → config only). Each role ONCE, already running → left alone. Again → changed=0.
+#   check_playbook.sh → ccc   dry run: every line that differs — writes nothing, restarts nothing, starts nothing
+#   apply_playbook.sh → ccc   the same, for real
+- name: ccc — deploy (what it needs first)
   hosts: ccc
   gather_facts: false
   roles:
-    - shared                    # inventories/<env>/shared/ first: values used by 2+ projects
-    - ccc
+    - ccc                       # + what it needs first: roles/ccc/meta/main.yml (CONFMGT [7.5])

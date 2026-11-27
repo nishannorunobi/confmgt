@@ -1,0 +1,5 @@
+# roles/kms/meta — what kms needs BEFORE it (CONFMGT [7.5]): Ansible runs these roles first, each ONCE per play
+# (config + start), so playbooks/kms.yml deploys kms alone.
+# Only HARD needs (it cannot start without them) — logs to mylog_analytics or links are not dependencies.
+dependencies:
+  - role: shared                # inventories/<env>/shared/ — values 2+ projects use

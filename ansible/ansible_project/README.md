@@ -10,11 +10,13 @@ ansible.cfg                                       Ansible's settings (default in
 inventories/<env>/hosts.yml                       the machines of one environment (dev · test · staging · prod)
 inventories/<env>/host_vars/<machine>.yml         how to reach one machine (address, port, user, workspace_root)
 inventories/<env>/group_vars/all/<topic>.yml      Ansible's own settings for every machine (e.g. connection)
-inventories/test/group_vars/deploy_targets/        WHICH workspace playbooks/deploy.yml puts on the deploy_targets (repo · branch · folder)
+inventories/test/group_vars/deploy_targets/        WHICH workspace playbooks/machine.yml puts on the deploy_targets (repo · branch · folder)
 inventories/<env>/shared/<topic>.yml             SHARED: values used by 2+ projects, once (kms · clock · anthropic · rabbitmq · postgres …)
 inventories/<env>/myworkspace/<path>.yml          THE MIRROR: only that project's own values of ~/myworkspace/<path>, one file per real config file
 playbooks/<name>.yml                              what can run — the agent finds every file here by itself
 roles/<project>/templates/myworkspace/<path>.j2   the real file's shape (its own comments), values from the mirror
+roles/<project>/meta/main.yml                    what the project NEEDS first (Ansible role dependencies — run once per play)
+roles/start_project/                             the last step of every project role: its targets up (projects.yml)
 ```
 
 ## Deploy — the workspace onto a machine (CONFMGT [6])
@@ -22,12 +24,20 @@ roles/<project>/templates/myworkspace/<path>.j2   the real file's shape (its own
 ```
 inventories/dev/hosts.yml    deploy_targets: dev-pc           this PC: git + Docker OFF (your live checkout · Docker from ccc/startup/startup.sh)
 inventories/test/hosts.yml   deploy_targets: test-vm          the test VM: git (clone / pull ws_branch) + Docker ON
-playbooks/deploy.yml          [git] → [Docker] → the workspace is there → (each project, [6.3]…)   (run again → changed=0)
+playbooks/machine.yml         [git] → [Docker] → [kms set up] → the workspace is there                  (run again → changed=0)
+playbooks/<project>.yml       ONE block: what it needs first (roles/<project>/meta) → config → its targets up
+playbooks/site.yml            EVERYTHING: machine.yml + every project in projects.yml's order, each role once
 ```
-This PC: `bash ../deploy_on_this_pc.sh` — ccc/startup/startup.sh runs it last (start-plan target deploy-dev) · `bash ../stop_on_this_pc.sh`
+Dependencies (roles/<project>/meta/main.yml, hard needs only): mydocs → mypostgresql_db · mycache · mychannels · myodoo →
+mypostgresql_db · every project but workspace → kms. So `mydocs.yml` brings Plane up with all it needs; `kms.yml` only kms.
+kms and ccc are never STARTED by Ansible (targets: []): Ansible lives in ccc, and ccc needs kms first — the bootstrap
+(ccc/scripts/svcmgt/start_all.sh: docker → portainer → kms → ccc) starts them, then asks ccc to run the playbook.
+This PC: `bash ../deploy_on_this_pc.sh` (playbook DEPLOY_PLAYBOOK, default mypostgresql_db) — ccc/startup/startup.sh runs it last
+(start-plan target deploy-dev); ccc/startup/startup_start_all.sh sets DEPLOY_PLAYBOOK=site · `bash ../stop_on_this_pc.sh`
 (playbooks/stop.yml, reverse order) — shutdown runs it first.
 The test VM: `bash ~/myworkspace/test_server/05_deploy_test_vm.sh` — starts the VM + the SSH relay, gives Ansible its key in
-the VM, then asks the agent to apply `deploy` on `test` with the branch it runs from.
+the VM, then asks the agent to apply a playbook on `test` with the branch it runs from (it still names `deploy` —
+to change to `site`, CONFMGT [7.5]).
 
 ## The mirror — the single source of truth, laid out like the workspace
 
