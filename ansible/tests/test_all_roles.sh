@@ -11,8 +11,9 @@
 #
 # Checks      A1 every project: dry run → changed=0 · A2 every project: apply → changed=0, no restart (nothing changed)
 #             A3 the real files only read · A4 no secret in the mirror or shared/ (passwords / keys = kms addresses)
-#             A5 playbooks/deploy.yml with the REAL dev deploy_projects (CONFMGT [6]) on the copies: changed=0, each
+#             A5 playbooks/site.yml with the REAL dev deploy_projects (CONFMGT [6] · [7.5]) on the copies: changed=0, each
 #                project's targets handed to ccc/scripts/svcmgt/start_targets.sh (a stub) in projects.yml's order, the copies unchanged
+#             (A1 · A2 · A6 run playbooks/<project>.yml with its role dependencies; m1 is a deploy target → each role hands its targets to a STUB start_targets.sh)
 #             A6 the TEST values (inventories/test/) render every project's real files too · A7 no secret in the test mirror
 # ─────────────────────────────────────────────────────────────────────────────
 case "${1:-}" in -h|--help) awk 'NR==1{next} /^# ─/{n++; if(n==2) exit; next} n==1{ sub(/^# ?/,""); if(!t){printf "\033[1m%s\033[0m\n",$0; t=1; next} l=substr($0,1,12); if(l ~ /^[A-Z][A-Za-z ]+$/){c=(l ~ /^Errors/)?"\033[33m":"\033[36m"; printf "%s%s\033[0m%s\n",c,l,substr($0,13)} else print }' "$0"; exit 0 ;; esac
@@ -38,11 +39,15 @@ docker build -q -t "$IMG" -f "$CCC/container/Dockerfile" \
 P="$TMP/p"; cp -a "$HERE/ansible_project" "$P"; mkdir -p "$P/inventories/t"
 cp -a "$P/inventories/dev/group_vars" "$P/inventories/dev/myworkspace" "$P/inventories/dev/shared" "$P/inventories/t/"
 roles="$(cd "$P/roles" && for r in *; do grep -qE "^${r}_files:" "$r/defaults/main.yml" 2>/dev/null && echo "$r"; done)"
-{ printf 'all:\n  children:\n'; for r in $roles; do printf '    %s:\n      hosts:\n        m1:\n' "$r"; done
+{ printf 'all:\n  children:\n    deploy_targets:\n      hosts:\n        m1:\n'; for r in $roles; do printf '    %s:\n      hosts:\n        m1:\n' "$r"; done
   printf '  hosts:\n    m1:\n      ansible_connection: local\n      workspace_root: /ws\n'; } > "$P/inventories/t/hosts.yml"
 files="$(for r in $roles; do sed -nE 's/^  - ([^ #]+).*$/\1/p' "$P/roles/$r/defaults/main.yml"; done)"
 for f in $files; do mkdir -p "$TMP/ws/$(dirname "$f")"; cp "$REAL/$f" "$TMP/ws/$f"; done
 S0="$(cd "$TMP/ws" && md5sum $files)"
+# m1 is a deploy target from the start (svc_policy.conf's SVC_VIA_DEPLOY is rendered from deploy_projects, CONFMGT [7.6]) — so every
+# role's last step, roles/start_project, hands its targets to ccc/scripts/svcmgt/start_targets.sh: a STUB here (only notes them)
+mkdir -p "$TMP/ws/ccc/scripts/svcmgt"; [ -f "$TMP/ws/ccc/scripts/svcmgt/svc_policy.conf" ] || cp "$REAL/ccc/scripts/svcmgt/svc_policy.conf" "$TMP/ws/ccc/scripts/svcmgt/"
+printf '#!/bin/bash\necho "$*" >> /ws/started\nfor t in "$@"; do echo "$t RUNNING"; done\n' > "$TMP/ws/ccc/scripts/svcmgt/start_targets.sh"
 run() { docker run --rm -v "$TMP/ws:/ws" -v "$P:/p" -w /p -e ANSIBLE_CONFIG=/p/ansible.cfg -e ANSIBLE_NOCOLOR=1 "$IMG" \
           ansible-playbook -i inventories/t "playbooks/$1.yml" "${@:2}" 2>&1; }
 b1=""; b2=""
@@ -66,17 +71,15 @@ for r in $roles; do
 done
 [ -z "$b6" ] && ok "A6 every project ($n) renders its real files from the TEST values too → changed=0 (test = dev today; a VM-only value shows here)" || bad "A6:$b6"
 
-# ── A5: deploy.yml with the real dev deploy_projects, on the copies ──────────
-mkdir -p "$TMP/ws/ccc/scripts/svcmgt"; [ -f "$TMP/ws/ccc/scripts/svcmgt/svc_policy.conf" ] || cp "$REAL/ccc/scripts/svcmgt/svc_policy.conf" "$TMP/ws/ccc/scripts/svcmgt/"
-printf '#!/bin/bash\necho "$*" >> /ws/started\nfor t in "$@"; do echo "$t RUNNING"; done\n' > "$TMP/ws/ccc/scripts/svcmgt/start_targets.sh"
-sed -i '/^  children:$/a\    deploy_targets:\n      hosts:\n        m1:' "$P/inventories/t/hosts.yml"
-o5="$(run deploy)"
+# ── A5: site.yml with the real dev deploy_projects, on the copies ──────────
+rm -f "$TMP/ws/started"                                                # only site.yml's starts below
+o5="$(run site)"
 want="$(docker run --rm -v "$P:/p" -w /p "$IMG" ansible-inventory -i inventories/t --host m1 2>/dev/null \
         | python3 -c 'import json,sys; [print(" ".join(p["targets"])) for p in json.load(sys.stdin).get("deploy_projects",[]) if p.get("targets")]')"
 got="$(cat "$TMP/ws/started" 2>/dev/null)"
 np="$(docker run --rm -v "$P:/p" -w /p "$IMG" ansible-inventory -i inventories/t --host m1 2>/dev/null | python3 -c 'import json,sys; print(len(json.load(sys.stdin).get("deploy_projects",[])))')"
 grep -qE 'm1 +: ok=[0-9]+ +changed=0 .*failed=0' <<< "$o5" && [ "$got" = "$want" ] && [ "$(cd "$TMP/ws" && md5sum $files)" = "$S0" ] \
-  && ok "A5 deploy.yml with the real dev deploy_projects ($np): changed=0 · targets up in order [$(tr '\n' '|' <<< "$want")] · the copies unchanged" \
+  && ok "A5 site.yml with the real dev deploy_projects ($np): changed=0 · targets up in order [$(tr '\n' '|' <<< "$want")] · the copies unchanged" \
   || bad "A5 want=[$want] got=[$got] $(grep -E 'm1 +:|fatal' <<< "$o5" | head -2 | tr '\n' '¦')"
 b4="$(find "$HERE/ansible_project/inventories/dev/myworkspace" "$HERE/ansible_project/inventories/dev/shared" -name '*.yml' -exec grep -hE '^ +[A-Za-z_]*(PASS|PASSWORD|SECRET|TOKEN|_KEY|passwd|password|api_key)[A-Za-z_]*: ' {} + \
       | grep -vE '^ +([A-Z_]+_DIR|SECRET_MGT|secret_mgt|ENABLE_EMAIL_PASSWORD): ' | grep -vE ': "\{\{ shared_[a-z_.]+ \}\}' \

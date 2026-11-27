@@ -1,6 +1,6 @@
 #!/bin/bash
 # ─────────────────────────────────────────────────────────────────────────────
-# deploy_on_this_pc.sh — Ansible deploys the workspace on THIS PC: playbook deploy, inventory dev (CONFMGT [6])
+# deploy_on_this_pc.sh — Ansible deploys the workspace on THIS PC: playbook DEPLOY_PLAYBOOK, inventory dev (CONFMGT [6] · [7.5])
 #
 # What for    The last step of ccc/startup/startup.sh (start-plan target deploy-dev): Ansible brings this PC to what
 #             inventories/dev says. Each project joins in its own story ([6.3]…); until then it only checks the
@@ -14,7 +14,9 @@
 # Steps       1. the ansible-agent answers (else confmgt's own start.sh)
 #             2. Ansible may log in to this PC: its public key in ~/.ssh/authorized_keys (authorize_ansible_on_this_pc.sh
 #                — only when missing, and it says so)
-#             3. apply deploy on dev → the output, OK / FAILED, the full log · the result kept for --state
+#             3. apply DEPLOY_PLAYBOOK on dev → the output, OK / FAILED, the full log · the result kept for --state
+#                DEPLOY_PLAYBOOK = which block (a playbooks/<name>.yml): set by the door that runs the start —
+#                ccc/startup/startup.sh mypostgresql_db · ccc/startup/startup_start_all.sh site · not set → mypostgresql_db
 #
 # Errors      UNREACHABLE → this PC's SSH server is off (port 22) · FAILED → the task named in the output says why
 # ─────────────────────────────────────────────────────────────────────────────
@@ -49,4 +51,4 @@ bash "$HERE/authorize_ansible_on_this_pc.sh" | grep -v "next:" || { result faile
 
 # 3. deploy on dev
 source "$HERE/lib_run_playbook.sh"
-if run_playbook apply deploy dev; then result ok; else result failed; exit 1; fi
+if run_playbook apply "${DEPLOY_PLAYBOOK:-mypostgresql_db}" dev; then result ok; else result failed; exit 1; fi

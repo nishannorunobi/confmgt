@@ -47,6 +47,7 @@ printf '#!/bin/bash\necho stop >> /ws/calls\n' > "$W/lifecycle/stop.sh"
 printf '#!/bin/bash\necho "ensure_running $* SVC_RUN=${SVC_RUN:-}" >> /ws/calls\n' > "$W/lifecycle/ensure_running.sh"
 calls() { cat "$TMP/ws/calls" 2>/dev/null | tr '\n' '|'; }
 P="$TMP/p"; cp -a "$HERE/ansible_project" "$P"; mkdir -p "$P/inventories/t/group_vars"
+printf 'dependencies:\n  - role: shared\n' > "$P/roles/mycache/meta/main.yml"   # the role ALONE: its dependencies are test_deploy_playbook P11's (CONFMGT [7.5])
 printf 'all:\n  children:\n    mycache:\n      hosts:\n        m1:\n          ansible_connection: local\n          workspace_root: /ws\n' > "$P/inventories/t/hosts.yml"
 cp -a "$P/inventories/dev/group_vars/." "$P/inventories/t/group_vars/"; cp -a "$P/inventories/dev/myworkspace" "$P/inventories/dev/shared" "$P/inventories/t/"   # the DEV environment's REAL values (the mirror)
 run() { docker run --rm -v "$TMP/ws:/ws" -v "$P:/p" -w /p -e ANSIBLE_CONFIG=/p/ansible.cfg -e ANSIBLE_NOCOLOR=1 "$IMG" \

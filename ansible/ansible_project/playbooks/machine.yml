@@ -1,13 +1,10 @@
-# deploy.yml — the workspace on the deploy_targets machines of an inventory (CONFMGT [6]): dev = this PC, test = the test VM.
-#   check_playbook.sh → deploy → <env>   dry run — changes nothing
-#   apply_playbook.sh → deploy → <env>   [ws_manage_git] git → clone / pull ws_branch + the deploy=yes repos of the workspace's ccc/scripts/gitmgt/repos.conf · [ws_manage_docker] Docker by the
-#                                         workspace's OWN script · [ws_kms_setup] kms unattended + keys + sign-ups
-#                                         · the workspace is there · each project of
-#                                         deploy_projects: config → restart if changed → up. Run again → changed=0.
-# How, per environment (a switch not set → off): inventories/<env>/group_vars/deploy_targets/ — dev: git + Docker OFF (your live checkout; Docker
-# from ccc/startup/startup.sh) · test: both ON (ws_branch: a run may send its own — the story branch under test).
-# deploy_projects (dev): inventories/dev/group_vars/deploy_targets/projects.yml — one project per story ([6.4]…).
-- name: Deploy the workspace
+# machine.yml — the MACHINE ready for the workspace (CONFMGT [6], split out of deploy.yml in [7.5]): base packages · git clone / pull
+# of the workspace + its deploy=yes repos · Docker · the shared network · kms set up unattended · the workspace is there.
+# No project here — site.yml imports it first, then every project (roles, dependencies first).
+#   apply_playbook.sh → machine → <env>     a fresh machine: this first (or site.yml, which does it)
+# How, per environment (a switch not set → off): inventories/<env>/group_vars/deploy_targets/ — dev: git + Docker OFF (your live
+# checkout; Docker from ccc/startup/startup.sh) · test: both ON (ws_branch: a run may send its own — the story branch under test).
+- name: The machine ready for the workspace
   hosts: deploy_targets
   gather_facts: false
   tasks:
@@ -126,15 +123,3 @@
         path: "{{ ws_dir }}/ccc/scripts/svcmgt/svc_policy.conf"
       register: ws
       failed_when: not ws.stat.exists
-
-    - name: shared values first (inventories/<env>/shared/ — what 2+ projects use)
-      ansible.builtin.include_role:
-        name: shared
-      when: deploy_projects | default([]) | length > 0
-
-    - name: the projects, in start order (inventories/<env>/group_vars/deploy_targets/projects.yml)
-      ansible.builtin.include_tasks: tasks/deploy_project.yml
-      loop: "{{ deploy_projects | default([]) }}"
-      loop_control:
-        loop_var: project
-        label: "{{ project.name }}"

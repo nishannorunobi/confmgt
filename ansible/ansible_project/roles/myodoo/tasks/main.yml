@@ -4,3 +4,9 @@
   loop: "{{ myodoo_files }}"
   loop_control:
     label: "{{ item }}"
+
+- name: "myodoo — up (its targets in projects.yml; none → config only)"
+  ansible.builtin.include_role:
+    name: start_project
+  vars:
+    start_project_name: myodoo

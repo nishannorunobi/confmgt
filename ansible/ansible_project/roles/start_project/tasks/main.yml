@@ -1,0 +1,19 @@
+# roles/start_project — ONE project up, the LAST step of every project role (CONFMGT [7.5]); its role passes start_project_name.
+#   1. the restart runs NOW if the project's config changed (its own role's handler)
+#   2. its targets up — inventories/<env>/group_vars/deploy_targets/projects.yml says which (targets: [] → config only, nothing
+#      started) · the workspace's ccc/scripts/svcmgt/start_targets.sh runs each target's OWN start script from svc_policy.conf and
+#      checks the REAL state after (already running → RUNNING; started → STARTED = changed; fails → the play stops)
+- name: restart now if this project's config changed (its role's handler)      # a meta task's name is not templated
+  ansible.builtin.meta: flush_handlers
+
+- name: "{{ start_project_name }} — up: {{ sp_targets | join(' ') or 'nothing (config only)' }}"
+  ansible.builtin.command: bash ccc/scripts/svcmgt/start_targets.sh {{ sp_targets | join(' ') }}
+  args:
+    chdir: "{{ ws_dir }}"
+  environment:
+    SVC_RUN: "1"
+  register: up
+  changed_when: "' STARTED' in up.stdout"
+  when: sp_targets | length > 0
+  vars:
+    sp_targets: "{{ (deploy_projects | default([]) | selectattr('name', 'equalto', start_project_name) | map(attribute='targets') | list | first | default([])) }}"
