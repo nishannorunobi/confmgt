@@ -29,7 +29,11 @@
 #                is down → nothing started, exit 1, --state partial
 #             P11 startup profile (CONFMGT [7.1]): basic.yml lists only "two" → "one" gets its config (+ restart) but is NOT
 #                started, "two" is · a profile naming no real project → FAILED, nothing started
-#             P12 the REAL dev profile: inventories/dev/startup_profiles/basic.yml names only projects of projects.yml
+#             P12 the REAL dev profiles: every inventories/dev/startup_profiles/*.yml (basic · start_all) names only projects of
+#                projects.yml · start_all = every project but myodoo
+#             P13 a profile asked by name (-e startup_profile, CONFMGT [7.4]): start_all [one, two] → both started · a name
+#                with no file (nope) → FAILED, nothing started
+#             P14 STARTUP_PROFILE=start_all → the request to the agent carries extra_vars startup_profile · not set → none
 # ─────────────────────────────────────────────────────────────────────────────
 case "${1:-}" in -h|--help) awk 'NR==1{next} /^# ─/{n++; if(n==2) exit; next} n==1{ sub(/^# ?/,""); if(!t){printf "\033[1m%s\033[0m\n",$0; t=1; next} l=substr($0,1,12); if(l ~ /^[A-Z][A-Za-z ]+$/){c=(l ~ /^Errors/)?"\033[33m":"\033[36m"; printf "%s%s\033[0m%s\n",c,l,substr($0,13)} else print }' "$0"; exit 0 ;; esac
 set -uo pipefail
@@ -154,7 +158,7 @@ done
 X'
 p6() {   # VALUE [extra project]
     mkinv p6 "ws_manage_git: false\nws_dir: /home/ansible/ws\nfake_value: $1\ndeploy_projects:\n  - {name: one, role: fakeproj, targets: [a1, a2]}\n${2:-}  - {name: two, role: fakeproj, targets: [b1]}\n"
-    mkdir -p "$WORK/a/project/inventories/p6/shared"; play p6 -e fake_file=fake.conf
+    mkdir -p "$WORK/a/project/inventories/p6/shared"; play p6 -e fake_file=fake.conf ${P6_EXTRA:-}      # P6_EXTRA: P13 names a profile
 }
 ev() { docker exec "$M" sh -c 'cat /home/ansible/ws/events 2>/dev/null' | tr '\n' ',' ; }
 o6="$(p6 1)"; e1="$(ev)"; o6b="$(p6 1)"; e2="$(ev)"; o6c="$(p6 2)"; e3="$(ev)"
@@ -248,10 +252,39 @@ bad12="$(python3 - "$PROJ/inventories/dev" <<'X'
 import sys, yaml
 d = sys.argv[1]
 names = {p["name"] for p in yaml.safe_load(open(f"{d}/group_vars/deploy_targets/projects.yml"))["deploy_projects"]}
-prof = yaml.safe_load(open(f"{d}/startup_profiles/basic.yml"))["profile_projects"]
-print(" ".join(sorted(set(prof) - names)) if prof else "EMPTY")
+import glob, os
+out = []
+for f in sorted(glob.glob(f"{d}/startup_profiles/*.yml")):
+    prof = yaml.safe_load(open(f))["profile_projects"]
+    n = os.path.basename(f)
+    out += [f"{n}:{x}" for x in sorted(set(prof or []) - names)] + ([f"{n}:EMPTY"] if not prof else [])
+    if n == "start_all.yml" and set(prof or []) != names - {"myodoo"}:
+        out.append(f"start_all.yml≠all-but-myodoo:{sorted(names - {'myodoo'} - set(prof or []))}")
+if not os.path.isfile(f"{d}/startup_profiles/basic.yml"):
+    out.append("basic.yml-missing")
+print(" ".join(out))
 X
 )"
-[ -z "$bad12" ] && ok "P12 inventories/dev/startup_profiles/basic.yml names only projects of projects.yml" || bad "P12 not in projects.yml: $bad12"
+[ -z "$bad12" ] && ok "P12 inventories/dev/startup_profiles/*.yml (basic · start_all) name only projects of projects.yml · start_all = all but myodoo" \
+  || bad "P12 $bad12"
+
+# ── P13: a profile asked by name — its projects start · a name with no file → FAILED, nothing started ──
+PF="$WORK/a/project/inventories/p6/startup_profiles"; mkdir -p "$PF"
+printf 'profile_projects: [two]\n' > "$PF/basic.yml"; printf 'profile_projects: [one, two]\n' > "$PF/start_all.yml"
+docker exec "$M" sh -c 'rm -f /home/ansible/ws/up_* /home/ansible/ws/events /home/ansible/ws/fake.conf'
+o13="$(P6_EXTRA="-e startup_profile=start_all" p6 1)"; e13="$(ev)"
+docker exec "$M" sh -c 'rm -f /home/ansible/ws/up_* /home/ansible/ws/events /home/ansible/ws/fake.conf'
+o13b="$(P6_EXTRA="-e startup_profile=nope" p6 1)"; e13b="$(ev)"; rm -rf "$PF"
+grep -q "start a1" <<< "$e13" && grep -q "start b1" <<< "$e13" && grep -qE 'm1 +: .*failed=0' <<< "$o13" \
+  && grep -qE 'm1 +: .*failed=1' <<< "$o13b" && grep -q "no startup profile 'nope'" <<< "$o13b" && ! grep -q "start" <<< "$e13b" \
+  && ok "P13 -e startup_profile=start_all [one, two] → both started · nope (no file) → FAILED, nothing started" \
+  || bad "P13 e13=[$e13] e13b=[$e13b] $(grep -E 'm1 +:|fatal|msg' <<< "$o13$o13b" | head -3 | tr '\n' '¦')"
+
+# ── P14: STARTUP_PROFILE reaches the agent as extra_vars (lib_run_playbook.sh) ──
+STARTUP_PROFILE=start_all ANSIBLE_AGENT_URL="http://127.0.0.1:$PORT" DEPLOY_STATE_FILE="$SF" bash "$HERE/stop_on_this_pc.sh" </dev/null >/dev/null 2>&1
+asked14="$(cat "$WORK/asked")"
+grep -q '"extra_vars": {"startup_profile": "start_all"}' <<< "$asked14" && ! grep -q extra_vars <<< "$asked" \
+  && ok "P14 STARTUP_PROFILE=start_all → the agent is asked with extra_vars startup_profile · not set → no extra_vars" \
+  || bad "P14 asked=$asked14 · before=$asked"
 
 [ $FAIL = 0 ] && ok "deploy playbook tests passed (throwaway machine + stand-in agent removed)" || { echo -e "\033[31m[FAILED]\033[0m deploy playbook tests"; exit 1; }

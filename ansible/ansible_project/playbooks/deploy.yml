@@ -9,6 +9,8 @@
 # deploy_projects (dev): inventories/dev/group_vars/deploy_targets/projects.yml — one project per story ([6.4]…).
 # Startup profile (CONFMGT [7.1]): inventories/<env>/startup_profiles/<startup_profile, default basic>.yml lists the projects
 # STARTED; every project still gets its config. No profile file in that inventory (test) → every project starts, as before.
+# dev profiles: basic (ccc/startup/startup.sh) · start_all = all but myodoo (ccc/startup/startup_start_all.sh, CONFMGT [7.4]);
+# a startup_profile named with no file → FAIL.
 - name: Deploy the workspace
   hosts: deploy_targets
   gather_facts: false
@@ -133,6 +135,12 @@
       ansible.builtin.include_role:
         name: shared
       when: deploy_projects | default([]) | length > 0
+
+    - name: a profile asked by name has its file (a typo would silently start every project)
+      ansible.builtin.assert:
+        that: (inventory_dir ~ '/startup_profiles/' ~ startup_profile ~ '.yml') is file
+        fail_msg: "no startup profile '{{ startup_profile }}' — known: inventories/<env>/startup_profiles/*.yml"
+      when: startup_profile is defined
 
     - name: the startup profile (inventories/<env>/startup_profiles/<name>.yml) — which projects are STARTED
       ansible.builtin.include_vars:
